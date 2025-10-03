@@ -852,35 +852,82 @@
         let map = null;
         let markers = [];
 
+        // Fallback events in case JSON can't be loaded
+        const fallbackEvents = [
+            {
+                id: 1,
+                title: 'Concerto in Piazza',
+                date: '2024-10-15',
+                location: 'Piazza del Plebiscito',
+                coordinates: { lat: 40.8359, lng: 14.2489 },
+                whatsappLink: 'https://chat.whatsapp.com/event1',
+                tags: ['#musica', '#concerto', '#gratuito'],
+                poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza'
+            },
+            {
+                id: 2,
+                title: 'Mostra d\'Arte Moderna',
+                date: '2024-10-20',
+                location: 'Museo MADRE',
+                coordinates: { lat: 40.8518, lng: 14.2571 },
+                whatsappLink: 'https://chat.whatsapp.com/event2',
+                tags: ['#arte', '#mostra', '#cultura'],
+                poster: 'https://via.placeholder.com/400x600/764ba2/ffffff?text=Mostra+Arte+Moderna'
+            },
+            {
+                id: 3,
+                title: 'Teatro: La Commedia',
+                date: '2024-10-25',
+                location: 'Teatro San Carlo',
+                coordinates: { lat: 40.8376, lng: 14.2496 },
+                whatsappLink: 'https://chat.whatsapp.com/event3',
+                tags: ['#teatro', '#spettacolo', '#cultura']
+            },
+            {
+                id: 4,
+                title: 'Festival Musicale',
+                date: '2024-11-02',
+                location: 'Parco Virgiliano',
+                coordinates: { lat: 40.7950, lng: 14.1889 },
+                whatsappLink: 'https://chat.whatsapp.com/event4',
+                tags: ['#musica', '#festival', '#outdoor'],
+                poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Festival+Musicale'
+            }
+        ];
+
         // Load events from JSON file
         async function loadEvents() {
             try {
+                // Try to load from events.json
                 const response = await fetch('events.json');
-                events = await response.json();
-                filteredEvents = [...events];
-                renderCalendar();
-                renderEventList();
-                if (map) {
-                    renderMap();
+                
+                if (!response.ok) {
+                    throw new Error('File not found');
                 }
+                
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    events = data;
+                    console.log('✅ Eventi caricati da events.json:', events.length);
+                } else {
+                    throw new Error('Empty file');
+                }
+                
             } catch (error) {
-                console.error('Error loading events:', error);
-                // Fallback to demo data if JSON file is not available
-                events = [
-                    {
-                        id: 1,
-                        title: 'Concerto in Piazza',
-                        date: '2024-10-15',
-                        location: 'Piazza del Plebiscito',
-                        coordinates: { lat: 40.8359, lng: 14.2489 },
-                        whatsappLink: 'https://chat.whatsapp.com/event1',
-                        tags: ['#musica', '#concerto', '#gratuito'],
-                        poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza'
-                    }
-                ];
-                filteredEvents = [...events];
-                renderCalendar();
-                renderEventList();
+                console.warn('⚠️ Impossibile caricare events.json, uso eventi di esempio:', error.message);
+                console.log('💡 Per risolvere: usa un server locale (es: python -m http.server)');
+                
+                // Use fallback events
+                events = fallbackEvents;
+            }
+            
+            filteredEvents = [...events];
+            renderCalendar();
+            renderEventList();
+            
+            if (map) {
+                renderMap();
             }
         }
 
@@ -1203,8 +1250,8 @@
         
         // Wait for Leaflet to load before initializing
         window.addEventListener('load', function() {
-            renderCalendar();
-            renderEventList();
+            // Load events first
+            loadEvents();
             
             // Small delay to ensure Leaflet is fully loaded
             setTimeout(() => {
