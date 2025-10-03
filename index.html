@@ -614,6 +614,7 @@
             align-items: center;
             gap: 5px;
             margin-top: 5px;
+            margin-right: 10px;
             color: #667eea;
             cursor: pointer;
             font-size: 0.875rem;
@@ -696,7 +697,7 @@
                 <button class="btn btn-white" onclick="document.getElementById('searchBar').focus()">
                     🔍 Esplora gli eventi
                 </button>
-                <button class="btn" onclick="window.open('https://chat.whatsapp.com/generalgroup', '_blank')">
+                <button class="btn" id="heroGeneralChatBtn">
                     💬 Unisciti alla community
                 </button>
             </div>
@@ -729,8 +730,8 @@
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💬</div>
-                    <h3>Chat per Evento</h3>
-                    <p>Ogni evento ha la sua chat WhatsApp dedicata per coordinare la partecipazione.</p>
+                    <h3>Chat per Interessi</h3>
+                    <p>Community organizzate per tema: musica, teatro, mostre e altro ancora.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">✨</div>
@@ -762,6 +763,14 @@
 
     <div class="container" id="events">
         <h2 class="section-title">🎉 Eventi in Programma</h2>
+        
+        <div id="localWarning" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ffeaa7;">
+            <strong>⚠️ Modalità Locale Rilevata</strong>
+            <p style="margin: 10px 0 0 0; font-size: 0.9rem;">
+                Stai visualizzando il sito dal file system. Gli eventi mostrati sono di esempio.
+                Per vedere i tuoi eventi, usa un server locale: <code>python -m http.server 8000</code>
+            </p>
+        </div>
         
         <input 
             type="text" 
@@ -815,13 +824,21 @@
 
         <div class="card chat-section">
             <div class="card-header">
-                <h2>💬 Community</h2>
+                <h2>💬 Community per Interessi</h2>
             </div>
             <div class="card-content">
-                <p class="chat-description">Unisciti alla community WhatsApp generale per conoscere persone nuove, condividere interessi e organizzarti per partecipare insieme agli eventi. È un luogo sicuro e accogliente dove fare nuove amicizie!</p>
-                <button class="btn" onclick="window.open('https://chat.whatsapp.com/generalgroup', '_blank')">
-                    Unisciti alla Community WhatsApp
-                </button>
+                <p class="chat-description">Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.</p>
+                
+                <div id="categoryChats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <!-- Categories will be loaded here -->
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e7ff;">
+                    <p class="chat-description"><strong>Community Generale</strong> - Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi</p>
+                    <button class="btn" id="generalChatBtn">
+                        Unisciti alla Community Generale
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -843,6 +860,7 @@
 
     <script>
         let events = [];
+        let categories = {};
         const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
         let currentMonth = new Date();
         let filteredEvents = [];
@@ -852,15 +870,18 @@
         let map = null;
         let markers = [];
 
-        // Fallback events in case JSON can't be loaded
+        // Fallback data
         const fallbackEvents = [
             {
                 id: 1,
                 title: 'Concerto in Piazza',
                 date: '2024-10-15',
+                dateEnd: null,
+                time: { start: '21:00', end: '23:30' },
                 location: 'Piazza del Plebiscito',
                 coordinates: { lat: 40.8359, lng: 14.2489 },
-                whatsappLink: 'https://chat.whatsapp.com/event1',
+                description: 'Un concerto di musica classica all\'aperto con l\'orchestra sinfonica di Napoli.',
+                category: 'musica',
                 tags: ['#musica', '#concerto', '#gratuito'],
                 poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza'
             },
@@ -868,9 +889,12 @@
                 id: 2,
                 title: 'Mostra d\'Arte Moderna',
                 date: '2024-10-20',
+                dateEnd: '2024-11-15',
+                time: null,
                 location: 'Museo MADRE',
                 coordinates: { lat: 40.8518, lng: 14.2571 },
-                whatsappLink: 'https://chat.whatsapp.com/event2',
+                description: 'Esposizione di opere contemporanee di artisti emergenti italiani.',
+                category: 'mostre',
                 tags: ['#arte', '#mostra', '#cultura'],
                 poster: 'https://via.placeholder.com/400x600/764ba2/ffffff?text=Mostra+Arte+Moderna'
             },
@@ -878,57 +902,92 @@
                 id: 3,
                 title: 'Teatro: La Commedia',
                 date: '2024-10-25',
+                dateEnd: null,
+                time: { start: '20:30', end: null },
                 location: 'Teatro San Carlo',
                 coordinates: { lat: 40.8376, lng: 14.2496 },
-                whatsappLink: 'https://chat.whatsapp.com/event3',
+                description: null,
+                category: 'teatro',
                 tags: ['#teatro', '#spettacolo', '#cultura']
-            },
-            {
-                id: 4,
-                title: 'Festival Musicale',
-                date: '2024-11-02',
-                location: 'Parco Virgiliano',
-                coordinates: { lat: 40.7950, lng: 14.1889 },
-                whatsappLink: 'https://chat.whatsapp.com/event4',
-                tags: ['#musica', '#festival', '#outdoor'],
-                poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Festival+Musicale'
             }
         ];
 
-        // Load events from JSON file
-        async function loadEvents() {
+        const fallbackCategories = {
+            categories: [
+                { id: 'musica', name: 'Musica', icon: '🎵', whatsappLink: 'https://chat.whatsapp.com/musica-group' },
+                { id: 'teatro', name: 'Teatro', icon: '🎭', whatsappLink: 'https://chat.whatsapp.com/teatro-group' },
+                { id: 'mostre', name: 'Mostre & Arte', icon: '🎨', whatsappLink: 'https://chat.whatsapp.com/arte-group' },
+                { id: 'cinema', name: 'Cinema', icon: '🎬', whatsappLink: 'https://chat.whatsapp.com/cinema-group' },
+                { id: 'sport', name: 'Sport', icon: '⚽', whatsappLink: 'https://chat.whatsapp.com/sport-group' },
+                { id: 'altro', name: 'Altro', icon: '✨', whatsappLink: 'https://chat.whatsapp.com/altro-group' }
+            ],
+            generalChat: 'https://chat.whatsapp.com/generalgroup'
+        };
+
+        async function loadCategories() {
             try {
-                // Try to load from events.json
-                const response = await fetch('events.json');
-                
-                if (!response.ok) {
-                    throw new Error('File not found');
+                const response = await fetch('categories.json');
+                if (!response.ok) throw new Error('File not found');
+                categories = await response.json();
+                console.log('✅ Categorie caricate');
+            } catch (error) {
+                console.warn('⚠️ Uso categorie di default');
+                categories = fallbackCategories;
+            }
+            renderCategoryChats();
+        }
+
+        function getCategoryInfo(categoryId) {
+            const category = categories.categories.find(c => c.id === categoryId);
+            return category || { id: 'altro', name: 'Altro', icon: '✨', whatsappLink: '' };
+        }
+
+        function formatEventDate(event) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            const startDate = new Date(event.date + 'T00:00:00');
+            
+            if (event.dateEnd) {
+                const endDate = new Date(event.dateEnd + 'T00:00:00');
+                return `${startDate.toLocaleDateString('it-IT', options)} - ${endDate.toLocaleDateString('it-IT', options)}`;
+            }
+            
+            let dateStr = startDate.toLocaleDateString('it-IT', options);
+            
+            if (event.time && event.time.start) {
+                dateStr += ` • ${event.time.start}`;
+                if (event.time.end) {
+                    dateStr += ` - ${event.time.end}`;
                 }
+            }
+            
+            return dateStr;
+        }
+
+        async function loadEvents() {
+            await loadCategories();
+            
+            try {
+                const response = await fetch('events.json');
+                if (!response.ok) throw new Error('File not found');
                 
                 const data = await response.json();
-                
                 if (data && data.length > 0) {
                     events = data;
-                    console.log('✅ Eventi caricati da events.json:', events.length);
+                    console.log('✅ Eventi caricati:', events.length);
+                    document.getElementById('localWarning').style.display = 'none';
                 } else {
                     throw new Error('Empty file');
                 }
-                
             } catch (error) {
-                console.warn('⚠️ Impossibile caricare events.json, uso eventi di esempio:', error.message);
-                console.log('💡 Per risolvere: usa un server locale (es: python -m http.server)');
-                
-                // Use fallback events
+                console.warn('⚠️ Uso eventi di esempio');
                 events = fallbackEvents;
+                document.getElementById('localWarning').style.display = 'block';
             }
             
             filteredEvents = [...events];
             renderCalendar();
             renderEventList();
-            
-            if (map) {
-                renderMap();
-            }
+            if (map) renderMap();
         }
 
         function showPoster(posterUrl) {
@@ -964,11 +1023,8 @@
 
         function handleNewsletterSubmit(e) {
             e.preventDefault();
-            const email = document.getElementById('emailInput').value;
-            
             document.getElementById('newsletterSuccess').style.display = 'block';
             document.getElementById('newsletterForm').reset();
-            
             setTimeout(() => {
                 document.getElementById('newsletterSuccess').style.display = 'none';
             }, 5000);
@@ -1014,7 +1070,12 @@
                 dayNumber.textContent = i;
                 dayElement.appendChild(dayNumber);
                 
-                const dayEvents = events.filter(event => event.date === dateStr);
+                const dayEvents = events.filter(event => {
+                    if (event.dateEnd) {
+                        return dateStr >= event.date && dateStr <= event.dateEnd;
+                    }
+                    return event.date === dateStr;
+                });
                 
                 dayEvents.forEach(event => {
                     const eventElement = document.createElement('div');
@@ -1037,7 +1098,12 @@
                         selectedDate = dateStr;
                         selectedLocation = null;
                         selectedTag = null;
-                        filteredEvents = events.filter(event => event.date === dateStr);
+                        filteredEvents = events.filter(event => {
+                            if (event.dateEnd) {
+                                return dateStr >= event.date && dateStr <= event.dateEnd;
+                            }
+                            return event.date === dateStr;
+                        });
                     }
                     renderCalendar();
                     renderEventList();
@@ -1054,7 +1120,7 @@
             eventList.innerHTML = '';
             
             if (filteredEvents.length === 0) {
-                eventList.innerHTML = '<p style="text-align: center; color: #666;">Nessun evento trovato. Prova con un\'altra ricerca.</p>';
+                eventList.innerHTML = '<p style="text-align: center; color: #666;">Nessun evento trovato.</p>';
                 return;
             }
             
@@ -1067,30 +1133,47 @@
                     eventItem.classList.add('highlighted');
                 }
                 
+                const categoryInfo = getCategoryInfo(event.category);
                 const tagsHtml = event.tags.map(tag => {
                     const isSelected = selectedTag === tag;
                     return `<span class="tag ${isSelected ? 'selected' : ''}" onclick="filterByTag('${tag}')">${tag}</span>`;
                 }).join('');
                 
                 const posterHtml = event.poster ? 
-                    `<div class="poster-btn" onclick="showPoster('${event.poster}')">🖼️ Vedi locandina</div>` : '';
+                    `<span class="poster-btn" onclick="showPoster('${event.poster}')">🖼️ Vedi locandina</span>` : '';
+                
+                const descriptionHtml = event.description ?
+                    `<span class="poster-btn" onclick="toggleDescription(${event.id})">📄 Maggiori dettagli</span>
+                     <div id="desc-${event.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${event.description}</div>` : '';
                 
                 eventItem.innerHTML = `
                     <div class="event-info">
-                        <div class="event-title">${event.title}</div>
-                        <div class="event-detail">📅 ${event.date}</div>
+                        <div class="event-title">${categoryInfo.icon} ${event.title}</div>
+                        <div class="event-detail">📅 ${formatEventDate(event)}</div>
                         <div class="event-detail">📍 ${event.location}</div>
                         <div class="event-tags">${tagsHtml}</div>
-                        ${posterHtml}
+                        <div style="margin-top: 8px;">
+                            ${posterHtml}
+                            ${descriptionHtml}
+                        </div>
                     </div>
                     <div class="event-actions">
-                        <button class="btn btn-small" onclick='addToCalendar(${JSON.stringify(event)})'>➕ Aggiungi</button>
-                        <button class="btn btn-small btn-outline" onclick="window.open('${event.whatsappLink}', '_blank')">💬 Chat</button>
+                        <button class="btn btn-small" onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})'>➕ Aggiungi</button>
+                        <button class="btn btn-small btn-outline" onclick="window.open('${categoryInfo.whatsappLink}', '_blank')">${categoryInfo.icon} Chat</button>
                     </div>
                 `;
                 
                 eventList.appendChild(eventItem);
             });
+        }
+
+        function toggleDescription(eventId) {
+            const descElement = document.getElementById(`desc-${eventId}`);
+            if (descElement.style.display === 'none') {
+                descElement.style.display = 'block';
+            } else {
+                descElement.style.display = 'none';
+            }
         }
 
         function filterByTag(tag) {
@@ -1117,8 +1200,22 @@
         }
 
         function addToCalendar(event) {
-            const dateFormatted = event.date.replace(/-/g, '');
-            const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${dateFormatted}/${dateFormatted}&location=${encodeURIComponent(event.location)}`;
+            const startDate = event.date.replace(/-/g, '');
+            const endDate = event.dateEnd ? event.dateEnd.replace(/-/g, '') : startDate;
+            
+            let dates = startDate;
+            if (event.time && event.time.start) {
+                const timeStart = event.time.start.replace(':', '') + '00';
+                const timeEnd = event.time.end ? event.time.end.replace(':', '') + '00' : timeStart;
+                dates = `${startDate}T${timeStart}/${startDate}T${timeEnd}`;
+            } else if (event.dateEnd) {
+                dates = `${startDate}/${endDate}`;
+            } else {
+                dates = `${startDate}/${startDate}`;
+            }
+            
+            const description = event.description ? '&details=' + encodeURIComponent(event.description) : '';
+            const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${dates}&location=${encodeURIComponent(event.location)}${description}`;
             window.open(googleCalendarUrl, '_blank');
         }
 
@@ -1149,7 +1246,6 @@
         function renderMap() {
             if (!map) {
                 map = L.map('map').setView([40.8359, 14.2489], 12);
-                
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 19
@@ -1159,9 +1255,7 @@
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
             
-            if (filteredEvents.length === 0) {
-                return;
-            }
+            if (filteredEvents.length === 0) return;
             
             const defaultIcon = L.divIcon({
                 className: 'custom-marker',
@@ -1184,6 +1278,7 @@
                     { icon: isSelected ? selectedIcon : defaultIcon }
                 ).addTo(map);
                 
+                const categoryInfo = getCategoryInfo(event.category);
                 const tagsHtml = event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
                 
                 const posterBtn = event.poster ? 
@@ -1191,13 +1286,13 @@
                 
                 const popupContent = `
                     <div style="min-width: 200px;">
-                        <h4 style="margin-bottom: 8px;">${event.title}</h4>
-                        <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${event.date}</p>
+                        <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
+                        <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${formatEventDate(event)}</p>
                         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
                         <div style="margin-bottom: 8px;">${tagsHtml}</div>
                         ${posterBtn}
-                        <button onclick='addToCalendar(${JSON.stringify(event)})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
-                        <button onclick="window.open('${event.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">💬 Chat</button>
+                        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+                        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
                     </div>
                 `;
                 
@@ -1236,6 +1331,31 @@
             }
         }
 
+        function renderCategoryChats() {
+            const container = document.getElementById('categoryChats');
+            if (!container) return;
+            
+            container.innerHTML = categories.categories.map(cat => `
+                <div style="border: 2px solid #e0e7ff; border-radius: 8px; padding: 15px; text-align: center; transition: all 0.3s; cursor: pointer;" 
+                     onmouseover="this.style.borderColor='#667eea'; this.style.background='#f0f4ff'" 
+                     onmouseout="this.style.borderColor='#e0e7ff'; this.style.background='white'"
+                     onclick="window.open('${cat.whatsappLink}', '_blank')">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">${cat.icon}</div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">${cat.name}</div>
+                    <div style="font-size: 0.875rem; color: #666;">Clicca per unirti</div>
+                </div>
+            `).join('');
+            
+            const generalBtn = document.getElementById('generalChatBtn');
+            const heroBtn = document.getElementById('heroGeneralChatBtn');
+            if (generalBtn) {
+                generalBtn.onclick = () => window.open(categories.generalChat, '_blank');
+            }
+            if (heroBtn) {
+                heroBtn.onclick = () => window.open(categories.generalChat, '_blank');
+            }
+        }
+
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1248,12 +1368,8 @@
 
         document.getElementById('searchBar').addEventListener('input', filterEvents);
         
-        // Wait for Leaflet to load before initializing
         window.addEventListener('load', function() {
-            // Load events first
             loadEvents();
-            
-            // Small delay to ensure Leaflet is fully loaded
             setTimeout(() => {
                 renderMap();
             }, 200);

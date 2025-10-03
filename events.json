@@ -3,12 +3,18 @@
     "id": 1,
     "title": "Concerto in Piazza",
     "date": "2024-10-15",
+    "dateEnd": null,
+    "time": {
+      "start": "21:00",
+      "end": "23:30"
+    },
     "location": "Piazza del Plebiscito",
     "coordinates": {
       "lat": 40.8359,
       "lng": 14.2489
     },
-    "whatsappLink": "https://chat.whatsapp.com/event1",
+    "description": "Un concerto di musica classica all'aperto con l'orchestra sinfonica di Napoli. Ingresso gratuito, posti limitati. Si consiglia di portare una coperta per sedersi.",
+    "category": "musica",
     "tags": ["#musica", "#concerto", "#gratuito"],
     "poster": "https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza"
   },
@@ -16,12 +22,15 @@
     "id": 2,
     "title": "Mostra d'Arte Moderna",
     "date": "2024-10-20",
+    "dateEnd": "2024-11-15",
+    "time": null,
     "location": "Museo MADRE",
     "coordinates": {
       "lat": 40.8518,
       "lng": 14.2571
     },
-    "whatsappLink": "https://chat.whatsapp.com/event2",
+    "description": "Esposizione di opere contemporanee di artisti emergenti italiani. La mostra include installazioni multimediali e opere interattive.",
+    "category": "mostre",
     "tags": ["#arte", "#mostra", "#cultura"],
     "poster": "https://via.placeholder.com/400x600/764ba2/ffffff?text=Mostra+Arte+Moderna"
   },
@@ -29,24 +38,33 @@
     "id": 3,
     "title": "Teatro: La Commedia",
     "date": "2024-10-25",
+    "dateEnd": null,
+    "time": {
+      "start": "20:30",
+      "end": null
+    },
     "location": "Teatro San Carlo",
     "coordinates": {
       "lat": 40.8376,
       "lng": 14.2496
     },
-    "whatsappLink": "https://chat.whatsapp.com/event3",
+    "description": null,
+    "category": "teatro",
     "tags": ["#teatro", "#spettacolo", "#cultura"]
   },
   {
     "id": 4,
     "title": "Festival Musicale",
     "date": "2024-11-02",
+    "dateEnd": "2024-11-04",
+    "time": null,
     "location": "Parco Virgiliano",
     "coordinates": {
       "lat": 40.795,
       "lng": 14.1889
     },
-    "whatsappLink": "https://chat.whatsapp.com/event4",
+    "description": "Tre giorni di musica dal vivo con artisti nazionali e internazionali. Food truck, mercatini e attività per bambini.",
+    "category": "musica",
     "tags": ["#musica", "#festival", "#outdoor"],
     "poster": "https://via.placeholder.com/400x600/667eea/ffffff?text=Festival+Musicale"
   }

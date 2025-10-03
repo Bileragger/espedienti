@@ -1,0 +1,41 @@
+{
+  "categories": [
+    {
+      "id": "musica",
+      "name": "Musica",
+      "icon": "🎵",
+      "whatsappLink": "https://chat.whatsapp.com/musica-group"
+    },
+    {
+      "id": "teatro",
+      "name": "Teatro",
+      "icon": "🎭",
+      "whatsappLink": "https://chat.whatsapp.com/teatro-group"
+    },
+    {
+      "id": "mostre",
+      "name": "Mostre & Arte",
+      "icon": "🎨",
+      "whatsappLink": "https://chat.whatsapp.com/arte-group"
+    },
+    {
+      "id": "cinema",
+      "name": "Cinema",
+      "icon": "🎬",
+      "whatsappLink": "https://chat.whatsapp.com/cinema-group"
+    },
+    {
+      "id": "sport",
+      "name": "Sport",
+      "icon": "⚽",
+      "whatsappLink": "https://chat.whatsapp.com/sport-group"
+    },
+    {
+      "id": "altro",
+      "name": "Altro",
+      "icon": "✨",
+      "whatsappLink": "https://chat.whatsapp.com/altro-group"
+    }
+  ],
+  "generalChat": "https://chat.whatsapp.com/generalgroup"
+}
