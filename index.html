@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espedienti per incontrarsi - Scopri eventi e incontra persone nuove</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .features {
+            padding: 60px 20px;
+            background: white;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .newsletter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .newsletter-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .newsletter h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .newsletter p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .newsletter-form button {
+            padding: 15px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .newsletter-form button:hover {
+            transform: scale(1.05);
+        }
+
+        .newsletter-success {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #333;
+            text-align: center;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: box-shadow 0.3s;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .search-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e0e7ff;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #4c1d95;
+        }
+
+        .search-info-text {
+            flex: 1;
+        }
+
+        .reset-filters {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .reset-filters:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4c1d95;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-top: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .tag.selected {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .calendar-nav button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .calendar-nav button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .calendar-nav span {
+            font-weight: 500;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day-header {
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .calendar-day {
+            min-height: 80px;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+
+        .calendar-day.selected {
+            background: #e0e7ff;
+            border-color: #667eea;
+            border-width: 2px;
+        }
+
+        .calendar-day.empty {
+            background: #f9f9f9;
+            cursor: default;
+        }
+
+        .calendar-day.empty:hover {
+            background: #f9f9f9;
+            border-color: #e0e0e0;
+        }
+
+        .calendar-day-number {
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .calendar-event {
+            font-size: 0.75rem;
+            padding: 4px;
+            margin-bottom: 2px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .calendar-event:hover {
+            background: #bbdefb;
+        }
+
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .event-item {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .event-item:hover {
+            background: #f9f9f9;
+            border-color: #667eea;
+        }
+
+        .event-item.highlighted {
+            background: #e0e7ff;
+            border-color: #667eea;
+            border-width: 2px;
+        }
+
+        .event-info {
+            flex: 1;
+        }
+
+        .event-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 180px;
+        }
+
+        .event-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .event-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #f0f4ff;
+        }
+
+        .btn-white {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-white:hover {
+            background: #f0f4ff;
+        }
+
+        .chat-section {
+            margin-top: 30px;
+        }
+
+        .chat-description {
+            margin-bottom: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            border: 2px solid #e0e7ff;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            border-radius: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            color: #666;
+            cursor: pointer;
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .poster-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: underline;
+        }
+
+        .poster-btn:hover {
+            color: #4c1d95;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 40px 20px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-content p {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .newsletter-form {
+                flex-direction: column;
+            }
+
+            .newsletter-form input,
+            .newsletter-form button {
+                width: 100%;
+            }
+
+            .event-item {
+                grid-template-columns: 1fr;
+            }
+
+            .event-actions {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <span>🎭</span>
+                <span>Espedienti per incontrarsi</span>
+            </div>
+            <nav class="nav-links">
+                <a href="#events">Eventi</a>
+                <a href="#features">Funzionalità</a>
+                <a href="#newsletter">Newsletter</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Scopri eventi e incontra persone nuove</h1>
+            <p>La piattaforma che abbatte le barriere culturali e tecnologiche, rendendo semplice scoprire cosa succede nella tua città e trovare compagni di avventure</p>
+            <div class="hero-buttons">
+                <button class="btn btn-white" onclick="document.getElementById('searchBar').focus()">
+                    🔍 Esplora gli eventi
+                </button>
+                <button class="btn" onclick="window.open('https://chat.whatsapp.com/generalgroup', '_blank')">
+                    💬 Unisciti alla community
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="features-container">
+            <h2>Come funziona</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>Calendario Condiviso</h3>
+                    <p>Visualizza tutti gli eventi della tua città in un unico calendario. Mai più occasioni perse!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Mappa Interattiva</h3>
+                    <p>Scopri eventi vicino a te con la nostra mappa. Clicca sui marker per vedere i dettagli.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Trova Compagni</h3>
+                    <p>Usa le chat per organizzarti con altre persone e partecipare insieme agli eventi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Aggiungi al Tuo Calendario</h3>
+                    <p>Con un click aggiungi gli eventi che ti interessano al tuo Google Calendar personale.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Chat per Evento</h3>
+                    <p>Ogni evento ha la sua chat WhatsApp dedicata per coordinare la partecipazione.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>Sempre Aggiornato</h3>
+                    <p>Iscriviti alla newsletter per ricevere aggiornamenti su nuovi eventi e funzionalità.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter" id="newsletter">
+        <div class="newsletter-content">
+            <h2>📬 Resta aggiornato</h2>
+            <p>Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
+            <form class="newsletter-form" id="newsletterForm" onsubmit="handleNewsletterSubmit(event)">
+                <input 
+                    type="email" 
+                    placeholder="Il tuo indirizzo email" 
+                    required
+                    id="emailInput"
+                >
+                <button type="submit">Iscriviti</button>
+            </form>
+            <div class="newsletter-success" id="newsletterSuccess">
+                ✅ Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
+            </div>
+        </div>
+    </section>
+
+    <div class="container" id="events">
+        <h2 class="section-title">🎉 Eventi in Programma</h2>
+        
+        <input 
+            type="text" 
+            class="search-bar" 
+            id="searchBar"
+            placeholder="🔍 Cerca per titolo, data (YYYY-MM-DD), luogo o #tag"
+        >
+
+        <div class="search-info" id="searchInfo">
+            <div class="search-info-text">
+                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi. Clicca di nuovo per deselezionare.
+            </div>
+            <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
+                🔄 Reset filtri
+            </button>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📅 Calendario Eventi</h2>
+                    <div class="calendar-nav">
+                        <button onclick="changeMonth(-1)">←</button>
+                        <span id="monthYear"></span>
+                        <button onclick="changeMonth(1)">→</button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="calendar-grid" id="calendar"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>🗺️ Mappa Eventi</h2>
+                </div>
+                <div class="card-content">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 Lista Eventi</h2>
+            </div>
+            <div class="card-content">
+                <div class="event-list" id="eventList"></div>
+            </div>
+        </div>
+
+        <div class="card chat-section">
+            <div class="card-header">
+                <h2>💬 Community</h2>
+            </div>
+            <div class="card-content">
+                <p class="chat-description">Unisciti alla community WhatsApp generale per conoscere persone nuove, condividere interessi e organizzarti per partecipare insieme agli eventi. È un luogo sicuro e accogliente dove fare nuove amicizie!</p>
+                <button class="btn" onclick="window.open('https://chat.whatsapp.com/generalgroup', '_blank')">
+                    Unisciti alla Community WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="posterModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="posterImage" src="" alt="Locandina evento">
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Espedienti per incontrarsi</strong></p>
+            <p>Una piattaforma per scoprire eventi e conoscere persone nuove</p>
+            <p style="margin-top: 20px; opacity: 0.7;">© 2024 - Fatto con ❤️ per la community</p>
+        </div>
+    </footer>
+
+    <script>
+        let events = [];
+        const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+        let currentMonth = new Date();
+        let filteredEvents = [];
+        let selectedDate = null;
+        let selectedLocation = null;
+        let selectedTag = null;
+        let map = null;
+        let markers = [];
+
+        // Load events from JSON file
+        async function loadEvents() {
+            try {
+                const response = await fetch('events.json');
+                events = await response.json();
+                filteredEvents = [...events];
+                renderCalendar();
+                renderEventList();
+                if (map) {
+                    renderMap();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                // Fallback to demo data if JSON file is not available
+                events = [
+                    {
+                        id: 1,
+                        title: 'Concerto in Piazza',
+                        date: '2024-10-15',
+                        location: 'Piazza del Plebiscito',
+                        coordinates: { lat: 40.8359, lng: 14.2489 },
+                        whatsappLink: 'https://chat.whatsapp.com/event1',
+                        tags: ['#musica', '#concerto', '#gratuito'],
+                        poster: 'https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza'
+                    }
+                ];
+                filteredEvents = [...events];
+                renderCalendar();
+                renderEventList();
+            }
+        }
+
+        function showPoster(posterUrl) {
+            document.getElementById('posterImage').src = posterUrl;
+            document.getElementById('posterModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('posterModal').classList.remove('show');
+        }
+
+        function updateResetButton() {
+            const resetBtn = document.getElementById('resetBtn');
+            const searchBar = document.getElementById('searchBar');
+            if (selectedDate || selectedLocation || selectedTag || searchBar.value) {
+                resetBtn.style.display = 'block';
+            } else {
+                resetBtn.style.display = 'none';
+            }
+        }
+
+        function resetFilters() {
+            selectedDate = null;
+            selectedLocation = null;
+            selectedTag = null;
+            document.getElementById('searchBar').value = '';
+            filteredEvents = [...events];
+            renderCalendar();
+            renderEventList();
+            renderMap();
+            updateResetButton();
+        }
+
+        function handleNewsletterSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            
+            document.getElementById('newsletterSuccess').style.display = 'block';
+            document.getElementById('newsletterForm').reset();
+            
+            setTimeout(() => {
+                document.getElementById('newsletterSuccess').style.display = 'none';
+            }, 5000);
+        }
+
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            const monthYear = document.getElementById('monthYear');
+            
+            calendar.innerHTML = '';
+            monthYear.textContent = currentMonth.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+            
+            daysOfWeek.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                calendar.appendChild(header);
+            });
+            
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                calendar.appendChild(emptyDay);
+            }
+            
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                if (selectedDate === dateStr) {
+                    dayElement.classList.add('selected');
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'calendar-day-number';
+                dayNumber.textContent = i;
+                dayElement.appendChild(dayNumber);
+                
+                const dayEvents = events.filter(event => event.date === dateStr);
+                
+                dayEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'calendar-event';
+                    eventElement.textContent = event.title;
+                    eventElement.onclick = (e) => {
+                        e.stopPropagation();
+                        addToCalendar(event);
+                    };
+                    dayElement.appendChild(eventElement);
+                });
+                
+                dayElement.onclick = () => {
+                    if (selectedDate === dateStr) {
+                        selectedDate = null;
+                        selectedLocation = null;
+                        selectedTag = null;
+                        filteredEvents = [...events];
+                    } else {
+                        selectedDate = dateStr;
+                        selectedLocation = null;
+                        selectedTag = null;
+                        filteredEvents = events.filter(event => event.date === dateStr);
+                    }
+                    renderCalendar();
+                    renderEventList();
+                    renderMap();
+                    updateResetButton();
+                };
+                
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        function renderEventList() {
+            const eventList = document.getElementById('eventList');
+            eventList.innerHTML = '';
+            
+            if (filteredEvents.length === 0) {
+                eventList.innerHTML = '<p style="text-align: center; color: #666;">Nessun evento trovato. Prova con un\'altra ricerca.</p>';
+                return;
+            }
+            
+            filteredEvents.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                eventItem.id = `event-${event.id}`;
+                
+                if (selectedLocation === event.location) {
+                    eventItem.classList.add('highlighted');
+                }
+                
+                const tagsHtml = event.tags.map(tag => {
+                    const isSelected = selectedTag === tag;
+                    return `<span class="tag ${isSelected ? 'selected' : ''}" onclick="filterByTag('${tag}')">${tag}</span>`;
+                }).join('');
+                
+                const posterHtml = event.poster ? 
+                    `<div class="poster-btn" onclick="showPoster('${event.poster}')">🖼️ Vedi locandina</div>` : '';
+                
+                eventItem.innerHTML = `
+                    <div class="event-info">
+                        <div class="event-title">${event.title}</div>
+                        <div class="event-detail">📅 ${event.date}</div>
+                        <div class="event-detail">📍 ${event.location}</div>
+                        <div class="event-tags">${tagsHtml}</div>
+                        ${posterHtml}
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn btn-small" onclick='addToCalendar(${JSON.stringify(event)})'>➕ Aggiungi</button>
+                        <button class="btn btn-small btn-outline" onclick="window.open('${event.whatsappLink}', '_blank')">💬 Chat</button>
+                    </div>
+                `;
+                
+                eventList.appendChild(eventItem);
+            });
+        }
+
+        function filterByTag(tag) {
+            if (selectedTag === tag) {
+                selectedTag = null;
+                selectedDate = null;
+                selectedLocation = null;
+                filteredEvents = [...events];
+            } else {
+                selectedTag = tag;
+                selectedDate = null;
+                selectedLocation = null;
+                filteredEvents = events.filter(event => event.tags.includes(tag));
+            }
+            renderCalendar();
+            renderEventList();
+            renderMap();
+            updateResetButton();
+        }
+
+        function changeMonth(offset) {
+            currentMonth.setMonth(currentMonth.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function addToCalendar(event) {
+            const dateFormatted = event.date.replace(/-/g, '');
+            const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${dateFormatted}/${dateFormatted}&location=${encodeURIComponent(event.location)}`;
+            window.open(googleCalendarUrl, '_blank');
+        }
+
+        function filterEvents() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            selectedDate = null;
+            selectedLocation = null;
+            selectedTag = null;
+            
+            filteredEvents = events.filter(event => {
+                const matchesText = event.title.toLowerCase().includes(searchTerm) ||
+                    event.date.includes(searchTerm) ||
+                    event.location.toLowerCase().includes(searchTerm);
+                
+                const matchesTag = event.tags.some(tag => 
+                    tag.toLowerCase().includes(searchTerm)
+                );
+                
+                return matchesText || matchesTag;
+            });
+            
+            renderCalendar();
+            renderEventList();
+            renderMap();
+            updateResetButton();
+        }
+
+        function renderMap() {
+            if (!map) {
+                map = L.map('map').setView([40.8359, 14.2489], 12);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+            }
+            
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            if (filteredEvents.length === 0) {
+                return;
+            }
+            
+            const defaultIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background: #667eea; width: 25px; height: 25px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><div style="position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 6.5px; left: 6.5px;"></div></div>',
+                iconSize: [25, 25],
+                iconAnchor: [12, 25]
+            });
+            
+            const selectedIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background: #ff4444; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 4px 16px rgba(255,68,68,0.5);"><div style="position: absolute; width: 15px; height: 15px; background: white; border-radius: 50%; top: 7.5px; left: 7.5px;"></div></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+            
+            filteredEvents.forEach(event => {
+                const isSelected = selectedLocation === event.location;
+                const marker = L.marker(
+                    [event.coordinates.lat, event.coordinates.lng],
+                    { icon: isSelected ? selectedIcon : defaultIcon }
+                ).addTo(map);
+                
+                const tagsHtml = event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
+                
+                const posterBtn = event.poster ? 
+                    `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
+                
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h4 style="margin-bottom: 8px;">${event.title}</h4>
+                        <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${event.date}</p>
+                        <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
+                        <div style="margin-bottom: 8px;">${tagsHtml}</div>
+                        ${posterBtn}
+                        <button onclick='addToCalendar(${JSON.stringify(event)})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+                        <button onclick="window.open('${event.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">💬 Chat</button>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                
+                marker.on('click', () => {
+                    if (selectedLocation === event.location) {
+                        selectedLocation = null;
+                        selectedDate = null;
+                        selectedTag = null;
+                        filteredEvents = [...events];
+                    } else {
+                        selectedLocation = event.location;
+                        selectedDate = null;
+                        selectedTag = null;
+                        filteredEvents = events.filter(ev => ev.location === event.location);
+                    }
+                    
+                    renderCalendar();
+                    renderEventList();
+                    renderMap();
+                    updateResetButton();
+                    
+                    const eventElement = document.getElementById(`event-${event.id}`);
+                    if (eventElement) {
+                        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+                
+                markers.push(marker);
+            });
+            
+            if (filteredEvents.length > 0) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        document.getElementById('searchBar').addEventListener('input', filterEvents);
+        
+        // Wait for Leaflet to load before initializing
+        window.addEventListener('load', function() {
+            renderCalendar();
+            renderEventList();
+            
+            // Small delay to ensure Leaflet is fully loaded
+            setTimeout(() => {
+                renderMap();
+            }, 200);
+        });
+    </script>
+</body>
+</html>
