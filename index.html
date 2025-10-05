@@ -746,9 +746,10 @@
         <div class="newsletter-content">
             <h2>📬 Resta aggiornato</h2>
             <p>Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
-            <form class="newsletter-form" id="newsletterForm" onsubmit="handleNewsletterSubmit(event)">
+            <form class="newsletter-form" id="newsletterForm" action="https://formspree.io/f/TUO_FORM_ID" method="POST">
                 <input 
-                    type="email" 
+                    type="email"
+                    name="email"
                     placeholder="Il tuo indirizzo email" 
                     required
                     id="emailInput"
