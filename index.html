@@ -248,10 +248,44 @@
             border-radius: 8px;
             font-size: 0.9rem;
             color: #4c1d95;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .search-info-text {
             flex: 1;
+            min-width: 200px;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quick-filter-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quick-filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .quick-filter-btn.active {
+            background: #667eea;
+            color: white;
         }
 
         .reset-filters {
@@ -550,10 +584,64 @@
             border-radius: 8px;
             border: 2px solid #e0e7ff;
             z-index: 1;
+            position: relative;
         }
 
         .leaflet-container {
             border-radius: 8px;
+        }
+
+        .locate-btn {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .locate-btn:hover {
+            background: #f4f4f4;
+        }
+
+        .locate-btn.loading {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .directions-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            margin-right: 10px;
+            padding: 4px 8px;
+            background: #34a853;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .directions-btn:hover {
+            background: #2d8e47;
+            transform: translateY(-1px);
         }
 
         .modal {
@@ -782,11 +870,16 @@
 
         <div class="search-info" id="searchInfo">
             <div class="search-info-text">
-                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi. Clicca di nuovo per deselezionare.
+                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
             </div>
-            <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
-                🔄 Reset filtri
-            </button>
+            <div class="quick-filters">
+                <button class="quick-filter-btn" onclick="filterToday()" id="todayBtn">
+                    📅 Eventi di oggi
+                </button>
+                <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
+                    🔄 Reset filtri
+                </button>
+            </div>
         </div>
 
         <div class="grid">
@@ -810,6 +903,9 @@
                 </div>
                 <div class="card-content">
                     <div id="map"></div>
+                    <button class="locate-btn" id="locateBtn" onclick="locateUser()" title="Trova la mia posizione">
+                        📍
+                    </button>
                 </div>
             </div>
         </div>
@@ -870,6 +966,8 @@
         let selectedTag = null;
         let map = null;
         let markers = [];
+        let userMarker = null;
+        let todayFilterActive = false;
 
         // Fallback data
         const fallbackEvents = [
@@ -1003,7 +1101,7 @@
         function updateResetButton() {
             const resetBtn = document.getElementById('resetBtn');
             const searchBar = document.getElementById('searchBar');
-            if (selectedDate || selectedLocation || selectedTag || searchBar.value) {
+            if (selectedDate || selectedLocation || selectedTag || todayFilterActive || searchBar.value) {
                 resetBtn.style.display = 'block';
             } else {
                 resetBtn.style.display = 'none';
@@ -1014,7 +1112,9 @@
             selectedDate = null;
             selectedLocation = null;
             selectedTag = null;
+            todayFilterActive = false;
             document.getElementById('searchBar').value = '';
+            document.getElementById('todayBtn').classList.remove('active');
             filteredEvents = [...events];
             renderCalendar();
             renderEventList();
@@ -1022,13 +1122,151 @@
             updateResetButton();
         }
 
-        function handleNewsletterSubmit(e) {
-            e.preventDefault();
-            document.getElementById('newsletterSuccess').style.display = 'block';
-            document.getElementById('newsletterForm').reset();
-            setTimeout(() => {
-                document.getElementById('newsletterSuccess').style.display = 'none';
-            }, 5000);
+        // Geolocation function
+        function locateUser() {
+            const locateBtn = document.getElementById('locateBtn');
+            
+            if (!navigator.geolocation) {
+                alert('La geolocalizzazione non è supportata dal tuo browser');
+                return;
+            }
+            
+            locateBtn.classList.add('loading');
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Center map on user location
+                    map.setView([lat, lng], 14);
+                    
+                    // Add or update user marker
+                    if (userMarker) {
+                        map.removeLayer(userMarker);
+                    }
+                    
+                    const userIcon = L.divIcon({
+                        className: 'custom-marker',
+                        html: '<div style="background: #4285f4; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                    
+                    userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+                    userMarker.bindPopup('<strong>📍 Sei qui</strong>').openPopup();
+                    
+                    locateBtn.classList.remove('loading');
+                },
+                (error) => {
+                    locateBtn.classList.remove('loading');
+                    let errorMsg = 'Impossibile ottenere la posizione';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = 'Permesso di geolocalizzazione negato. Abilita la localizzazione nelle impostazioni del browser.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = 'Posizione non disponibile';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = 'Timeout nella richiesta di posizione';
+                            break;
+                    }
+                    
+                    alert(errorMsg);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // Filter events for today
+        function filterToday() {
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            const todayBtn = document.getElementById('todayBtn');
+            
+            if (todayFilterActive) {
+                // Deactivate filter
+                todayFilterActive = false;
+                todayBtn.classList.remove('active');
+                selectedDate = null;
+                selectedLocation = null;
+                selectedTag = null;
+                filteredEvents = [...events];
+            } else {
+                // Activate filter
+                todayFilterActive = true;
+                todayBtn.classList.add('active');
+                selectedDate = todayStr;
+                selectedLocation = null;
+                selectedTag = null;
+                
+                filteredEvents = events.filter(event => {
+                    if (event.dateEnd) {
+                        return todayStr >= event.date && todayStr <= event.dateEnd;
+                    }
+                    return event.date === todayStr;
+                });
+                
+                if (filteredEvents.length === 0) {
+                    alert('Nessun evento in programma oggi 😔\nProva a guardare i prossimi giorni!');
+                    todayFilterActive = false;
+                    todayBtn.classList.remove('active');
+                    filteredEvents = [...events];
+                }
+            }
+            
+            renderCalendar();
+            renderEventList();
+            renderMap();
+            updateResetButton();
+        }
+
+        // Open directions in external map app
+        function openDirections(lat, lng, locationName) {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            const destination = `${lat},${lng}`;
+            
+            if (isIOS) {
+                // Try Apple Maps first on iOS
+                const appleMapsUrl = `maps://maps.apple.com/?daddr=${destination}&q=${encodeURIComponent(locationName)}`;
+                window.location.href = appleMapsUrl;
+                
+                // Fallback to Google Maps if Apple Maps is not available
+                setTimeout(() => {
+                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&destination_place_id=${encodeURIComponent(locationName)}`;
+                    window.open(googleMapsUrl, '_blank');
+                }, 500);
+            } else {
+                // Use Google Maps for Android and Desktop
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&destination_place_id=${encodeURIComponent(locationName)}`;
+                window.open(googleMapsUrl, '_blank');
+            }
+        }
+
+        // Newsletter form handling
+        const newsletterForm = document.getElementById('newsletterForm');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', async function(e) {
+                // Se usa Formspree, rimuovi e.preventDefault() per permettere il submit normale
+                // Se usi il vecchio metodo, mantieni questo codice:
+                if (!this.action.includes('formspree.io')) {
+                    e.preventDefault();
+                    document.getElementById('newsletterSuccess').style.display = 'block';
+                    this.reset();
+                    setTimeout(() => {
+                        document.getElementById('newsletterSuccess').style.display = 'none';
+                    }, 5000);
+                }
+            });
         }
 
         function renderCalendar() {
@@ -1147,6 +1385,8 @@
                     `<span class="poster-btn" onclick="toggleDescription(${event.id})">📄 Maggiori dettagli</span>
                      <div id="desc-${event.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${event.description}</div>` : '';
                 
+                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+                
                 eventItem.innerHTML = `
                     <div class="event-info">
                         <div class="event-title">${categoryInfo.icon} ${event.title}</div>
@@ -1156,6 +1396,7 @@
                         <div style="margin-top: 8px;">
                             ${posterHtml}
                             ${descriptionHtml}
+                            ${directionsHtml}
                         </div>
                     </div>
                     <div class="event-actions">
@@ -1293,6 +1534,7 @@
                         <div style="margin-bottom: 8px;">${tagsHtml}</div>
                         ${posterBtn}
                         <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+                        <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
                         <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
                     </div>
                 `;
