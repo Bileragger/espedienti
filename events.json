@@ -2,7 +2,7 @@
   {
     "id": 1,
     "title": "Concerto in Piazza",
-    "date": "2025-10-5",
+    "date": "2025-10-05",
     "dateEnd": null,
     "time": {
       "start": "21:00",
@@ -17,6 +17,30 @@
     "category": "musica",
     "tags": ["#musica", "#concerto", "#gratuito"],
     "poster": "https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza"
+  },
+  {
+    "id": 1,
+    "title": "evento di test",
+    "date": "2025-10-05",
+    "location": "Piazza Dante",
+    "coordinates": {
+      "lat": 40.8491564,
+      "lng": 14.250303
+    },
+    "whatsappLink": "https://community",
+    "tags": []
+  },
+  {
+    "id": 2,
+    "title": "test 2",
+    "date": "2025-10-05",
+    "location": "Via San Mandato",
+    "coordinates": {
+      "lat": 40.8528226,
+      "lng": 14.2416869
+    },
+    "whatsappLink": "https://chat.whatsapp.com/DnPdV2x2aKLGAx6Pobo8MK?mode=wwt",
+    "tags": []
   },
   {
     "id": 2,
