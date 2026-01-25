@@ -2,7 +2,7 @@
   {
     "id": 1,
     "title": "Concerto in Piazza",
-    "date": "2025-10-05",
+    "date": "2025-02-15",
     "dateEnd": null,
     "time": {
       "start": "21:00",
@@ -13,40 +13,16 @@
       "lat": 40.8359,
       "lng": 14.2489
     },
-    "description": "Un concerto di musica classica all'aperto con l'orchestra sinfonica di Napoli. Ingresso gratuito, posti limitati. Si consiglia di portare una coperta per sedersi.",
+    "description": "Un concerto di musica classica all'aperto con l'orchestra sinfonica di Napoli. Ingresso gratuito, posti limitati.",
     "category": "musica",
     "tags": ["#musica", "#concerto", "#gratuito"],
     "poster": "https://via.placeholder.com/400x600/667eea/ffffff?text=Concerto+in+Piazza"
   },
   {
-    "id": 1,
-    "title": "evento di test",
-    "date": "2025-10-05",
-    "location": "Piazza Dante",
-    "coordinates": {
-      "lat": 40.8491564,
-      "lng": 14.250303
-    },
-    "whatsappLink": "https://community",
-    "tags": []
-  },
-  {
-    "id": 2,
-    "title": "test 2",
-    "date": "2025-10-05",
-    "location": "Via San Mandato",
-    "coordinates": {
-      "lat": 40.8528226,
-      "lng": 14.2416869
-    },
-    "whatsappLink": "https://chat.whatsapp.com/DnPdV2x2aKLGAx6Pobo8MK?mode=wwt",
-    "tags": []
-  },
-  {
     "id": 2,
     "title": "Mostra d'Arte Moderna",
-    "date": "2024-10-20",
-    "dateEnd": "2024-11-15",
+    "date": "2025-02-01",
+    "dateEnd": "2025-03-15",
     "time": null,
     "location": "Museo MADRE",
     "coordinates": {
@@ -55,13 +31,13 @@
     },
     "description": "Esposizione di opere contemporanee di artisti emergenti italiani. La mostra include installazioni multimediali e opere interattive.",
     "category": "mostre",
-    "tags": ["#arte", "#mostra", "#cultura"],
+    "tags": ["#mostre", "#arte", "#cultura"],
     "poster": "https://via.placeholder.com/400x600/764ba2/ffffff?text=Mostra+Arte+Moderna"
   },
   {
     "id": 3,
     "title": "Teatro: La Commedia",
-    "date": "2024-10-25",
+    "date": "2025-02-25",
     "dateEnd": null,
     "time": {
       "start": "20:30",
@@ -72,15 +48,16 @@
       "lat": 40.8376,
       "lng": 14.2496
     },
-    "description": null,
+    "description": "Spettacolo teatrale di Eduardo De Filippo interpretato dalla compagnia nazionale.",
     "category": "teatro",
-    "tags": ["#teatro", "#spettacolo", "#cultura"]
+    "tags": ["#teatro", "#spettacolo", "#cultura"],
+    "poster": "https://via.placeholder.com/400x600/9370DB/ffffff?text=Teatro"
   },
   {
     "id": 4,
     "title": "Festival Musicale",
-    "date": "2024-11-02",
-    "dateEnd": "2024-11-04",
+    "date": "2025-03-02",
+    "dateEnd": "2025-03-04",
     "time": null,
     "location": "Parco Virgiliano",
     "coordinates": {
@@ -91,5 +68,62 @@
     "category": "musica",
     "tags": ["#musica", "#festival", "#outdoor"],
     "poster": "https://via.placeholder.com/400x600/667eea/ffffff?text=Festival+Musicale"
+  },
+  {
+    "id": 5,
+    "title": "Proiezione Film d'Autore",
+    "date": "2025-02-20",
+    "dateEnd": null,
+    "time": {
+      "start": "21:00",
+      "end": null
+    },
+    "location": "Cinema Modernissimo",
+    "coordinates": {
+      "lat": 40.8456,
+      "lng": 14.2492
+    },
+    "description": "Rassegna di cinema d'autore con proiezione del film vincitore del Festival di Cannes. Ingresso 5€.",
+    "category": "cinema",
+    "tags": ["#cinema", "#film", "#cultura"],
+    "poster": "https://via.placeholder.com/400x600/FF6B6B/ffffff?text=Cinema"
+  },
+  {
+    "id": 6,
+    "title": "Torneo di Beach Volley",
+    "date": "2025-03-10",
+    "dateEnd": null,
+    "time": {
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "location": "Lungomare Caracciolo",
+    "coordinates": {
+      "lat": 40.8281,
+      "lng": 14.2153
+    },
+    "description": "Torneo amatoriale di beach volley aperto a tutti. Iscrizioni sul posto dalle 9:00.",
+    "category": "sport",
+    "tags": ["#sport", "#volley", "#outdoor"],
+    "poster": "https://via.placeholder.com/400x600/4ECDC4/ffffff?text=Beach+Volley"
+  },
+  {
+    "id": 7,
+    "title": "Mercatino dell'Usato",
+    "date": "2025-02-23",
+    "dateEnd": null,
+    "time": {
+      "start": "09:00",
+      "end": "19:00"
+    },
+    "location": "Villa Comunale",
+    "coordinates": {
+      "lat": 40.8295,
+      "lng": 14.2184
+    },
+    "description": "Mercatino vintage e dell'usato con abbigliamento, libri, dischi e oggetti d'antiquariato. Ingresso gratuito.",
+    "category": "altro",
+    "tags": ["#altro", "#mercatino", "#vintage"],
+    "poster": "https://via.placeholder.com/400x600/95E1D3/ffffff?text=Mercatino"
   }
 ]

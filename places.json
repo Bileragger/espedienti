@@ -1,0 +1,170 @@
+[
+  {
+    "id": 1,
+    "name": "Museo Archeologico Nazionale",
+    "category": "museo",
+    "address": "Piazza Museo, 19, Napoli",
+    "coordinates": {
+      "lat": 40.8533,
+      "lng": 14.2503
+    },
+    "description": "Uno dei più importanti musei archeologici al mondo, ospita reperti provenienti da Pompei, Ercolano e dalla Magna Grecia. Sito web: https://www.museoarcheologiconapoli.it",
+    "openingHours": {
+      "lunedi": "chiuso",
+      "martedi": "09:00-19:30",
+      "mercoledi": "09:00-19:30",
+      "giovedi": "09:00-19:30",
+      "venerdi": "09:00-19:30",
+      "sabato": "09:00-19:30",
+      "domenica": "09:00-19:30"
+    },
+    "image": "https://via.placeholder.com/400x300/8B4513/ffffff?text=MANN"
+  },
+  {
+    "id": 2,
+    "name": "Museo di Capodimonte",
+    "category": "museo",
+    "address": "Via Miano, 2, Napoli",
+    "coordinates": {
+      "lat": 40.8676,
+      "lng": 14.2503
+    },
+    "description": "Museo e pinacoteca situato nella reggia omonima, con opere di Caravaggio, Tiziano e Raffaello. Sito web: https://capodimonte.cultura.gov.it",
+    "openingHours": {
+      "lunedi": "chiuso",
+      "martedi": "08:30-19:30",
+      "mercoledi": "08:30-19:30",
+      "giovedi": "08:30-19:30",
+      "venerdi": "08:30-19:30",
+      "sabato": "08:30-19:30",
+      "domenica": "08:30-19:30"
+    },
+    "image": "https://via.placeholder.com/400x300/8B4513/ffffff?text=Capodimonte"
+  },
+  {
+    "id": 3,
+    "name": "Galleria Umberto I",
+    "category": "galleria",
+    "address": "Via San Carlo, 15, Napoli",
+    "coordinates": {
+      "lat": 40.8389,
+      "lng": 14.2486
+    },
+    "description": "Splendida galleria commerciale in stile liberty con cupola in vetro e ferro, costruita alla fine del 1800.",
+    "openingHours": {
+      "lunedi": "08:00-20:00",
+      "martedi": "08:00-20:00",
+      "mercoledi": "08:00-20:00",
+      "giovedi": "08:00-20:00",
+      "venerdi": "08:00-20:00",
+      "sabato": "08:00-20:00",
+      "domenica": "08:00-20:00"
+    },
+    "image": "https://via.placeholder.com/400x300/9370DB/ffffff?text=Galleria+Umberto"
+  },
+  {
+    "id": 4,
+    "name": "Castel dell'Ovo",
+    "category": "monumento",
+    "address": "Via Eldorado, 3, Napoli",
+    "coordinates": {
+      "lat": 40.8282,
+      "lng": 14.2478
+    },
+    "description": "Il castello più antico di Napoli, costruito su un'isoletta dove si trovava la villa del poeta romano Virgilio.",
+    "openingHours": {
+      "lunedi": "09:00-18:30",
+      "martedi": "09:00-18:30",
+      "mercoledi": "09:00-18:30",
+      "giovedi": "09:00-18:30",
+      "venerdi": "09:00-18:30",
+      "sabato": "09:00-18:30",
+      "domenica": "09:00-18:30"
+    },
+    "image": "https://via.placeholder.com/400x300/CD853F/ffffff?text=Castel+Ovo"
+  },
+  {
+    "id": 5,
+    "name": "Parco Virgiliano",
+    "category": "parco",
+    "address": "Via Tito Lucrezio Caro, Napoli",
+    "coordinates": {
+      "lat": 40.795,
+      "lng": 14.1889
+    },
+    "description": "Parco panoramico con vista mozzafiato sul Golfo di Napoli, Vesuvio, Capri e Ischia. Ideale per passeggiate e pic-nic.",
+    "openingHours": {
+      "lunedi": "07:00-21:00",
+      "martedi": "07:00-21:00",
+      "mercoledi": "07:00-21:00",
+      "giovedi": "07:00-21:00",
+      "venerdi": "07:00-21:00",
+      "sabato": "07:00-21:00",
+      "domenica": "07:00-21:00"
+    },
+    "image": "https://via.placeholder.com/400x300/228B22/ffffff?text=Parco+Virgiliano"
+  },
+  {
+    "id": 6,
+    "name": "Biblioteca Nazionale",
+    "category": "biblioteca",
+    "address": "Piazza del Plebiscito, 1, Napoli",
+    "coordinates": {
+      "lat": 40.8352,
+      "lng": 14.2502
+    },
+    "description": "Una delle biblioteche più importanti d'Italia, con oltre 2 milioni di volumi e manoscritti antichi.",
+    "openingHours": {
+      "lunedi": "08:30-19:00",
+      "martedi": "08:30-19:00",
+      "mercoledi": "08:30-19:00",
+      "giovedi": "08:30-19:00",
+      "venerdi": "08:30-19:00",
+      "sabato": "chiuso",
+      "domenica": "chiuso"
+    },
+    "image": "https://via.placeholder.com/400x300/4682B4/ffffff?text=Biblioteca+Nazionale"
+  },
+  {
+    "id": 7,
+    "name": "Teatro San Carlo",
+    "category": "teatro",
+    "address": "Via San Carlo, 98, Napoli",
+    "coordinates": {
+      "lat": 40.8376,
+      "lng": 14.2496
+    },
+    "description": "Il teatro lirico più antico d'Europa ancora attivo, inaugurato nel 1737. Sede di opere liriche, balletti e concerti.",
+    "openingHours": {
+      "lunedi": "10:00-17:30",
+      "martedi": "10:00-17:30",
+      "mercoledi": "10:00-17:30",
+      "giovedi": "10:00-17:30",
+      "venerdi": "10:00-17:30",
+      "sabato": "10:00-17:30",
+      "domenica": "chiuso"
+    },
+    "image": "https://via.placeholder.com/400x300/DC143C/ffffff?text=San+Carlo"
+  },
+  {
+    "id": 8,
+    "name": "Complesso Monumentale Santa Chiara",
+    "category": "altro",
+    "address": "Via Santa Chiara, 49/c, Napoli",
+    "coordinates": {
+      "lat": 40.8478,
+      "lng": 14.2523
+    },
+    "description": "Complesso religioso gotico con il famoso chiostro maiolicato, capolavoro dell'arte barocca napoletana.",
+    "openingHours": {
+      "lunedi": "09:30-17:30",
+      "martedi": "09:30-17:30",
+      "mercoledi": "09:30-17:30",
+      "giovedi": "09:30-17:30",
+      "venerdi": "09:30-17:30",
+      "sabato": "09:30-14:00",
+      "domenica": "chiuso"
+    },
+    "image": "https://via.placeholder.com/400x300/DEB887/ffffff?text=Santa+Chiara"
+  }
+]

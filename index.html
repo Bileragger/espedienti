@@ -6,6 +6,36 @@
     <title>Espedienti per incontrarsi - Scopri eventi e incontra persone nuove</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
+        authDomain: "espedienti-napoli.firebaseapp.com",
+        projectId: "espedienti-napoli",
+        storageBucket: "espedienti-napoli.firebasestorage.app",
+        messagingSenderId: "450345618879",
+        appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a",
+        measurementId: "G-Q48FHGR60K"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Rendi disponibili globalmente
+        window.db = db;
+        window.firestoreModules = { collection, getDocs, onSnapshot };
+
+        // Segnala che Firebase è pronto
+        window.firebaseReady = true;
+        window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -591,6 +621,56 @@
             border-radius: 8px;
         }
 
+        .map-container {
+            position: relative;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .map-control-btn {
+            background: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .map-control-btn:hover {
+            background: #f4f4f4;
+        }
+
+        .map-control-btn.loading {
+            animation: pulse 1s infinite;
+        }
+
+        .map-control-btn.active {
+            background: #8B4513;
+            color: white;
+            border-color: #8B4513;
+        }
+
+        .map-control-btn.wide {
+            width: auto;
+            padding: 0 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
         .locate-btn {
             position: absolute;
             top: 80px;
@@ -608,6 +688,7 @@
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
             font-size: 1.2rem;
             transition: all 0.2s;
+            display: none; /* Nascosto, usiamo map-controls */
         }
 
         .locate-btn:hover {
@@ -760,6 +841,180 @@
                 width: 100%;
             }
         }
+
+        /* Toggle filtri eventi/luoghi */
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-btn:hover {
+            background: #f0f4ff;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .toggle-btn.places-toggle {
+            border-color: #8B4513;
+            color: #8B4513;
+        }
+
+        .toggle-btn.places-toggle:hover {
+            background: #fdf6f0;
+        }
+
+        .toggle-btn.places-toggle.active {
+            background: #8B4513;
+            color: white;
+        }
+
+        /* Stili luoghi */
+        .place-item {
+            border-left: 4px solid #8B4513;
+        }
+
+        .place-item:hover {
+            border-color: #A0522D;
+        }
+
+        .place-item .event-title {
+            color: #8B4513;
+        }
+
+        .place-category {
+            display: inline-block;
+            background: #fdf6f0;
+            color: #8B4513;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .opening-hours {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .opening-hours-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .hours-grid {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 4px;
+        }
+
+        .hours-day {
+            font-weight: 500;
+        }
+
+        .hours-time {
+            color: #666;
+        }
+
+        .hours-closed {
+            color: #dc3545;
+        }
+
+        /* Filtri per categoria */
+        .category-filters {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e7ff;
+            align-items: center;
+        }
+
+        .category-filters.show {
+            display: flex;
+        }
+
+        .category-filters.places-filters {
+            border-color: #d4a574;
+            background: #fdf6f0;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .filter-checkbox:hover {
+            border-color: #667eea;
+        }
+
+        .filter-checkbox.checked {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .filter-checkbox.places-filter {
+            border-color: #d4a574;
+        }
+
+        .filter-checkbox.places-filter:hover {
+            border-color: #8B4513;
+        }
+
+        .filter-checkbox.places-filter.checked {
+            background: #8B4513;
+            color: white;
+            border-color: #8B4513;
+        }
+
+        .filters-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #666;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .filters-label.places-label {
+            color: #8B4513;
+        }
     </style>
 </head>
 <body>
@@ -882,6 +1137,71 @@
             </div>
         </div>
 
+        <!-- Toggle visualizzazione eventi/luoghi -->
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="toggleEvents" onclick="toggleView('events')">
+                🎭 Eventi
+            </button>
+            <button class="toggle-btn places-toggle active" id="togglePlaces" onclick="toggleView('places')">
+                🏛️ Luoghi di interesse
+            </button>
+        </div>
+
+        <!-- Filtri categorie eventi -->
+        <div class="category-filters show" id="eventCategoryFilters">
+            <span class="filters-label">Categorie:</span>
+            <div class="filter-checkbox checked" onclick="toggleEventCategory('all')">
+                Tutti
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('musica')">
+                🎵 Musica
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('teatro')">
+                🎭 Teatro
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('mostre')">
+                🎨 Mostre
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('cinema')">
+                🎬 Cinema
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('sport')">
+                ⚽ Sport
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('altro')">
+                ✨ Altro
+            </div>
+        </div>
+
+        <!-- Filtri categorie luoghi -->
+        <div class="category-filters places-filters show" id="placeCategoryFilters">
+            <span class="filters-label places-label">Tipologie:</span>
+            <div class="filter-checkbox places-filter checked" onclick="togglePlaceCategory('all')">
+                Tutti
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('museo')">
+                🏛️ Musei
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('galleria')">
+                🖼️ Gallerie
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('monumento')">
+                🏰 Monumenti
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('parco')">
+                🌳 Parchi
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('biblioteca')">
+                📚 Biblioteche
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('teatro')">
+                🎭 Teatri
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('altro')">
+                📍 Altro
+            </div>
+        </div>
+
         <div class="grid">
             <div class="card">
                 <div class="card-header">
@@ -899,23 +1219,40 @@
             
             <div class="card">
                 <div class="card-header">
-                    <h2>🗺️ Mappa Eventi</h2>
+                    <h2>🗺️ Mappa</h2>
                 </div>
                 <div class="card-content">
-                    <div id="map"></div>
-                    <button class="locate-btn" id="locateBtn" onclick="locateUser()" title="Trova la mia posizione">
-                        📍
-                    </button>
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <div class="map-controls">
+                            <button class="map-control-btn" id="locateBtnNew" onclick="locateUser()" title="Trova la mia posizione">
+                                📍
+                            </button>
+                            <button class="map-control-btn wide" id="openNowBtn" onclick="filterOpenNow()" title="Mostra solo luoghi aperti ora">
+                                🕐 Aperti
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="eventsCard">
             <div class="card-header">
                 <h2>📋 Lista Eventi</h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="eventList"></div>
+            </div>
+        </div>
+
+        <!-- Sezione Luoghi di Interesse -->
+        <div class="card" id="placesCard">
+            <div class="card-header" style="background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);">
+                <h2>🏛️ Luoghi di Interesse</h2>
+            </div>
+            <div class="card-content">
+                <div class="event-list" id="placeList"></div>
             </div>
         </div>
 
@@ -968,6 +1305,18 @@
         let markers = [];
         let userMarker = null;
         let todayFilterActive = false;
+
+        // Variabili per i luoghi
+        let places = [];
+        let filteredPlaces = [];
+        let placeMarkers = [];
+        let showEvents = true;
+        let showPlaces = true;
+        let openNowFilterActive = false;
+
+        // Variabili per filtri categorie
+        let selectedEventCategories = new Set(); // vuoto = tutti
+        let selectedPlaceCategories = new Set(); // vuoto = tutti
 
         // Fallback data
         const fallbackEvents = [
@@ -1064,29 +1413,244 @@
 
         async function loadEvents() {
             await loadCategories();
-            
+
             try {
-                const response = await fetch('events.json');
-                if (!response.ok) throw new Error('File not found');
-                
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    events = data;
-                    console.log('✅ Eventi caricati:', events.length);
+                // Carica da Firebase
+                const { collection, getDocs } = window.firestoreModules;
+                const querySnapshot = await getDocs(collection(window.db, 'events'));
+                events = [];
+                querySnapshot.forEach((doc) => {
+                    events.push({ firebaseId: doc.id, ...doc.data() });
+                });
+
+                if (events.length > 0) {
+                    console.log('✅ Eventi caricati da Firebase:', events.length);
                     document.getElementById('localWarning').style.display = 'none';
                 } else {
-                    throw new Error('Empty file');
+                    throw new Error('Nessun evento in Firebase');
                 }
             } catch (error) {
-                console.warn('⚠️ Uso eventi di esempio');
-                events = fallbackEvents;
+                console.warn('⚠️ Errore caricamento Firebase, uso dati locali:', error);
+                // Fallback: prova a caricare da file JSON locale
+                try {
+                    const response = await fetch('events.json');
+                    if (response.ok) {
+                        const data = await response.json();
+                        events = data;
+                        console.log('✅ Eventi caricati da JSON locale:', events.length);
+                    } else {
+                        throw new Error('File not found');
+                    }
+                } catch (jsonError) {
+                    console.warn('⚠️ Uso eventi di esempio');
+                    events = fallbackEvents;
+                }
                 document.getElementById('localWarning').style.display = 'block';
             }
-            
+
             filteredEvents = [...events];
             renderCalendar();
             renderEventList();
             if (map) renderMap();
+
+            // Carica anche i luoghi
+            await loadPlaces();
+        }
+
+        async function loadPlaces() {
+            try {
+                // Carica da Firebase
+                const { collection, getDocs } = window.firestoreModules;
+                const querySnapshot = await getDocs(collection(window.db, 'places'));
+                places = [];
+                querySnapshot.forEach((doc) => {
+                    places.push({ firebaseId: doc.id, ...doc.data() });
+                });
+
+                if (places.length > 0) {
+                    console.log('✅ Luoghi caricati da Firebase:', places.length);
+                }
+            } catch (error) {
+                console.warn('⚠️ Errore caricamento luoghi da Firebase:', error);
+                // Fallback: prova a caricare da file JSON locale
+                try {
+                    const response = await fetch('places.json');
+                    if (response.ok) {
+                        const data = await response.json();
+                        places = data;
+                        console.log('✅ Luoghi caricati da JSON locale:', places.length);
+                    } else {
+                        throw new Error('File not found');
+                    }
+                } catch (jsonError) {
+                    console.warn('⚠️ Nessun luogo trovato');
+                    places = [];
+                }
+            }
+
+            filteredPlaces = [...places];
+            renderPlaceList();
+            if (map) renderMap();
+        }
+
+        // Toggle visualizzazione eventi/luoghi
+        function toggleView(type) {
+            if (type === 'events') {
+                showEvents = !showEvents;
+                document.getElementById('toggleEvents').classList.toggle('active');
+                document.getElementById('eventsCard').style.display = showEvents ? 'block' : 'none';
+                document.getElementById('eventCategoryFilters').classList.toggle('show', showEvents);
+            } else {
+                showPlaces = !showPlaces;
+                document.getElementById('togglePlaces').classList.toggle('active');
+                document.getElementById('placesCard').style.display = showPlaces ? 'block' : 'none';
+                document.getElementById('placeCategoryFilters').classList.toggle('show', showPlaces);
+            }
+            renderMap();
+        }
+
+        // Funzioni filtro categorie eventi
+        function toggleEventCategory(category) {
+            const filterContainer = document.getElementById('eventCategoryFilters');
+            const allCheckbox = filterContainer.querySelector('[onclick="toggleEventCategory(\'all\')"]');
+            const categoryCheckboxes = filterContainer.querySelectorAll('.filter-checkbox:not([onclick="toggleEventCategory(\'all\')"])');
+
+            if (category === 'all') {
+                // Seleziona "Tutti" e deseleziona gli altri
+                selectedEventCategories.clear();
+                allCheckbox.classList.add('checked');
+                categoryCheckboxes.forEach(cb => cb.classList.remove('checked'));
+            } else {
+                // Toggle categoria specifica
+                allCheckbox.classList.remove('checked');
+                const checkbox = filterContainer.querySelector(`[onclick="toggleEventCategory('${category}')"]`);
+
+                if (selectedEventCategories.has(category)) {
+                    selectedEventCategories.delete(category);
+                    checkbox.classList.remove('checked');
+                } else {
+                    selectedEventCategories.add(category);
+                    checkbox.classList.add('checked');
+                }
+
+                // Se nessuna categoria selezionata, riattiva "Tutti"
+                if (selectedEventCategories.size === 0) {
+                    allCheckbox.classList.add('checked');
+                }
+            }
+
+            console.log('🔍 Categorie eventi selezionate:', Array.from(selectedEventCategories));
+            applyFilters();
+        }
+
+        // Funzioni filtro categorie luoghi
+        function togglePlaceCategory(category) {
+            const filterContainer = document.getElementById('placeCategoryFilters');
+            const allCheckbox = filterContainer.querySelector('[onclick="togglePlaceCategory(\'all\')"]');
+            const categoryCheckboxes = filterContainer.querySelectorAll('.filter-checkbox:not([onclick="togglePlaceCategory(\'all\')"])');
+
+            if (category === 'all') {
+                // Seleziona "Tutti" e deseleziona gli altri
+                selectedPlaceCategories.clear();
+                allCheckbox.classList.add('checked');
+                categoryCheckboxes.forEach(cb => cb.classList.remove('checked'));
+            } else {
+                // Toggle categoria specifica
+                allCheckbox.classList.remove('checked');
+                const checkbox = filterContainer.querySelector(`[onclick="togglePlaceCategory('${category}')"]`);
+
+                if (selectedPlaceCategories.has(category)) {
+                    selectedPlaceCategories.delete(category);
+                    checkbox.classList.remove('checked');
+                } else {
+                    selectedPlaceCategories.add(category);
+                    checkbox.classList.add('checked');
+                }
+
+                // Se nessuna categoria selezionata, riattiva "Tutti"
+                if (selectedPlaceCategories.size === 0) {
+                    allCheckbox.classList.add('checked');
+                }
+            }
+
+            applyFilters();
+        }
+
+        // Applica tutti i filtri
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+
+            console.log('📊 Totale eventi:', events.length);
+            console.log('🔍 Filtri attivi - Categorie eventi:', Array.from(selectedEventCategories));
+
+            // Filtra eventi per categoria e testo
+            filteredEvents = events.filter(event => {
+                // Filtro per testo di ricerca
+                const matchesText = !searchTerm ||
+                    event.title.toLowerCase().includes(searchTerm) ||
+                    event.date.includes(searchTerm) ||
+                    event.location.toLowerCase().includes(searchTerm) ||
+                    (event.tags && event.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+
+                // Filtro per categoria (controlla i tag degli eventi, rimuovendo il # se presente)
+                const matchesCategory = selectedEventCategories.size === 0 ||
+                    (event.tags && event.tags.some(tag => {
+                        const tagClean = tag.toLowerCase().replace('#', '');
+                        return selectedEventCategories.has(tagClean);
+                    })) ||
+                    (event.category && selectedEventCategories.has(event.category.toLowerCase()));
+
+                if (selectedEventCategories.size > 0) {
+                    console.log(`  Evento "${event.title}":`, {
+                        tags: event.tags,
+                        category: event.category,
+                        matchesCategory: matchesCategory
+                    });
+                }
+
+                return matchesText && matchesCategory;
+            });
+
+            console.log('✅ Eventi filtrati:', filteredEvents.length);
+
+            console.log('🏛️ Totale luoghi:', places.length);
+            console.log('🔍 Filtri attivi - Categorie luoghi:', Array.from(selectedPlaceCategories));
+
+            // Filtra luoghi per categoria e testo
+            filteredPlaces = places.filter(place => {
+                // Filtro per testo di ricerca
+                const matchesText = !searchTerm ||
+                    place.name.toLowerCase().includes(searchTerm) ||
+                    place.address.toLowerCase().includes(searchTerm) ||
+                    (place.category && place.category.toLowerCase().includes(searchTerm)) ||
+                    (place.description && place.description.toLowerCase().includes(searchTerm));
+
+                // Filtro per categoria
+                const matchesCategory = selectedPlaceCategories.size === 0 ||
+                    selectedPlaceCategories.has(place.category);
+
+                if (selectedPlaceCategories.size > 0) {
+                    console.log(`  Luogo "${place.name}":`, {
+                        category: place.category,
+                        matchesCategory: matchesCategory
+                    });
+                }
+
+                return matchesText && matchesCategory;
+            });
+
+            console.log('✅ Luoghi filtrati:', filteredPlaces.length);
+
+            // Applica anche il filtro "aperti ora" se attivo
+            if (openNowFilterActive) {
+                filteredPlaces = filteredPlaces.filter(place => isPlaceOpenNow(place));
+            }
+
+            renderCalendar();
+            renderEventList();
+            renderPlaceList();
+            renderMap();
+            updateResetButton();
         }
 
         function showPoster(posterUrl) {
@@ -1101,7 +1665,11 @@
         function updateResetButton() {
             const resetBtn = document.getElementById('resetBtn');
             const searchBar = document.getElementById('searchBar');
-            if (selectedDate || selectedLocation || selectedTag || todayFilterActive || searchBar.value) {
+            const hasActiveFilters = selectedDate || selectedLocation || selectedTag ||
+                todayFilterActive || openNowFilterActive || searchBar.value ||
+                selectedEventCategories.size > 0 || selectedPlaceCategories.size > 0;
+
+            if (hasActiveFilters) {
                 resetBtn.style.display = 'block';
             } else {
                 resetBtn.style.display = 'none';
@@ -1113,18 +1681,41 @@
             selectedLocation = null;
             selectedTag = null;
             todayFilterActive = false;
+            openNowFilterActive = false;
             document.getElementById('searchBar').value = '';
             document.getElementById('todayBtn').classList.remove('active');
+            const openNowBtn = document.getElementById('openNowBtn');
+            if (openNowBtn) openNowBtn.classList.remove('active');
+
+            // Reset filtri categorie
+            selectedEventCategories.clear();
+            selectedPlaceCategories.clear();
+            resetCategoryCheckboxes();
+
             filteredEvents = [...events];
+            filteredPlaces = [...places];
             renderCalendar();
             renderEventList();
+            renderPlaceList();
             renderMap();
             updateResetButton();
         }
 
+        function resetCategoryCheckboxes() {
+            // Reset eventi
+            const eventFilters = document.getElementById('eventCategoryFilters');
+            eventFilters.querySelectorAll('.filter-checkbox').forEach(cb => cb.classList.remove('checked'));
+            eventFilters.querySelector('[onclick="toggleEventCategory(\'all\')"]').classList.add('checked');
+
+            // Reset luoghi
+            const placeFilters = document.getElementById('placeCategoryFilters');
+            placeFilters.querySelectorAll('.filter-checkbox').forEach(cb => cb.classList.remove('checked'));
+            placeFilters.querySelector('[onclick="togglePlaceCategory(\'all\')"]').classList.add('checked');
+        }
+
         // Geolocation function
         function locateUser() {
-            const locateBtn = document.getElementById('locateBtn');
+            const locateBtn = document.getElementById('locateBtnNew') || document.getElementById('locateBtn');
             
             if (!navigator.geolocation) {
                 alert('La geolocalizzazione non è supportata dal tuo browser');
@@ -1418,6 +2009,182 @@
             }
         }
 
+        function renderPlaceList() {
+            const placeList = document.getElementById('placeList');
+            if (!placeList) return;
+
+            placeList.innerHTML = '';
+
+            if (filteredPlaces.length === 0) {
+                placeList.innerHTML = '<p style="text-align: center; color: #666;">Nessun luogo trovato.</p>';
+                return;
+            }
+
+            const categoryIcons = {
+                'museo': '🏛️',
+                'galleria': '🖼️',
+                'monumento': '🏰',
+                'parco': '🌳',
+                'biblioteca': '📚',
+                'teatro': '🎭',
+                'altro': '📍'
+            };
+
+            const categoryNames = {
+                'museo': 'Museo',
+                'galleria': 'Galleria d\'Arte',
+                'monumento': 'Monumento',
+                'parco': 'Parco',
+                'biblioteca': 'Biblioteca',
+                'teatro': 'Teatro',
+                'altro': 'Altro'
+            };
+
+            filteredPlaces.forEach(place => {
+                const placeItem = document.createElement('div');
+                placeItem.className = 'event-item place-item';
+                placeItem.id = `place-${place.id}`;
+
+                const icon = categoryIcons[place.category] || '📍';
+                const catName = categoryNames[place.category] || 'Altro';
+
+                const descriptionHtml = place.description ?
+                    `<span class="poster-btn" onclick="togglePlaceDescription(${place.id})">📄 Dettagli</span>
+                     <div id="place-desc-${place.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${place.description}</div>` : '';
+
+                const openingHoursHtml = place.openingHours ?
+                    `<span class="poster-btn" onclick="togglePlaceHours(${place.id})">🕐 Orari</span>
+                     <div id="place-hours-${place.id}" style="display: none;" class="opening-hours">
+                        <div class="opening-hours-title">Orari di apertura</div>
+                        <div class="hours-grid">
+                            ${formatOpeningHours(place.openingHours)}
+                        </div>
+                     </div>` : '';
+
+                const imageHtml = place.image ?
+                    `<span class="poster-btn" onclick="showPoster('${place.image}')">🖼️ Immagine</span>` : '';
+
+                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+
+                placeItem.innerHTML = `
+                    <div class="event-info">
+                        <div class="event-title">${icon} ${place.name}</div>
+                        <div class="event-detail"><span class="place-category">${catName}</span></div>
+                        <div class="event-detail">📍 ${place.address}</div>
+                        <div style="margin-top: 8px;">
+                            ${descriptionHtml}
+                            ${openingHoursHtml}
+                            ${imageHtml}
+                            ${directionsHtml}
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${place.coordinates.lat}, ${place.coordinates.lng})">🗺️ Mostra su mappa</button>
+                    </div>
+                `;
+
+                placeList.appendChild(placeItem);
+            });
+        }
+
+        function formatOpeningHours(hours) {
+            const dayNames = {
+                'lunedi': 'Lunedì',
+                'martedi': 'Martedì',
+                'mercoledi': 'Mercoledì',
+                'giovedi': 'Giovedì',
+                'venerdi': 'Venerdì',
+                'sabato': 'Sabato',
+                'domenica': 'Domenica'
+            };
+
+            let html = '';
+            for (const [day, time] of Object.entries(hours)) {
+                const dayName = dayNames[day] || day;
+                const isClosed = time.toLowerCase() === 'chiuso';
+                html += `<span class="hours-day">${dayName}</span>`;
+                html += `<span class="${isClosed ? 'hours-closed' : 'hours-time'}">${time}</span>`;
+            }
+            return html;
+        }
+
+        function togglePlaceDescription(placeId) {
+            const descElement = document.getElementById(`place-desc-${placeId}`);
+            if (descElement.style.display === 'none') {
+                descElement.style.display = 'block';
+            } else {
+                descElement.style.display = 'none';
+            }
+        }
+
+        function togglePlaceHours(placeId) {
+            const hoursElement = document.getElementById(`place-hours-${placeId}`);
+            if (hoursElement.style.display === 'none') {
+                hoursElement.style.display = 'block';
+            } else {
+                hoursElement.style.display = 'none';
+            }
+        }
+
+        function centerMapOnPlace(lat, lng) {
+            if (map) {
+                map.setView([lat, lng], 16);
+                document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function filterOpenNow() {
+            const openNowBtn = document.getElementById('openNowBtn');
+
+            if (openNowFilterActive) {
+                // Disattiva filtro
+                openNowFilterActive = false;
+                openNowBtn.classList.remove('active');
+                filteredPlaces = [...places];
+            } else {
+                // Attiva filtro
+                openNowFilterActive = true;
+                openNowBtn.classList.add('active');
+
+                filteredPlaces = places.filter(place => isPlaceOpenNow(place));
+
+                if (filteredPlaces.length === 0) {
+                    alert('Nessun luogo aperto in questo momento.');
+                    openNowFilterActive = false;
+                    openNowBtn.classList.remove('active');
+                    filteredPlaces = [...places];
+                }
+            }
+
+            renderPlaceList();
+            renderMap();
+            updateResetButton();
+        }
+
+        function isPlaceOpenNow(place) {
+            if (!place.openingHours) return false;
+
+            const now = new Date();
+            const dayNames = ['domenica', 'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato'];
+            const currentDay = dayNames[now.getDay()];
+            const currentTime = now.getHours() * 60 + now.getMinutes(); // Minuti dalla mezzanotte
+
+            const todayHours = place.openingHours[currentDay];
+            if (!todayHours) return false;
+
+            // Controlla se è "chiuso"
+            if (todayHours.toLowerCase() === 'chiuso') return false;
+
+            // Prova a parsare l'orario (formato: "09:00-19:30" o "9:00-19:30")
+            const timeMatch = todayHours.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+            if (!timeMatch) return false;
+
+            const openTime = parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
+            const closeTime = parseInt(timeMatch[3]) * 60 + parseInt(timeMatch[4]);
+
+            return currentTime >= openTime && currentTime <= closeTime;
+        }
+
         function filterByTag(tag) {
             if (selectedTag === tag) {
                 selectedTag = null;
@@ -1462,27 +2229,10 @@
         }
 
         function filterEvents() {
-            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
             selectedDate = null;
             selectedLocation = null;
             selectedTag = null;
-            
-            filteredEvents = events.filter(event => {
-                const matchesText = event.title.toLowerCase().includes(searchTerm) ||
-                    event.date.includes(searchTerm) ||
-                    event.location.toLowerCase().includes(searchTerm);
-                
-                const matchesTag = event.tags.some(tag => 
-                    tag.toLowerCase().includes(searchTerm)
-                );
-                
-                return matchesText || matchesTag;
-            });
-            
-            renderCalendar();
-            renderEventList();
-            renderMap();
-            updateResetButton();
+            applyFilters();
         }
 
         function renderMap() {
@@ -1493,83 +2243,153 @@
                     maxZoom: 19
                 }).addTo(map);
             }
-            
+
+            // Rimuovi marker eventi
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
-            
-            if (filteredEvents.length === 0) return;
-            
+
+            // Rimuovi marker luoghi
+            placeMarkers.forEach(marker => map.removeLayer(marker));
+            placeMarkers = [];
+
+            // Icone per gli eventi
             const defaultIcon = L.divIcon({
                 className: 'custom-marker',
                 html: '<div style="background: #667eea; width: 25px; height: 25px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><div style="position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 6.5px; left: 6.5px;"></div></div>',
                 iconSize: [25, 25],
                 iconAnchor: [12, 25]
             });
-            
+
             const selectedIcon = L.divIcon({
                 className: 'custom-marker',
                 html: '<div style="background: #ff4444; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 4px 16px rgba(255,68,68,0.5);"><div style="position: absolute; width: 15px; height: 15px; background: white; border-radius: 50%; top: 7.5px; left: 7.5px;"></div></div>',
                 iconSize: [30, 30],
                 iconAnchor: [15, 30]
             });
-            
-            filteredEvents.forEach(event => {
-                const isSelected = selectedLocation === event.location;
-                const marker = L.marker(
-                    [event.coordinates.lat, event.coordinates.lng],
-                    { icon: isSelected ? selectedIcon : defaultIcon }
-                ).addTo(map);
-                
-                const categoryInfo = getCategoryInfo(event.category);
-                const tagsHtml = event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
-                
-                const posterBtn = event.poster ? 
-                    `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
-                
-                const popupContent = `
-                    <div style="min-width: 200px;">
-                        <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
-                        <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${formatEventDate(event)}</p>
-                        <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
-                        <div style="margin-bottom: 8px;">${tagsHtml}</div>
-                        ${posterBtn}
-                        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
-                        <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
-                        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
-                    </div>
-                `;
-                
-                marker.bindPopup(popupContent);
-                
-                marker.on('click', () => {
-                    if (selectedLocation === event.location) {
-                        selectedLocation = null;
-                        selectedDate = null;
-                        selectedTag = null;
-                        filteredEvents = [...events];
-                    } else {
-                        selectedLocation = event.location;
-                        selectedDate = null;
-                        selectedTag = null;
-                        filteredEvents = events.filter(ev => ev.location === event.location);
-                    }
-                    
-                    renderCalendar();
-                    renderEventList();
-                    renderMap();
-                    updateResetButton();
-                    
-                    const eventElement = document.getElementById(`event-${event.id}`);
-                    if (eventElement) {
-                        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                });
-                
-                markers.push(marker);
+
+            // Icona per i luoghi
+            const placeIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background: #8B4513; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏛️</div>',
+                iconSize: [28, 28],
+                iconAnchor: [14, 28]
             });
-            
-            if (filteredEvents.length > 0) {
-                const group = L.featureGroup(markers);
+
+            // Aggiungi marker eventi (se attivi)
+            if (showEvents && filteredEvents.length > 0) {
+                filteredEvents.forEach(event => {
+                    const isSelected = selectedLocation === event.location;
+                    const marker = L.marker(
+                        [event.coordinates.lat, event.coordinates.lng],
+                        { icon: isSelected ? selectedIcon : defaultIcon }
+                    ).addTo(map);
+
+                    const categoryInfo = getCategoryInfo(event.category);
+                    const tagsHtml = event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
+
+                    const posterBtn = event.poster ?
+                        `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
+
+                    const popupContent = `
+                        <div style="min-width: 200px;">
+                            <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
+                            <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${formatEventDate(event)}</p>
+                            <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
+                            <div style="margin-bottom: 8px;">${tagsHtml}</div>
+                            ${posterBtn}
+                            <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+                            <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
+                            <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+
+                    marker.on('click', () => {
+                        if (selectedLocation === event.location) {
+                            selectedLocation = null;
+                            selectedDate = null;
+                            selectedTag = null;
+                            filteredEvents = [...events];
+                        } else {
+                            selectedLocation = event.location;
+                            selectedDate = null;
+                            selectedTag = null;
+                            filteredEvents = events.filter(ev => ev.location === event.location);
+                        }
+
+                        renderCalendar();
+                        renderEventList();
+                        renderMap();
+                        updateResetButton();
+
+                        const eventElement = document.getElementById(`event-${event.id}`);
+                        if (eventElement) {
+                            eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+
+                    markers.push(marker);
+                });
+            }
+
+            // Aggiungi marker luoghi (se attivi)
+            if (showPlaces && filteredPlaces.length > 0) {
+                const categoryIcons = {
+                    'museo': '🏛️',
+                    'galleria': '🖼️',
+                    'monumento': '🏰',
+                    'parco': '🌳',
+                    'biblioteca': '📚',
+                    'teatro': '🎭',
+                    'altro': '📍'
+                };
+
+                filteredPlaces.forEach(place => {
+                    const icon = categoryIcons[place.category] || '🏛️';
+
+                    const placeMarkerIcon = L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="background: #8B4513; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">${icon}</div>`,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 28]
+                    });
+
+                    const marker = L.marker(
+                        [place.coordinates.lat, place.coordinates.lng],
+                        { icon: placeMarkerIcon }
+                    ).addTo(map);
+
+                    const imageBtn = place.image ?
+                        `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #8B4513; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>` : '';
+
+                    const popupContent = `
+                        <div style="min-width: 200px;">
+                            <h4 style="margin-bottom: 8px; color: #8B4513;">${icon} ${place.name}</h4>
+                            <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
+                            ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
+                            ${imageBtn}
+                            <button onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+
+                    marker.on('click', () => {
+                        const placeElement = document.getElementById(`place-${place.id}`);
+                        if (placeElement) {
+                            placeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+
+                    placeMarkers.push(marker);
+                });
+            }
+
+            // Fit bounds includendo sia eventi che luoghi
+            const allMarkers = [...markers, ...placeMarkers];
+            if (allMarkers.length > 0) {
+                const group = L.featureGroup(allMarkers);
                 map.fitBounds(group.getBounds().pad(0.1));
             }
         }
@@ -1611,12 +2431,58 @@
 
         document.getElementById('searchBar').addEventListener('input', filterEvents);
         
-        window.addEventListener('load', function() {
-            loadEvents();
-            setTimeout(() => {
-                renderMap();
-            }, 200);
-        });
+        // Listener real-time per Firebase
+        function setupRealtimeListeners() {
+            try {
+                const { collection, onSnapshot } = window.firestoreModules;
+
+                // Listener per eventi
+                onSnapshot(collection(window.db, 'events'), (snapshot) => {
+                    const changes = snapshot.docChanges();
+                    if (changes.length > 0) {
+                        console.log('🔄 Aggiornamento eventi in tempo reale');
+                        events = [];
+                        snapshot.forEach((doc) => {
+                            events.push({ firebaseId: doc.id, ...doc.data() });
+                        });
+                        filteredEvents = [...events];
+                        applyFilters();
+                    }
+                });
+
+                // Listener per luoghi
+                onSnapshot(collection(window.db, 'places'), (snapshot) => {
+                    const changes = snapshot.docChanges();
+                    if (changes.length > 0) {
+                        console.log('🔄 Aggiornamento luoghi in tempo reale');
+                        places = [];
+                        snapshot.forEach((doc) => {
+                            places.push({ firebaseId: doc.id, ...doc.data() });
+                        });
+                        filteredPlaces = [...places];
+                        applyFilters();
+                    }
+                });
+            } catch (error) {
+                console.warn('⚠️ Listener real-time non disponibili:', error);
+            }
+        }
+
+        function initializeIndexApp() {
+            if (window.firebaseReady && window.firestoreModules) {
+                loadEvents();
+                setTimeout(() => {
+                    renderMap();
+                    // Attiva listener real-time dopo il caricamento iniziale
+                    setupRealtimeListeners();
+                }, 1000);
+            } else {
+                // Riprova dopo 100ms
+                setTimeout(initializeIndexApp, 100);
+            }
+        }
+
+        window.addEventListener('load', initializeIndexApp);
     </script>
 </body>
 </html>
