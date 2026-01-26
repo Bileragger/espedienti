@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espedienti per incontrarsi - Scopri eventi e incontra persone nuove</title>
+    <title>Espedienti a Napoli - Scopri eventi e incontra persone nuove</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -37,25 +37,44 @@
     </script>
 
     <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #252b3b;
+            --text-primary: #e4e6eb;
+            --text-secondary: #a8adb7;
+            --text-tertiary: #6b7280;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #7c3aed;
+            --accent-places: #d97706;
+            --border-subtle: rgba(139, 92, 246, 0.2);
+            --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f5f5f5;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1f2e 0%, #2d1b4e 100%);
             color: white;
             padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             position: sticky;
             top: 0;
             z-index: 1000;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .header-content {
@@ -85,36 +104,59 @@
             color: white;
             text-decoration: none;
             padding: 8px 16px;
-            border-radius: 6px;
-            transition: background 0.3s;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
         }
 
         .nav-links a:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--border-subtle);
+            box-shadow: var(--shadow-glow);
         }
 
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1f2e 0%, #2d1b4e 50%, #1a1f2e 100%);
             color: white;
-            padding: 60px 20px;
+            padding: 80px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .hero-content {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         .hero h1 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             margin-bottom: 20px;
             line-height: 1.2;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
         }
 
         .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 30px;
-            opacity: 0.95;
+            font-size: 1.35rem;
+            margin-bottom: 35px;
+            color: var(--text-secondary);
         }
 
         .hero-buttons {
@@ -122,122 +164,6 @@
             gap: 15px;
             justify-content: center;
             flex-wrap: wrap;
-        }
-
-        .features {
-            padding: 60px 20px;
-            background: white;
-        }
-
-        .features-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .features h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 50px;
-            color: #333;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-        }
-
-        .feature-card {
-            background: #f9f9f9;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #667eea;
-        }
-
-        .feature-card p {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .newsletter {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-        }
-
-        .newsletter-content {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .newsletter h2 {
-            font-size: 2rem;
-            margin-bottom: 15px;
-        }
-
-        .newsletter p {
-            font-size: 1.1rem;
-            margin-bottom: 30px;
-            opacity: 0.95;
-        }
-
-        .newsletter-form {
-            display: flex;
-            gap: 10px;
-            max-width: 500px;
-            margin: 0 auto;
-            flex-wrap: wrap;
-        }
-
-        .newsletter-form input {
-            flex: 1;
-            min-width: 250px;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .newsletter-form button {
-            padding: 15px 30px;
-            background: white;
-            color: #667eea;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .newsletter-form button:hover {
-            transform: scale(1.05);
-        }
-
-        .newsletter-success {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 8px;
         }
 
         .container {
@@ -249,23 +175,31 @@
         .section-title {
             font-size: 2rem;
             margin-bottom: 30px;
-            color: #333;
+            color: var(--text-primary);
             text-align: center;
         }
 
         .search-bar {
             width: 100%;
-            padding: 15px;
+            padding: 15px 20px;
             font-size: 1rem;
-            border: 2px solid #667eea;
-            border-radius: 8px;
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
             margin-bottom: 15px;
-            transition: box-shadow 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .search-bar:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), var(--shadow-glow);
+            background: var(--bg-tertiary);
+        }
+
+        .search-bar::placeholder {
+            color: var(--text-tertiary);
         }
 
         .search-info {
@@ -273,13 +207,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-            padding: 12px;
-            background: #e0e7ff;
-            border-radius: 8px;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
             font-size: 0.9rem;
-            color: #4c1d95;
+            color: var(--text-secondary);
             flex-wrap: wrap;
             gap: 10px;
+            border: 1px solid var(--border-subtle);
         }
 
         .search-info-text {
@@ -294,70 +229,79 @@
         }
 
         .quick-filter-btn {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            padding: 6px 12px;
-            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+            border: 2px solid var(--border-subtle);
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.2s;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
         .quick-filter-btn:hover {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-primary);
         }
 
         .quick-filter-btn.active {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-primary);
         }
 
         .reset-filters {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+            border: 2px solid var(--border-subtle);
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .reset-filters:hover {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-primary);
         }
 
         .tag {
             display: inline-block;
-            background: #e0e7ff;
-            color: #4c1d95;
-            padding: 4px 10px;
-            border-radius: 12px;
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-primary);
+            padding: 6px 12px;
+            border-radius: 16px;
             font-size: 0.8rem;
             margin-right: 5px;
             margin-top: 5px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-subtle);
         }
 
         .tag:hover {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
-            transform: scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
         }
 
         .tag.selected {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
             font-weight: 600;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
         }
 
         .event-tags {
@@ -381,24 +325,27 @@
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            transition: box-shadow 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-subtle);
         }
 
         .card:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3);
+            transform: translateY(-4px);
+            border-color: rgba(139, 92, 246, 0.4);
         }
 
         .card-header {
             padding: 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
             color: white;
         }
 
@@ -408,6 +355,7 @@
 
         .card-content {
             padding: 20px;
+            background: var(--bg-secondary);
         }
 
         .calendar-nav {
@@ -417,18 +365,20 @@
         }
 
         .calendar-nav button {
-            background: rgba(255,255,255,0.2);
+            background: rgba(139, 92, 246, 0.2);
             color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 6px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
-            transition: background 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
         }
 
         .calendar-nav button:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
         }
 
         .calendar-nav span {
@@ -448,57 +398,63 @@
             text-align: center;
             font-weight: 600;
             font-size: 0.9rem;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         .calendar-day {
             min-height: 80px;
             padding: 8px;
-            border: 1px solid #e0e0e0;
-            background: white;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .calendar-day:hover {
-            background: #f0f4ff;
-            border-color: #667eea;
+            background: var(--bg-tertiary);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
 
         .calendar-day.selected {
-            background: #e0e7ff;
-            border-color: #667eea;
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-primary);
             border-width: 2px;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
         }
 
         .calendar-day.empty {
-            background: #f9f9f9;
+            background: var(--bg-primary);
             cursor: default;
+            opacity: 0.5;
         }
 
         .calendar-day.empty:hover {
-            background: #f9f9f9;
-            border-color: #e0e0e0;
+            background: var(--bg-primary);
+            border-color: var(--border-subtle);
+            box-shadow: none;
         }
 
         .calendar-day-number {
             font-size: 0.875rem;
             margin-bottom: 4px;
-            color: #333;
+            color: var(--text-primary);
         }
 
         .calendar-event {
             font-size: 0.75rem;
-            padding: 4px;
+            padding: 4px 6px;
             margin-bottom: 2px;
-            background: #e3f2fd;
-            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            border: 1px solid rgba(139, 92, 246, 0.4);
         }
 
         .calendar-event:hover {
-            background: #bbdefb;
+            background: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
         }
 
         .event-list {
@@ -508,25 +464,29 @@
         }
 
         .event-item {
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-subtle);
             padding: 20px;
-            border-radius: 8px;
-            transition: all 0.3s;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: grid;
             grid-template-columns: 1fr auto;
             gap: 20px;
             align-items: center;
+            background: var(--bg-secondary);
         }
 
         .event-item:hover {
-            background: #f9f9f9;
-            border-color: #667eea;
+            background: var(--bg-tertiary);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
         }
 
         .event-item.highlighted {
-            background: #e0e7ff;
-            border-color: #667eea;
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--accent-primary);
             border-width: 2px;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
         }
 
         .event-info {
@@ -544,7 +504,7 @@
             font-weight: 600;
             font-size: 1.2rem;
             margin-bottom: 8px;
-            color: #333;
+            color: var(--text-primary);
         }
 
         .event-detail {
@@ -552,25 +512,25 @@
             align-items: center;
             gap: 8px;
             font-size: 0.875rem;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 4px;
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
         }
 
         .btn-small {
@@ -580,22 +540,28 @@
         }
 
         .btn-outline {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            background: transparent;
+            color: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
         }
 
         .btn-outline:hover {
-            background: #f0f4ff;
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
         }
 
         .btn-white {
-            background: white;
-            color: #667eea;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
 
         .btn-white:hover {
-            background: #f0f4ff;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
         }
 
         .chat-section {
@@ -604,17 +570,18 @@
 
         .chat-description {
             margin-bottom: 15px;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
 
         #map {
             width: 100%;
             height: 500px;
-            border-radius: 8px;
-            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            border: 2px solid var(--border-subtle);
             z-index: 1;
             position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .leaflet-container {
@@ -636,22 +603,27 @@
         }
 
         .map-control-btn {
-            background: white;
-            border: 2px solid rgba(0,0,0,0.2);
-            border-radius: 4px;
-            width: 34px;
-            height: 34px;
+            background: rgba(26, 31, 46, 0.8);
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-            font-size: 1rem;
-            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
         }
 
         .map-control-btn:hover {
-            background: #f4f4f4;
+            background: rgba(139, 92, 246, 0.3);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
         }
 
         .map-control-btn.loading {
@@ -659,15 +631,16 @@
         }
 
         .map-control-btn.active {
-            background: #8B4513;
+            background: var(--accent-places);
             color: white;
-            border-color: #8B4513;
+            border-color: var(--accent-places);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.5);
         }
 
         .map-control-btn.wide {
             width: auto;
-            padding: 0 10px;
-            font-size: 0.75rem;
+            padding: 0 14px;
+            font-size: 0.8rem;
             font-weight: 600;
         }
 
@@ -733,9 +706,11 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.9);
             align-items: center;
             justify-content: center;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
 
         .modal.show {
@@ -743,12 +718,14 @@
         }
 
         .modal-content {
-            background: white;
+            background: var(--bg-secondary);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 16px;
             max-width: 90%;
             max-height: 90%;
             position: relative;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .modal-content img {
@@ -762,20 +739,24 @@
             top: 10px;
             right: 15px;
             font-size: 2rem;
-            color: #666;
+            color: var(--text-secondary);
             cursor: pointer;
-            background: white;
+            background: var(--bg-tertiary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.3s;
         }
 
         .modal-close:hover {
-            color: #333;
+            color: var(--text-primary);
+            background: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
         }
 
         .poster-btn {
@@ -795,10 +776,11 @@
         }
 
         footer {
-            background: #2d3748;
-            color: white;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
             padding: 40px 20px;
             margin-top: 60px;
+            border-top: 1px solid var(--border-subtle);
         }
 
         .footer-content {
@@ -809,6 +791,16 @@
 
         .footer-content p {
             margin-bottom: 10px;
+        }
+
+        .footer-content a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-content a:hover {
+            color: var(--accent-secondary);
         }
 
         @media (max-width: 768px) {
@@ -851,78 +843,86 @@
         }
 
         .toggle-btn {
-            padding: 10px 20px;
-            border: 2px solid #667eea;
+            padding: 12px 24px;
+            border: 2px solid var(--border-subtle);
             border-radius: 25px;
-            background: white;
-            color: #667eea;
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
             cursor: pointer;
             font-size: 0.9rem;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .toggle-btn:hover {
-            background: #f0f4ff;
+            background: var(--bg-tertiary);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
         }
 
         .toggle-btn.active {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
         }
 
         .toggle-btn.places-toggle {
-            border-color: #8B4513;
-            color: #8B4513;
+            border-color: rgba(217, 119, 6, 0.3);
+            color: var(--accent-places);
         }
 
         .toggle-btn.places-toggle:hover {
-            background: #fdf6f0;
+            background: var(--bg-tertiary);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
         }
 
         .toggle-btn.places-toggle.active {
-            background: #8B4513;
+            background: var(--accent-places);
             color: white;
+            border-color: var(--accent-places);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.4);
         }
 
         /* Stili luoghi */
         .place-item {
-            border-left: 4px solid #8B4513;
+            border-left: 4px solid var(--accent-places);
         }
 
         .place-item:hover {
-            border-color: #A0522D;
+            border-left-color: #f59e0b;
         }
 
         .place-item .event-title {
-            color: #8B4513;
+            color: var(--accent-places);
         }
 
         .place-category {
             display: inline-block;
-            background: #fdf6f0;
-            color: #8B4513;
-            padding: 4px 10px;
-            border-radius: 12px;
+            background: rgba(217, 119, 6, 0.2);
+            color: var(--accent-places);
+            padding: 6px 12px;
+            border-radius: 16px;
             font-size: 0.8rem;
             margin-right: 5px;
+            border: 1px solid rgba(217, 119, 6, 0.3);
         }
 
         .opening-hours {
             margin-top: 10px;
             padding: 12px;
-            background: #f9f9f9;
+            background: var(--bg-tertiary);
             border-radius: 8px;
             font-size: 0.875rem;
+            border: 1px solid var(--border-subtle);
         }
 
         .opening-hours-title {
             font-weight: 600;
             margin-bottom: 8px;
-            color: #333;
+            color: var(--text-primary);
         }
 
         .hours-grid {
@@ -949,10 +949,10 @@
             flex-wrap: wrap;
             gap: 8px;
             padding: 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
             margin-bottom: 15px;
-            border: 1px solid #e0e7ff;
+            border: 1px solid var(--border-subtle);
             align-items: center;
         }
 
@@ -961,59 +961,63 @@
         }
 
         .category-filters.places-filters {
-            border-color: #d4a574;
-            background: #fdf6f0;
+            border-color: rgba(217, 119, 6, 0.3);
+            background: rgba(217, 119, 6, 0.05);
         }
 
         .filter-checkbox {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            background: white;
-            border: 2px solid #e0e7ff;
+            padding: 8px 14px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-subtle);
             border-radius: 20px;
             cursor: pointer;
             font-size: 0.85rem;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-user-select: none;
             user-select: none;
         }
 
         .filter-checkbox:hover {
-            border-color: #667eea;
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
 
         .filter-checkbox.checked {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
-            border-color: #667eea;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         }
 
         .filter-checkbox.places-filter {
-            border-color: #d4a574;
+            border-color: rgba(217, 119, 6, 0.3);
         }
 
         .filter-checkbox.places-filter:hover {
-            border-color: #8B4513;
+            border-color: rgba(217, 119, 6, 0.6);
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
         }
 
         .filter-checkbox.places-filter.checked {
-            background: #8B4513;
+            background: var(--accent-places);
             color: white;
-            border-color: #8B4513;
+            border-color: var(--accent-places);
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.4);
         }
 
         .filters-label {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #666;
+            color: var(--text-secondary);
             margin-right: 10px;
             white-space: nowrap;
         }
 
         .filters-label.places-label {
-            color: #8B4513;
+            color: var(--accent-places);
         }
     </style>
 </head>
@@ -1021,92 +1025,35 @@
     <header>
         <div class="header-content">
             <div class="logo">
-                <span>🎭</span>
-                <span>Espedienti per incontrarsi</span>
+                <span>Espedienti a Napoli</span>
             </div>
             <nav class="nav-links">
-                <a href="#events">Eventi</a>
-                <a href="#features">Funzionalità</a>
-                <a href="#newsletter">Newsletter</a>
+                <a href="about.html">Il Progetto</a>
+                <a href="about.html#contatti">Contatti</a>
             </nav>
         </div>
     </header>
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Scopri eventi e incontra persone nuove</h1>
-            <p>La piattaforma che abbatte le barriere culturali e tecnologiche, rendendo semplice scoprire cosa succede nella tua città e trovare compagni di avventure</p>
+            <h1>Cosa facciamo oggi a Napoli?</h1>
+            <p>Eventi, luoghi e persone</p>
             <div class="hero-buttons">
-                <button class="btn btn-white" onclick="document.getElementById('searchBar').focus()">
-                    🔍 Esplora gli eventi
+                <button class="btn btn-white" onclick="document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    🗺️ Esplora la mappa
                 </button>
-                <button class="btn" id="heroGeneralChatBtn">
-                    💬 Unisciti alla community
+                <button class="btn btn-white" onclick="document.getElementById('calendar').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    📅 Vedi calendario
                 </button>
-            </div>
-        </div>
-    </section>
-
-    <section class="features" id="features">
-        <div class="features-container">
-            <h2>Come funziona</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Calendario Condiviso</h3>
-                    <p>Visualizza tutti gli eventi della tua città in un unico calendario. Mai più occasioni perse!</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🗺️</div>
-                    <h3>Mappa Interattiva</h3>
-                    <p>Scopri eventi vicino a te con la nostra mappa. Clicca sui marker per vedere i dettagli.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Trova Compagni</h3>
-                    <p>Usa le chat per organizzarti con altre persone e partecipare insieme agli eventi.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔔</div>
-                    <h3>Aggiungi al Tuo Calendario</h3>
-                    <p>Con un click aggiungi gli eventi che ti interessano al tuo Google Calendar personale.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3>Chat per Interessi</h3>
-                    <p>Community organizzate per tema: musica, teatro, mostre e altro ancora.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">✨</div>
-                    <h3>Sempre Aggiornato</h3>
-                    <p>Iscriviti alla newsletter per ricevere aggiornamenti su nuovi eventi e funzionalità.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="newsletter" id="newsletter">
-        <div class="newsletter-content">
-            <h2>📬 Resta aggiornato</h2>
-            <p>Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
-            <form class="newsletter-form" id="newsletterForm" action="https://formspree.io/f/TUO_FORM_ID" method="POST">
-                <input 
-                    type="email"
-                    name="email"
-                    placeholder="Il tuo indirizzo email" 
-                    required
-                    id="emailInput"
-                >
-                <button type="submit">Iscriviti</button>
-            </form>
-            <div class="newsletter-success" id="newsletterSuccess">
-                ✅ Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
+                <button class="btn btn-outline" onclick="document.getElementById('community').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    💬 Community
+                </button>
             </div>
         </div>
     </section>
 
     <div class="container" id="events">
-        <h2 class="section-title">🎉 Eventi in Programma</h2>
+        <h2 class="section-title">Esplora gli eventi ed i luoghi di Napoli</h2>
         
         <div id="localWarning" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ffeaa7;">
             <strong>⚠️ Modalità Locale Rilevata</strong>
@@ -1123,27 +1070,13 @@
             placeholder="🔍 Cerca per titolo, data (YYYY-MM-DD), luogo o #tag"
         >
 
-        <div class="search-info" id="searchInfo">
-            <div class="search-info-text">
-                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
-            </div>
-            <div class="quick-filters">
-                <button class="quick-filter-btn" onclick="filterToday()" id="todayBtn">
-                    📅 Eventi di oggi
-                </button>
-                <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
-                    🔄 Reset filtri
-                </button>
-            </div>
-        </div>
-
         <!-- Toggle visualizzazione eventi/luoghi -->
         <div class="view-toggle">
             <button class="toggle-btn active" id="toggleEvents" onclick="toggleView('events')">
                 🎭 Eventi
             </button>
             <button class="toggle-btn places-toggle active" id="togglePlaces" onclick="toggleView('places')">
-                🏛️ Luoghi di interesse
+                🏛️ Luoghi
             </button>
         </div>
 
@@ -1185,9 +1118,6 @@
             <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('galleria')">
                 🖼️ Gallerie
             </div>
-            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('monumento')">
-                🏰 Monumenti
-            </div>
             <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('parco')">
                 🌳 Parchi
             </div>
@@ -1196,6 +1126,18 @@
             </div>
             <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('teatro')">
                 🎭 Teatri
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('coworking')">
+                💼 Coworking
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('ristorante')">
+                🍽️ Ristoranti
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('centro-sociale')">
+                🤝 Centri Sociali
+            </div>
+            <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('fondazione')">
+                🏢 Fondazioni
             </div>
             <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('altro')">
                 📍 Altro
@@ -1237,6 +1179,20 @@
             </div>
         </div>
 
+        <div class="search-info" id="searchInfo">
+            <div class="search-info-text">
+                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
+            </div>
+            <div class="quick-filters">
+                <button class="quick-filter-btn" onclick="filterToday()" id="todayBtn">
+                    📅 Eventi di oggi
+                </button>
+                <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
+                    🔄 Reset filtri
+                </button>
+            </div>
+        </div>
+
         <div class="card" id="eventsCard">
             <div class="card-header">
                 <h2>📋 Lista Eventi</h2>
@@ -1249,14 +1205,14 @@
         <!-- Sezione Luoghi di Interesse -->
         <div class="card" id="placesCard">
             <div class="card-header" style="background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);">
-                <h2>🏛️ Luoghi di Interesse</h2>
+                <h2>🏛️ Lista Luoghi</h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="placeList"></div>
             </div>
         </div>
 
-        <div class="card chat-section">
+        <div class="card chat-section" id="community">
             <div class="card-header">
                 <h2>💬 Community per Interessi</h2>
             </div>
@@ -1286,7 +1242,7 @@
 
     <footer>
         <div class="footer-content">
-            <p><strong>Espedienti per incontrarsi</strong></p>
+            <p><strong>Espedienti a Napoli</strong></p>
             <p>Una piattaforma per scoprire eventi e conoscere persone nuove</p>
             <p style="margin-top: 20px; opacity: 0.7;">© 2024 - Fatto con ❤️ per la community</p>
         </div>
@@ -1820,25 +1776,28 @@
         }
 
         // Open directions in external map app
-        function openDirections(lat, lng, locationName) {
+        function openDirections(lat, lng, locationName, fullAddress = null) {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            const destination = `${lat},${lng}`;
-            
+
+            // Use full address if provided, otherwise use coordinates
+            const destination = fullAddress && fullAddress.trim() !== ''
+                ? encodeURIComponent(fullAddress)
+                : `${lat},${lng}`;
+
             if (isIOS) {
                 // Try Apple Maps first on iOS
                 const appleMapsUrl = `maps://maps.apple.com/?daddr=${destination}&q=${encodeURIComponent(locationName)}`;
                 window.location.href = appleMapsUrl;
-                
+
                 // Fallback to Google Maps if Apple Maps is not available
                 setTimeout(() => {
-                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&destination_place_id=${encodeURIComponent(locationName)}`;
+                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
                     window.open(googleMapsUrl, '_blank');
                 }, 500);
             } else {
                 // Use Google Maps for Android and Desktop
-                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&destination_place_id=${encodeURIComponent(locationName)}`;
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
                 window.open(googleMapsUrl, '_blank');
             }
         }
@@ -1900,23 +1859,19 @@
                 dayNumber.textContent = i;
                 dayElement.appendChild(dayNumber);
                 
-                const dayEvents = events.filter(event => {
+                const dayEvents = filteredEvents.filter(event => {
                     if (event.dateEnd) {
                         return dateStr >= event.date && dateStr <= event.dateEnd;
                     }
                     return event.date === dateStr;
                 });
-                
-                dayEvents.forEach(event => {
+
+                if (dayEvents.length > 0) {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'calendar-event';
-                    eventElement.textContent = event.title;
-                    eventElement.onclick = (e) => {
-                        e.stopPropagation();
-                        addToCalendar(event);
-                    };
+                    eventElement.textContent = `${dayEvents.length} event${dayEvents.length === 1 ? 'o' : 'i'}`;
                     dayElement.appendChild(eventElement);
-                });
+                }
                 
                 dayElement.onclick = () => {
                     if (selectedDate === dateStr) {
@@ -1976,7 +1931,7 @@
                     `<span class="poster-btn" onclick="toggleDescription(${event.id})">📄 Maggiori dettagli</span>
                      <div id="desc-${event.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${event.description}</div>` : '';
                 
-                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
                 
                 eventItem.innerHTML = `
                     <div class="event-info">
@@ -2023,20 +1978,26 @@
             const categoryIcons = {
                 'museo': '🏛️',
                 'galleria': '🖼️',
-                'monumento': '🏰',
                 'parco': '🌳',
                 'biblioteca': '📚',
                 'teatro': '🎭',
+                'coworking': '💼',
+                'ristorante': '🍽️',
+                'centro-sociale': '🤝',
+                'fondazione': '🏢',
                 'altro': '📍'
             };
 
             const categoryNames = {
                 'museo': 'Museo',
                 'galleria': 'Galleria d\'Arte',
-                'monumento': 'Monumento',
                 'parco': 'Parco',
                 'biblioteca': 'Biblioteca',
                 'teatro': 'Teatro',
+                'coworking': 'Coworking Space',
+                'ristorante': 'Ristorante',
+                'centro-sociale': 'Centro Sociale',
+                'fondazione': 'Fondazione',
                 'altro': 'Altro'
             };
 
@@ -2061,10 +2022,13 @@
                         </div>
                      </div>` : '';
 
+                const websiteHtml = place.website ?
+                    `<a href="${place.website}" target="_blank" rel="noopener noreferrer" class="directions-btn" style="background: var(--accent-primary); text-decoration: none;">🌐 Sito Web</a>` : '';
+
                 const imageHtml = place.image ?
                     `<span class="poster-btn" onclick="showPoster('${place.image}')">🖼️ Immagine</span>` : '';
 
-                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+                const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
 
                 placeItem.innerHTML = `
                     <div class="event-info">
@@ -2074,6 +2038,7 @@
                         <div style="margin-top: 8px;">
                             ${descriptionHtml}
                             ${openingHoursHtml}
+                            ${websiteHtml}
                             ${imageHtml}
                             ${directionsHtml}
                         </div>
@@ -2298,7 +2263,7 @@
                             <div style="margin-bottom: 8px;">${tagsHtml}</div>
                             ${posterBtn}
                             <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
-                            <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
+                            <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
                             <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
                         </div>
                     `;
@@ -2338,10 +2303,13 @@
                 const categoryIcons = {
                     'museo': '🏛️',
                     'galleria': '🖼️',
-                    'monumento': '🏰',
                     'parco': '🌳',
                     'biblioteca': '📚',
                     'teatro': '🎭',
+                    'coworking': '💼',
+                    'ristorante': '🍽️',
+                    'centro-sociale': '🤝',
+                    'fondazione': '🏢',
                     'altro': '📍'
                 };
 
@@ -2360,6 +2328,9 @@
                         { icon: placeMarkerIcon }
                     ).addTo(map);
 
+                    const websiteBtn = place.website ?
+                        `<a href="${place.website}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; padding: 8px; margin-top: 5px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none;">🌐 Sito Web</a>` : '';
+
                     const imageBtn = place.image ?
                         `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #8B4513; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>` : '';
 
@@ -2368,8 +2339,9 @@
                             <h4 style="margin-bottom: 8px; color: #8B4513;">${icon} ${place.name}</h4>
                             <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
                             ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
+                            ${websiteBtn}
                             ${imageBtn}
-                            <button onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
+                            <button onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
                         </div>
                     `;
 
