@@ -1086,23 +1086,29 @@
             <div class="filter-checkbox checked" onclick="toggleEventCategory('all')">
                 Tutti
             </div>
-            <div class="filter-checkbox" onclick="toggleEventCategory('musica')">
-                🎵 Musica
+            <div class="filter-checkbox" onclick="toggleEventCategory('live-music')">
+                🎵 Live Music
             </div>
-            <div class="filter-checkbox" onclick="toggleEventCategory('teatro')">
-                🎭 Teatro
+            <div class="filter-checkbox" onclick="toggleEventCategory('open-mic')">
+                🎤 Open Mic
             </div>
-            <div class="filter-checkbox" onclick="toggleEventCategory('mostre')">
-                🎨 Mostre
+            <div class="filter-checkbox" onclick="toggleEventCategory('concerto')">
+                🎸 Concerti
             </div>
-            <div class="filter-checkbox" onclick="toggleEventCategory('cinema')">
-                🎬 Cinema
+            <div class="filter-checkbox" onclick="toggleEventCategory('spettacolo-teatrale')">
+                🎭 Spettacoli Teatrali
             </div>
-            <div class="filter-checkbox" onclick="toggleEventCategory('sport')">
-                ⚽ Sport
+            <div class="filter-checkbox" onclick="toggleEventCategory('mostra')">
+                🖼️ Mostre
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('workshop')">
+                🛠️ Workshop
+            </div>
+            <div class="filter-checkbox" onclick="toggleEventCategory('fiera')">
+                🎪 Fiere
             </div>
             <div class="filter-checkbox" onclick="toggleEventCategory('altro')">
-                ✨ Altro
+                📍 Altro
             </div>
         </div>
 
@@ -1248,6 +1254,12 @@
         </div>
     </footer>
 
+    <!-- Inline script moved to modular JS files in /js/ directory -->
+    <!-- See js/app.js for the new modular entry point -->
+    <script type="module" src="js/app.js"></script>
+
+    <!--
+    ORIGINAL INLINE SCRIPT (COMMENTED OUT - NOW USING MODULAR ARCHITECTURE)
     <script>
         let events = [];
         let categories = {};
@@ -1318,12 +1330,14 @@
 
         const fallbackCategories = {
             categories: [
-                { id: 'musica', name: 'Musica', icon: '🎵', whatsappLink: 'https://chat.whatsapp.com/musica-group' },
-                { id: 'teatro', name: 'Teatro', icon: '🎭', whatsappLink: 'https://chat.whatsapp.com/teatro-group' },
-                { id: 'mostre', name: 'Mostre & Arte', icon: '🎨', whatsappLink: 'https://chat.whatsapp.com/arte-group' },
-                { id: 'cinema', name: 'Cinema', icon: '🎬', whatsappLink: 'https://chat.whatsapp.com/cinema-group' },
-                { id: 'sport', name: 'Sport', icon: '⚽', whatsappLink: 'https://chat.whatsapp.com/sport-group' },
-                { id: 'altro', name: 'Altro', icon: '✨', whatsappLink: 'https://chat.whatsapp.com/altro-group' }
+                { id: 'live-music', name: 'Live Music', icon: '🎵', whatsappLink: 'https://chat.whatsapp.com/live-music-group' },
+                { id: 'open-mic', name: 'Open Mic', icon: '🎤', whatsappLink: 'https://chat.whatsapp.com/open-mic-group' },
+                { id: 'concerto', name: 'Concerto', icon: '🎸', whatsappLink: 'https://chat.whatsapp.com/concerto-group' },
+                { id: 'spettacolo-teatrale', name: 'Spettacolo Teatrale', icon: '🎭', whatsappLink: 'https://chat.whatsapp.com/teatro-group' },
+                { id: 'mostra', name: 'Mostra', icon: '🖼️', whatsappLink: 'https://chat.whatsapp.com/mostra-group' },
+                { id: 'workshop', name: 'Workshop', icon: '🛠️', whatsappLink: 'https://chat.whatsapp.com/workshop-group' },
+                { id: 'fiera', name: 'Fiera', icon: '🎪', whatsappLink: 'https://chat.whatsapp.com/fiera-group' },
+                { id: 'altro', name: 'Altro', icon: '📍', whatsappLink: 'https://chat.whatsapp.com/altro-group' }
             ],
             generalChat: 'https://chat.whatsapp.com/generalgroup'
         };
@@ -2456,5 +2470,7 @@
 
         window.addEventListener('load', initializeIndexApp);
     </script>
+    -->
+
 </body>
 </html>

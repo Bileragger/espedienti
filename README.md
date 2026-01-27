@@ -1,195 +1,303 @@
-# 🎭 Espedienti per incontrarsi
+# 🎭 Espedienti - Eventi e Luoghi di Napoli
 
-Piattaforma per scoprire eventi e incontrare persone nuove
+Piattaforma web per scoprire eventi culturali e luoghi interessanti a Napoli, con mappa interattiva, filtri avanzati e interfaccia admin per la gestione dei contenuti.
 
-## 📁 Struttura del Progetto
+## ✨ Caratteristiche
 
+### 🗺️ Mappa Interattiva
+- Visualizzazione eventi e luoghi su mappa Leaflet
+- Marker personalizzati con popup informativi
+- Geolocalizzazione utente
+- Indicazioni stradali integrate
+
+### 🔍 Filtri Avanzati
+- **Ricerca testuale**: Cerca eventi e luoghi per nome/descrizione
+- **Categorie**: Filtra per tipo evento (concerti, mostre, teatro, ecc.)
+- **Data**: Visualizza eventi di oggi o seleziona data specifica
+- **Tag**: Filtra per hashtag (#jazz, #gratis, ecc.)
+- **Aperti ora**: Mostra solo luoghi attualmente aperti
+
+### 📅 Calendario
+- Vista mensile con indicatori eventi
+- Selezione data interattiva
+- Export eventi a Google Calendar / iCal
+
+### 🎨 Interfaccia Admin
+- CRUD completo per eventi e luoghi
+- Geocoding automatico (Nominatim API)
+- Upload immagini (ImgBB)
+- Validazione orari apertura
+- Mini mappe per verifica posizioni
+
+## 🚀 Quick Start
+
+### Prerequisiti
+
+- Browser moderno con supporto ES6 modules
+- Connessione internet (per Firebase e API esterne)
+
+### Installazione
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/espedienti.git
+cd espedienti
+
+# Serve locale (sceglierne uno)
+python -m http.server 8000
+# oppure
+npx serve
+# oppure
+php -S localhost:8000
+
+# Apri browser
+open http://localhost:8000
 ```
-espedienti-per-incontrarsi/
-├── index.html          # Pagina principale del sito
-├── events.json         # Database degli eventi
-├── admin.html          # Pannello di gestione (solo locale)
-└── README.md           # Questo file
-```
 
-## 🚀 Come Pubblicare su GitHub Pages
+### Configurazione Firebase
 
-### 1. Crea un Repository su GitHub
+1. Crea progetto su [Firebase Console](https://console.firebase.google.com)
+2. Abilita Firestore Database
+3. Copia credenziali in `index.html` e `admin.html` (linea ~16-24)
+4. Configura regole Firestore:
 
-1. Vai su [GitHub](https://github.com) e crea un nuovo repository
-2. Chiamalo ad esempio `espedienti-per-incontrarsi`
-3. Lascialo pubblico
-
-### 2. Carica i File
-
-Carica questi 3 file nel repository:
-- `index.html`
-- `events.json`
-- `README.md`
-
-**NON caricare `admin.html` su GitHub** (tienilo solo in locale)
-
-### 3. Attiva GitHub Pages
-
-1. Vai nelle Settings del repository
-2. Cerca la sezione "Pages" nel menu laterale
-3. In "Source" seleziona "main" branch
-4. Clicca "Save"
-5. Dopo qualche minuto il sito sarà online su: `https://tuousername.github.io/espedienti-per-incontrarsi/`
-
-## ✏️ Come Aggiungere Nuovi Eventi
-
-### Metodo 1: Usando il Pannello Admin (CONSIGLIATO)
-
-1. Apri `admin.html` nel tuo browser (doppio click sul file)
-2. Compila il form con i dettagli dell'evento
-3. Per le coordinate usa [latlong.net](https://www.latlong.net/)
-4. Per caricare le locandine usa [Imgur](https://imgur.com/)
-5. Clicca "Aggiungi Evento"
-6. Quando hai finito, clicca "Scarica events.json"
-7. Sostituisci il file `events.json` nel repository con quello scaricato
-8. Fai commit e push su GitHub
-
-### Metodo 2: Modificando Manualmente il JSON
-
-Apri `events.json` e aggiungi un nuovo evento seguendo questa struttura:
-
-```json
-{
-  "id": 5,
-  "title": "Nome Evento",
-  "date": "2024-11-15",
-  "location": "Luogo dell'evento",
-  "coordinates": {
-    "lat": 40.8359,
-    "lng": 14.2489
-  },
-  "whatsappLink": "https://chat.whatsapp.com/...",
-  "tags": ["#tag1", "#tag2"],
-  "poster": "https://... (opzionale)"
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Lettura pubblica
+    match /events/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null; // Solo admin autenticati
+    }
+    match /places/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /categories/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
 }
 ```
 
-**IMPORTANTE:** 
-- Gli ID devono essere univoci
-- Le date devono essere nel formato YYYY-MM-DD
-- I tag devono iniziare con #
+## 📁 Struttura Progetto
 
-## 🔧 Aggiornare il Sito
-
-Dopo aver modificato `events.json`:
-
-```bash
-git add events.json
-git commit -m "Aggiunto nuovo evento"
-git push
+```
+espedienti/
+├── index.html              # Pagina principale utenti
+├── admin.html              # Pannello amministrazione
+├── styles.css              # Stili globali
+├── js/                     # Moduli JavaScript ES6
+│   ├── app.js              # Entry point index.html
+│   ├── admin/              # Moduli admin
+│   ├── core/               # Core (state, event bus, DI)
+│   ├── config/             # Configurazioni e costanti
+│   ├── data/               # Repository dati
+│   ├── filters/            # Logica filtri
+│   ├── ui/                 # Renderer UI
+│   └── utils/              # Utility (date, geo, ecc.)
+├── data/                   # Dati locali (fallback)
+│   ├── events.json
+│   ├── places.json
+│   └── categories.json
+├── ARCHITECTURE.md         # 📖 Documentazione architettura
+└── README.md               # Questo file
 ```
 
-Il sito si aggiornerà automaticamente in pochi minuti!
+## 🏗️ Architettura
 
-## 🗺️ Come Trovare le Coordinate
+Il progetto utilizza un'**architettura modulare ES6** con:
 
-1. Vai su [latlong.net](https://www.latlong.net/)
-2. Cerca l'indirizzo del luogo
-3. Copia latitudine e longitudine
+- **25 moduli specializzati** organizzati per responsabilità
+- **State Management** centralizzato con Proxy reattivo
+- **Event Bus** per comunicazione pub/sub tra moduli
+- **Dependency Injection** per inizializzazione ordinata
+- **Zero variabili globali** (tutto in StateManager)
 
-## 🖼️ Come Caricare le Locandine
+Per dettagli completi, vedi **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
-1. Vai su [Imgur](https://imgur.com/)
-2. Carica l'immagine
-3. Clicca con il tasto destro sull'immagine caricata
-4. Seleziona "Copia indirizzo immagine"
-5. Incolla il link nel campo "poster"
+### Pattern Principali
 
-## 💬 Link WhatsApp
+| Pattern | Utilizzo |
+|---------|----------|
+| **Repository** | Caricamento dati con fallback chain |
+| **Observer** | State Manager reattivo |
+| **Pub/Sub** | Event Bus per comunicazione moduli |
+| **Coordinator** | Filter Coordinator per logica filtri |
+| **Singleton** | Export istanze singleton moduli |
 
-Per creare un link di invito a un gruppo WhatsApp:
-1. Apri il gruppo WhatsApp
-2. Tocca il nome del gruppo in alto
-3. Vai su "Invita tramite link"
-4. Copia il link
+## 🛠️ Tecnologie
 
-## 🛠️ Manutenzione
+### Frontend
+- **Vanilla JavaScript** (ES6+ modules)
+- **Leaflet.js** - Mappa interattiva
+- **CSS3** - Gradient scuri, animazioni
 
-### Backup
-Fai sempre un backup del file `events.json` prima di fare modifiche importanti.
+### Backend & Services
+- **Firebase Firestore** - Database NoSQL real-time
+- **Nominatim API** - Geocoding OpenStreetMap
+- **ImgBB API** - Upload immagini
 
-### Testare in Locale
-Per testare il sito in locale prima di pubblicarlo:
-1. Usa un server locale (es. Python: `python -m http.server`)
-2. Oppure usa estensioni browser come "Live Server" in VS Code
+### Build & Deploy
+- Nessun build step (ES6 nativi)
+- Hosting: Firebase Hosting / Netlify / GitHub Pages
 
-### Risolvere Problemi
+## 📱 Uso
 
-**Il sito non si aggiorna?**
-- Aspetta 5-10 minuti dopo il push
-- Svuota la cache del browser (Ctrl+Shift+R)
-- Controlla che GitHub Pages sia attivo nelle Settings
+### Utenti (index.html)
 
-**Gli eventi non si caricano?**
-- Verifica che `events.json` sia valido usando [jsonlint.com](https://jsonlint.com/)
-- Controlla la console del browser (F12) per errori
+1. **Esplora mappa**: Click sui marker per dettagli
+2. **Filtra eventi**: Usa barra ricerca, categorie, data
+3. **Calendario**: Naviga mesi e seleziona date
+4. **Aggiungi al calendario**: Click "➕ Aggiungi" su evento
+5. **Indicazioni**: Click "🧭 Indicazioni" per aprire Google Maps
 
-**La mappa non funziona?**
-- Verifica di avere connessione internet
-- La libreria Leaflet viene caricata da CDN
+### Admin (admin.html)
 
-## 📱 Funzionalità del Sito
+1. **Switch tab**: Scegli Eventi o Luoghi
+2. **Aggiungi evento**:
+   - Compila form
+   - Cerca posizione (geocoding automatico)
+   - Aggiungi tag con # + Enter
+   - Upload locandina (drag & drop)
+   - Submit
+3. **Aggiungi luogo**:
+   - Compila form
+   - Inserisci orari apertura per giorno
+   - Verifica posizione su mini mappa
+   - Submit
+4. **Modifica/Elimina**: Click icone ✏️ / 🗑️ nella lista
 
-- 📅 Calendario interattivo
-- 🗺️ Mappa con OpenStreetMap
-- 🔍 Ricerca per titolo, data, luogo e tag
-- 🏷️ Filtro per tag
-- 📍 Filtro per location (click sulla mappa)
-- 📆 Filtro per data (click sul calendario)
-- 🖼️ Visualizzazione locandine
-- ➕ Aggiunta eventi a Google Calendar
-- 💬 Link diretti alle chat WhatsApp
+## 🔧 Manutenzione
 
-## 🔒 Sicurezza
+### Aggiungere un evento manualmente
 
-La pagina `admin.html`:
-- NON va caricata su GitHub
-- Funziona solo in locale
-- Salva i dati nel localStorage del browser
-- È sicura perché non è accessibile online
+```javascript
+// In admin.html o via Firebase Console
+{
+  title: "Concerto Jazz al Fico",
+  category: "Musica",
+  date: "2026-02-15",
+  location: "Fico - Vico Lungo Teatro Nuovo, Napoli",
+  coordinates: { lat: 40.8467, lng: 14.2514 },
+  tags: ["#jazz", "#live", "#gratis"],
+  poster: "https://i.ibb.co/xxx/poster.jpg", // opzionale
+  whatsappLink: "https://chat.whatsapp.com/xxx" // opzionale
+}
+```
 
-## 📞 Supporto
+### Aggiungere una categoria
 
-Per problemi o domande, consulta la documentazione di:
-- [GitHub Pages](https://docs.github.com/pages)
-- [Leaflet.js](https://leafletjs.com/)
-- [OpenStreetMap](https://www.openstreetmap.org/)
+1. Modifica `js/config/constants.js`:
+```javascript
+export const EVENT_CATEGORY_ICONS = {
+  // ...esistenti
+  'Fotografia': '📷'
+};
+```
 
-## 🎨 Personalizzazione
+2. Aggiungi entry in Firestore collection `categories`:
+```json
+{
+  "id": "fotografia",
+  "name": "Fotografia",
+  "icon": "📷",
+  "color": "#10b981",
+  "whatsappLink": "https://chat.whatsapp.com/xxx"
+}
+```
 
-Puoi personalizzare:
-- Colori nel CSS (cerca `#667eea` e `#764ba2`)
-- Testi nelle sezioni Hero e Features
-- Logo (emoji 🎭 nell'header)
-- Link alla community WhatsApp generale
+### Debug
 
-## 📊 Statistiche
+Apri console browser (F12) per vedere:
+```
+🚀 Initializing Espedienti modules...
+✅ StateManager initialized
+✅ EventBus initialized
+📥 Loading application data...
+✅ All data loaded
+✅ Espedienti initialized successfully!
+```
 
-Il sito è:
-- ✅ Completamente statico (nessun server necessario)
-- ✅ Gratis (GitHub Pages è gratuito)
-- ✅ Veloce (solo HTML, CSS, JS)
-- ✅ Responsive (funziona su mobile)
-- ✅ SEO-friendly
+Ispeziona stato:
+```javascript
+// In console
+window.debugState = state;
+debugState.get('filteredEvents');
+debugState.get('map');
+```
 
-## 🚀 Workflow Consigliato
+## 🧪 Testing
 
-1. **Aggiungi eventi** usando `admin.html`
-2. **Scarica** il file `events.json`
-3. **Sostituisci** il file nel repository
-4. **Push** su GitHub
-5. **Verifica** il sito dopo 5 minuti
+```bash
+# Unit tests (da implementare con Vitest)
+npm test
 
-## 📝 Licenza
+# E2E tests (da implementare con Playwright)
+npm run test:e2e
+```
 
-Progetto personale - Usa come preferisci!
+## 📦 Build & Deploy
+
+### Development
+```bash
+# Serve locale
+npm run dev
+```
+
+### Production
+```bash
+# Build (opzionale con Vite)
+npm run build
+
+# Deploy Firebase Hosting
+firebase deploy --only hosting
+```
+
+## 🤝 Contribuire
+
+1. Fork del progetto
+2. Crea branch feature: `git checkout -b feature/nome-feature`
+3. Commit modifiche: `git commit -m 'feat: descrizione'`
+4. Push: `git push origin feature/nome-feature`
+5. Apri Pull Request
+
+### Commit Convention
+
+Usa [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` Nuova funzionalità
+- `fix:` Bug fix
+- `docs:` Documentazione
+- `style:` Formattazione
+- `refactor:` Refactoring
+- `test:` Test
+- `chore:` Manutenzione
+
+## 📄 Licenza
+
+MIT License - vedi [LICENSE](LICENSE)
+
+## 👥 Autori
+
+- **Simone Esposito** - *Initial work & Design*
+- **Claude Code** - *Architecture & Refactoring*
+
+## 🙏 Ringraziamenti
+
+- [Leaflet.js](https://leafletjs.com/) - Mappa interattiva
+- [Firebase](https://firebase.google.com/) - Backend & Hosting
+- [Nominatim](https://nominatim.org/) - Geocoding
+- [ImgBB](https://imgbb.com/) - Image hosting
+- Community di Napoli 💜
+
+## 📞 Contatti
+
+- 🌐 Website: [espedienti.napoli](https://espedienti.napoli)
+- 💬 WhatsApp Community: [Link gruppo](https://chat.whatsapp.com/xxx)
 
 ---
 
-**Fatto con ❤️ per la community**
+**Fatto con ❤️ a Napoli**
