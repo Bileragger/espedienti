@@ -19,6 +19,8 @@ export class EventListRenderer {
     this.dateFormatter = formatter;
     this.categoriesLoader = categories;
     this.dateFilter = dateFilterInstance;
+    this.currentPage = 1;
+    this.itemsPerPage = 5;
   }
 
   /**
@@ -27,6 +29,7 @@ export class EventListRenderer {
   initialize() {
     // Subscribe to filter events
     this.eventBus.on('filters:applied', () => {
+      this.currentPage = 1; // Reset to first page on filter change
       this.render();
     });
 
@@ -40,15 +43,17 @@ export class EventListRenderer {
     window.openDirections = (lat, lng, locationName, fullAddress) => {
       this.openDirections(lat, lng, locationName, fullAddress);
     };
+    window.changeEventPage = (page) => this.changePage(page);
 
     console.log('✅ EventListRenderer initialized');
   }
 
   /**
-   * Render event list
+   * Render event list with pagination
    */
   render() {
     const eventList = document.getElementById('eventList');
+    const eventsTitle = document.getElementById('eventsTitle');
 
     if (!eventList) {
       console.warn('⚠️ Event list element not found');
@@ -59,6 +64,11 @@ export class EventListRenderer {
     const selectedLocation = this.state.get('selectedLocation');
     const selectedTag = this.state.get('selectedTag');
 
+    // Update title with count
+    if (eventsTitle) {
+      eventsTitle.textContent = `📋 Lista Eventi (${filteredEvents.length})`;
+    }
+
     // Clear list
     eventList.innerHTML = '';
 
@@ -68,11 +78,20 @@ export class EventListRenderer {
       return;
     }
 
-    // Render each event
-    filteredEvents.forEach(event => {
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredEvents.length / this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    const eventsToShow = filteredEvents.slice(startIndex, endIndex);
+
+    // Render events for current page
+    eventsToShow.forEach(event => {
       const eventItem = this._createEventElement(event, selectedLocation, selectedTag);
       eventList.appendChild(eventItem);
     });
+
+    // Render pagination controls
+    this._renderPaginationControls(eventList, totalPages, filteredEvents.length);
   }
 
   /**
@@ -220,6 +239,66 @@ export class EventListRenderer {
     }
 
     console.log('🧭 Opening directions to:', locationName);
+  }
+
+  /**
+   * Render pagination controls
+   * @param {HTMLElement} container - Container element
+   * @param {number} totalPages - Total number of pages
+   * @param {number} totalItems - Total number of items
+   */
+  _renderPaginationControls(container, totalPages, totalItems) {
+    if (totalPages <= 1) return; // No pagination needed
+
+    const paginationDiv = document.createElement('div');
+    paginationDiv.className = 'pagination-controls';
+    paginationDiv.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding: 15px;';
+
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'btn btn-small';
+    prevBtn.textContent = '← Prec';
+    prevBtn.disabled = this.currentPage === 1;
+    prevBtn.onclick = () => this.changePage(this.currentPage - 1);
+    prevBtn.style.cssText = `opacity: ${this.currentPage === 1 ? '0.5' : '1'}; min-width: 70px; padding: 6px 10px;`;
+    paginationDiv.appendChild(prevBtn);
+
+    // Page info
+    const pageInfo = document.createElement('span');
+    pageInfo.style.cssText = 'color: var(--text-secondary); font-size: 0.9rem; flex: 1; text-align: center;';
+    pageInfo.textContent = `Pagina ${this.currentPage} di ${totalPages}`;
+    paginationDiv.appendChild(pageInfo);
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn btn-small';
+    nextBtn.textContent = 'Succ →';
+    nextBtn.disabled = this.currentPage === totalPages;
+    nextBtn.onclick = () => this.changePage(this.currentPage + 1);
+    nextBtn.style.cssText = `opacity: ${this.currentPage === totalPages ? '0.5' : '1'}; min-width: 70px; padding: 6px 10px;`;
+    paginationDiv.appendChild(nextBtn);
+
+    container.appendChild(paginationDiv);
+  }
+
+  /**
+   * Change page
+   * @param {number} page - Page number
+   */
+  changePage(page) {
+    const filteredEvents = this.state.get('filteredEvents');
+    const totalPages = Math.ceil(filteredEvents.length / this.itemsPerPage);
+
+    if (page < 1 || page > totalPages) return;
+
+    this.currentPage = page;
+    this.render();
+
+    // Scroll to top of event list
+    const eventList = document.getElementById('eventList');
+    if (eventList) {
+      eventList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   /**

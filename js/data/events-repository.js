@@ -1,10 +1,8 @@
 /**
- * EventsRepository - Events Data Management with Fallback Chain
+ * EventsRepository - Events Data Management from Firebase
  *
- * Load strategy (fallback chain):
- * 1. Try Firebase Firestore
- * 2. If Firebase fails, try local JSON file (events.json)
- * 3. If JSON fails, use hardcoded fallback data
+ * Load strategy: Firebase Firestore only
+ * If Firebase fails or has no data, returns empty array
  *
  * Dependencies: FirebaseService, EventBus, StateManager
  */
@@ -12,7 +10,6 @@
 import { firebaseService } from './firebase-service.js';
 import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';
-import { FALLBACK_EVENTS, API_ENDPOINTS } from '../config/constants.js';
 
 export class EventsRepository {
   constructor(firebase, eventBusInstance, stateManager) {
@@ -25,37 +22,25 @@ export class EventsRepository {
   }
 
   /**
-   * Load events with fallback chain
-   * @returns {Promise<Array>} Loaded events
+   * Load events from Firebase only
+   * @returns {Promise<Array>} Loaded events (empty if Firebase fails)
    */
   async load() {
-    console.log('📥 Loading events...');
+    console.log('📥 Loading events from Firebase...');
 
     try {
-      // Try Firebase first
       const events = await this._loadFromFirebase();
       this.loadedFromFirebase = true;
-      this._updateState(events, false);
+      this._updateState(events);
       this._setupRealtimeListener();
       return events;
     } catch (firebaseError) {
-      console.warn('⚠️ Firebase load failed, trying JSON file:', firebaseError);
+      console.error('❌ Firebase load failed:', firebaseError);
 
-      try {
-        // Try JSON file
-        const events = await this._loadFromJSON();
-        this.loadedFromFirebase = false;
-        this._updateState(events, true);
-        return events;
-      } catch (jsonError) {
-        console.warn('⚠️ JSON file load failed, using fallback data:', jsonError);
-
-        // Use fallback data
-        const events = this._loadFallbackData();
-        this.loadedFromFirebase = false;
-        this._updateState(events, true);
-        return events;
-      }
+      // Return empty array if Firebase fails
+      this.loadedFromFirebase = false;
+      this._updateState([]);
+      return [];
     }
   }
 
@@ -69,60 +54,23 @@ export class EventsRepository {
     }
 
     const events = await this.firebase.getEvents();
-
-    if (events.length === 0) {
-      throw new Error('No events in Firebase');
-    }
-
     console.log('✅ Events loaded from Firebase:', events.length);
     return events;
   }
 
   /**
-   * Load events from local JSON file
-   * @returns {Promise<Array>} Events from JSON
-   */
-  async _loadFromJSON() {
-    const response = await fetch(API_ENDPOINTS.events);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const events = await response.json();
-    console.log('✅ Events loaded from JSON file:', events.length);
-    return events;
-  }
-
-  /**
-   * Load fallback events
-   * @returns {Array} Fallback events
-   */
-  _loadFallbackData() {
-    console.log('✅ Using fallback events data:', FALLBACK_EVENTS.length);
-    return [...FALLBACK_EVENTS];
-  }
-
-  /**
    * Update state and emit event
    * @param {Array} events - Loaded events
-   * @param {boolean} isLocalMode - True if not from Firebase
    */
-  _updateState(events, isLocalMode) {
+  _updateState(events) {
     this.state.set('events', events);
     this.state.set('filteredEvents', [...events]);
 
     this.eventBus.emit('events:loaded', {
       events,
-      source: this.loadedFromFirebase ? 'firebase' : (isLocalMode ? 'local' : 'fallback'),
+      source: this.loadedFromFirebase ? 'firebase' : 'empty',
       count: events.length
     });
-
-    // Show/hide warning banner
-    const warningEl = document.getElementById('localWarning');
-    if (warningEl) {
-      warningEl.style.display = isLocalMode ? 'block' : 'none';
-    }
   }
 
   /**

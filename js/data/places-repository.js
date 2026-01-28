@@ -1,10 +1,8 @@
 /**
- * PlacesRepository - Places Data Management with Fallback Chain
+ * PlacesRepository - Places Data Management from Firebase
  *
- * Load strategy (fallback chain):
- * 1. Try Firebase Firestore
- * 2. If Firebase fails, try local JSON file (places.json)
- * 3. If JSON fails, return empty array (no fallback places)
+ * Load strategy: Firebase Firestore only
+ * If Firebase fails or has no data, returns empty array
  *
  * Dependencies: FirebaseService, EventBus, StateManager
  */
@@ -12,7 +10,6 @@
 import { firebaseService } from './firebase-service.js';
 import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';
-import { API_ENDPOINTS } from '../config/constants.js';
 
 export class PlacesRepository {
   constructor(firebase, eventBusInstance, stateManager) {
@@ -25,37 +22,25 @@ export class PlacesRepository {
   }
 
   /**
-   * Load places with fallback chain
-   * @returns {Promise<Array>} Loaded places
+   * Load places from Firebase only
+   * @returns {Promise<Array>} Loaded places (empty if Firebase fails)
    */
   async load() {
-    console.log('📥 Loading places...');
+    console.log('📥 Loading places from Firebase...');
 
     try {
-      // Try Firebase first
       const places = await this._loadFromFirebase();
       this.loadedFromFirebase = true;
-      this._updateState(places, false);
+      this._updateState(places);
       this._setupRealtimeListener();
       return places;
     } catch (firebaseError) {
-      console.warn('⚠️ Firebase load failed, trying JSON file:', firebaseError);
+      console.error('❌ Firebase load failed:', firebaseError);
 
-      try {
-        // Try JSON file
-        const places = await this._loadFromJSON();
-        this.loadedFromFirebase = false;
-        this._updateState(places, true);
-        return places;
-      } catch (jsonError) {
-        console.warn('⚠️ JSON file load failed, using empty array:', jsonError);
-
-        // No fallback data for places - return empty array
-        const places = [];
-        this.loadedFromFirebase = false;
-        this._updateState(places, true);
-        return places;
-      }
+      // Return empty array if Firebase fails
+      this.loadedFromFirebase = false;
+      this._updateState([]);
+      return [];
     }
   }
 
@@ -69,43 +54,21 @@ export class PlacesRepository {
     }
 
     const places = await this.firebase.getPlaces();
-
-    if (places.length === 0) {
-      throw new Error('No places in Firebase');
-    }
-
     console.log('✅ Places loaded from Firebase:', places.length);
-    return places;
-  }
-
-  /**
-   * Load places from local JSON file
-   * @returns {Promise<Array>} Places from JSON
-   */
-  async _loadFromJSON() {
-    const response = await fetch(API_ENDPOINTS.places);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const places = await response.json();
-    console.log('✅ Places loaded from JSON file:', places.length);
     return places;
   }
 
   /**
    * Update state and emit event
    * @param {Array} places - Loaded places
-   * @param {boolean} isLocalMode - True if not from Firebase
    */
-  _updateState(places, isLocalMode) {
+  _updateState(places) {
     this.state.set('places', places);
     this.state.set('filteredPlaces', [...places]);
 
     this.eventBus.emit('places:loaded', {
       places,
-      source: this.loadedFromFirebase ? 'firebase' : (isLocalMode ? 'local' : 'empty'),
+      source: this.loadedFromFirebase ? 'firebase' : 'empty',
       count: places.length
     });
   }

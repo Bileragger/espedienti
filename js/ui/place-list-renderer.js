@@ -18,6 +18,8 @@ export class PlaceListRenderer {
     this.openingHoursParser = hoursParser;
     this.categoryIcons = PLACE_CATEGORY_ICONS;
     this.categoryNames = PLACE_CATEGORY_NAMES;
+    this.currentPage = 1;
+    this.itemsPerPage = 5;
   }
 
   /**
@@ -26,6 +28,7 @@ export class PlaceListRenderer {
   initialize() {
     // Subscribe to filter events
     this.eventBus.on('filters:applied', () => {
+      this.currentPage = 1; // Reset to first page on filter change
       this.render();
     });
 
@@ -35,15 +38,17 @@ export class PlaceListRenderer {
     window.centerMapOnPlace = (lat, lng) => {
       this.eventBus.emit('map:centerOn', { lat, lng });
     };
+    window.changePlacePage = (page) => this.changePage(page);
 
     console.log('✅ PlaceListRenderer initialized');
   }
 
   /**
-   * Render place list
+   * Render place list with pagination
    */
   render() {
     const placeList = document.getElementById('placeList');
+    const placesTitle = document.getElementById('placesTitle');
 
     if (!placeList) {
       console.warn('⚠️ Place list element not found');
@@ -51,6 +56,11 @@ export class PlaceListRenderer {
     }
 
     const filteredPlaces = this.state.get('filteredPlaces');
+
+    // Update title with count
+    if (placesTitle) {
+      placesTitle.textContent = `🏛️ Lista Luoghi (${filteredPlaces.length})`;
+    }
 
     // Clear list
     placeList.innerHTML = '';
@@ -61,11 +71,20 @@ export class PlaceListRenderer {
       return;
     }
 
-    // Render each place
-    filteredPlaces.forEach(place => {
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredPlaces.length / this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    const placesToShow = filteredPlaces.slice(startIndex, endIndex);
+
+    // Render places for current page
+    placesToShow.forEach(place => {
       const placeItem = this._createPlaceElement(place);
       placeList.appendChild(placeItem);
     });
+
+    // Render pagination controls
+    this._renderPaginationControls(placeList, totalPages, filteredPlaces.length);
   }
 
   /**
@@ -160,6 +179,66 @@ export class PlaceListRenderer {
       } else {
         hoursElement.style.display = 'none';
       }
+    }
+  }
+
+  /**
+   * Render pagination controls
+   * @param {HTMLElement} container - Container element
+   * @param {number} totalPages - Total number of pages
+   * @param {number} totalItems - Total number of items
+   */
+  _renderPaginationControls(container, totalPages, totalItems) {
+    if (totalPages <= 1) return; // No pagination needed
+
+    const paginationDiv = document.createElement('div');
+    paginationDiv.className = 'pagination-controls';
+    paginationDiv.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding: 15px;';
+
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'btn btn-small';
+    prevBtn.textContent = '← Prec';
+    prevBtn.disabled = this.currentPage === 1;
+    prevBtn.onclick = () => this.changePage(this.currentPage - 1);
+    prevBtn.style.cssText = `opacity: ${this.currentPage === 1 ? '0.5' : '1'}; min-width: 70px; padding: 6px 10px;`;
+    paginationDiv.appendChild(prevBtn);
+
+    // Page info
+    const pageInfo = document.createElement('span');
+    pageInfo.style.cssText = 'color: var(--text-secondary); font-size: 0.9rem; flex: 1; text-align: center;';
+    pageInfo.textContent = `Pagina ${this.currentPage} di ${totalPages}`;
+    paginationDiv.appendChild(pageInfo);
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn btn-small';
+    nextBtn.textContent = 'Succ →';
+    nextBtn.disabled = this.currentPage === totalPages;
+    nextBtn.onclick = () => this.changePage(this.currentPage + 1);
+    nextBtn.style.cssText = `opacity: ${this.currentPage === totalPages ? '0.5' : '1'}; min-width: 70px; padding: 6px 10px;`;
+    paginationDiv.appendChild(nextBtn);
+
+    container.appendChild(paginationDiv);
+  }
+
+  /**
+   * Change page
+   * @param {number} page - Page number
+   */
+  changePage(page) {
+    const filteredPlaces = this.state.get('filteredPlaces');
+    const totalPages = Math.ceil(filteredPlaces.length / this.itemsPerPage);
+
+    if (page < 1 || page > totalPages) return;
+
+    this.currentPage = page;
+    this.render();
+
+    // Scroll to top of place list
+    const placeList = document.getElementById('placeList');
+    if (placeList) {
+      placeList.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 

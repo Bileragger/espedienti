@@ -110,10 +110,16 @@ export class CalendarRenderer {
     dayElement.className = 'calendar-day';
 
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const todayStr = new Date().toISOString().split('T')[0];
 
     // Mark selected date
     if (selectedDateStr === dateStr) {
       dayElement.classList.add('selected');
+    }
+
+    // Mark today
+    if (todayStr === dateStr) {
+      dayElement.classList.add('today');
     }
 
     // Day number

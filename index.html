@@ -423,6 +423,17 @@
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
         }
 
+        .calendar-day.today {
+            border-color: #fbbf24;
+            border-width: 2px;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+        }
+
+        .calendar-day.today.selected {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 10px rgba(251, 191, 36, 0.2);
+        }
+
         .calendar-day.empty {
             background: var(--bg-primary);
             cursor: default;
@@ -566,6 +577,56 @@
 
         .chat-section {
             margin-top: 30px;
+            position: relative;
+        }
+
+        .wip-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 20, 25, 0.92);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 12px;
+            gap: 15px;
+        }
+
+        .wip-overlay h3 {
+            color: #fbbf24;
+            font-size: 2rem;
+            margin: 0;
+            text-align: center;
+        }
+
+        .wip-overlay p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 0;
+            max-width: 500px;
+        }
+
+        .wip-icon {
+            font-size: 4rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.05);
+            }
         }
 
         .chat-description {
@@ -1067,7 +1128,7 @@
             type="text" 
             class="search-bar" 
             id="searchBar"
-            placeholder="🔍 Cerca per titolo, data (YYYY-MM-DD), luogo o #tag"
+            placeholder="🔍 Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag"
         >
 
         <!-- Toggle visualizzazione eventi/luoghi -->
@@ -1173,11 +1234,11 @@
                     <div class="map-container">
                         <div id="map"></div>
                         <div class="map-controls">
-                            <button class="map-control-btn" id="locateBtnNew" onclick="locateUser()" title="Trova la mia posizione">
-                                📍
+                            <button class="map-control-btn wide" id="locateBtnNew" onclick="locateUser()" title="Trova la mia posizione">
+                                📍 Dove sono
                             </button>
                             <button class="map-control-btn wide" id="openNowBtn" onclick="filterOpenNow()" title="Mostra solo luoghi aperti ora">
-                                🕐 Aperti
+                                🕐 Aperti ora
                             </button>
                         </div>
                     </div>
@@ -1201,7 +1262,7 @@
 
         <div class="card" id="eventsCard">
             <div class="card-header">
-                <h2>📋 Lista Eventi</h2>
+                <h2 id="eventsTitle">📋 Lista Eventi</h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="eventList"></div>
@@ -1211,7 +1272,7 @@
         <!-- Sezione Luoghi di Interesse -->
         <div class="card" id="placesCard">
             <div class="card-header" style="background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);">
-                <h2>🏛️ Lista Luoghi</h2>
+                <h2 id="placesTitle">🏛️ Lista Luoghi</h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="placeList"></div>
@@ -1224,17 +1285,24 @@
             </div>
             <div class="card-content">
                 <p class="chat-description">Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.</p>
-                
+
                 <div id="categoryChats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
                     <!-- Categories will be loaded here -->
                 </div>
-                
+
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e7ff;">
                     <p class="chat-description"><strong>Community Generale</strong> - Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi</p>
                     <button class="btn" id="generalChatBtn">
                         Unisciti alla Community Generale
                     </button>
                 </div>
+            </div>
+
+            <!-- Work in Progress Overlay -->
+            <div class="wip-overlay">
+                <div class="wip-icon">🚧</div>
+                <h3>Work in Progress</h3>
+                <p>Stiamo lavorando alla community! Presto potrai unirti alle chat di gruppo organizzate per interesse.</p>
             </div>
         </div>
     </div>

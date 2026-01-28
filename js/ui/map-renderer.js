@@ -193,9 +193,11 @@ export class MapRenderer {
         { icon }
       ).addTo(this.map);
 
-      // Create popup content
+      // Create popup content with offset
       const popupContent = this._createPlacePopup(place);
-      marker.bindPopup(popupContent);
+      marker.bindPopup(popupContent, {
+        offset: [0, -20] // Offset in alto di 20px
+      });
 
       // Click handler
       marker.on('click', () => {
@@ -408,8 +410,8 @@ export class MapRenderer {
     try {
       const position = await this.geolocationService.getCurrentPosition();
 
-      // Center map on user location
-      this.centerOn(position.lat, position.lng, 14);
+      // Center map on user location with higher zoom
+      this.centerOn(position.lat, position.lng, 16);
 
       // Add or update user marker
       this._updateUserMarker(position.lat, position.lng);
@@ -452,7 +454,7 @@ export class MapRenderer {
 
     // Add new user marker
     const userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(this.map);
-    userMarker.bindPopup('<div style="text-align: center;"><strong>Sei qui</strong></div>');
+    userMarker.bindPopup('<div style="text-align: center;"><strong>Dove sono</strong></div>');
 
     this.state.set('userMarker', userMarker);
   }
