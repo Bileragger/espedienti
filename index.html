@@ -6,6 +6,9 @@
     <title>Espedienti a Napoli - Scopri eventi e incontra persone nuove</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -38,17 +41,17 @@
 
     <style>
         :root {
-            --bg-primary: #0f1419;
-            --bg-secondary: #1a1f2e;
-            --bg-tertiary: #252b3b;
-            --text-primary: #e4e6eb;
-            --text-secondary: #a8adb7;
-            --text-tertiary: #6b7280;
-            --accent-primary: #8b5cf6;
-            --accent-secondary: #7c3aed;
-            --accent-places: #d97706;
-            --border-subtle: rgba(139, 92, 246, 0.2);
-            --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+            --bg-primary: #1a1410;
+            --bg-secondary: #2d2418;
+            --bg-tertiary: #3d2f1f;
+            --text-primary: #fef3c7;
+            --text-secondary: #e5d5b7;
+            --text-tertiary: #c9a961;
+            --accent-primary: #f59e0b;
+            --accent-secondary: #d97706;
+            --accent-places: #92400e;
+            --border-subtle: rgba(245, 158, 11, 0.2);
+            --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.3);
         }
 
         * {
@@ -59,13 +62,13 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-primary);
         }
 
         header {
-            background: linear-gradient(135deg, #1a1f2e 0%, #2d1b4e 100%);
+            background: linear-gradient(135deg, #2d2418 0%, #78350f 100%);
             color: white;
             padding: 1rem 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -110,13 +113,13 @@
         }
 
         .nav-links a:hover {
-            background: rgba(139, 92, 246, 0.2);
+            background: rgba(245, 158, 11, 0.2);
             border-color: var(--border-subtle);
             box-shadow: var(--shadow-glow);
         }
 
         .hero {
-            background: linear-gradient(135deg, #1a1f2e 0%, #2d1b4e 50%, #1a1f2e 100%);
+            background: linear-gradient(135deg, #2d2418 0%, #78350f 50%, #2d2418 100%);
             color: white;
             padding: 80px 20px;
             text-align: center;
@@ -131,7 +134,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            background: radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -146,7 +149,7 @@
             font-size: 3.5rem;
             margin-bottom: 20px;
             line-height: 1.2;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -194,7 +197,7 @@
         .search-bar:focus {
             outline: none;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), var(--shadow-glow);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), var(--shadow-glow);
             background: var(--bg-tertiary);
         }
 
@@ -208,7 +211,7 @@
             align-items: center;
             margin-bottom: 15px;
             padding: 15px;
-            background: rgba(139, 92, 246, 0.1);
+            background: rgba(245, 158, 11, 0.1);
             border-radius: 12px;
             font-size: 0.9rem;
             color: var(--text-secondary);
@@ -278,7 +281,7 @@
 
         .tag {
             display: inline-block;
-            background: rgba(139, 92, 246, 0.15);
+            background: rgba(245, 158, 11, 0.15);
             color: var(--accent-primary);
             padding: 6px 12px;
             border-radius: 16px;
@@ -294,14 +297,14 @@
             background: var(--accent-primary);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         }
 
         .tag.selected {
             background: var(--accent-primary);
             color: white;
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         }
 
         .event-tags {
@@ -334,9 +337,9 @@
         }
 
         .card:hover {
-            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.3);
             transform: translateY(-4px);
-            border-color: rgba(139, 92, 246, 0.4);
+            border-color: rgba(245, 158, 11, 0.4);
         }
 
         .card-header {
@@ -345,7 +348,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
             color: white;
         }
 
@@ -365,9 +368,9 @@
         }
 
         .calendar-nav button {
-            background: rgba(139, 92, 246, 0.2);
+            background: rgba(245, 158, 11, 0.2);
             color: white;
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.3);
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -377,8 +380,8 @@
         }
 
         .calendar-nav button:hover {
-            background: rgba(139, 92, 246, 0.4);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+            background: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
         }
 
         .calendar-nav span {
@@ -412,15 +415,15 @@
 
         .calendar-day:hover {
             background: var(--bg-tertiary);
-            border-color: rgba(139, 92, 246, 0.5);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
         .calendar-day.selected {
-            background: rgba(139, 92, 246, 0.2);
+            background: rgba(245, 158, 11, 0.2);
             border-color: var(--accent-primary);
             border-width: 2px;
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
         }
 
         .calendar-day.today {
@@ -431,7 +434,7 @@
 
         .calendar-day.today.selected {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 10px rgba(251, 191, 36, 0.2);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 0 10px rgba(251, 191, 36, 0.2);
         }
 
         .calendar-day.empty {
@@ -456,16 +459,16 @@
             font-size: 0.75rem;
             padding: 4px 6px;
             margin-bottom: 2px;
-            background: rgba(139, 92, 246, 0.3);
+            background: rgba(245, 158, 11, 0.3);
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid rgba(139, 92, 246, 0.4);
+            border: 1px solid rgba(245, 158, 11, 0.4);
         }
 
         .calendar-event:hover {
-            background: rgba(139, 92, 246, 0.5);
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+            background: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
         }
 
         .event-list {
@@ -488,16 +491,16 @@
 
         .event-item:hover {
             background: var(--bg-tertiary);
-            border-color: rgba(139, 92, 246, 0.5);
-            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
             transform: translateY(-2px);
         }
 
         .event-item.highlighted {
-            background: rgba(139, 92, 246, 0.1);
+            background: rgba(245, 158, 11, 0.1);
             border-color: var(--accent-primary);
             border-width: 2px;
-            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
         }
 
         .event-info {
@@ -528,7 +531,7 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
             color: white;
             border: none;
             padding: 14px 28px;
@@ -541,7 +544,7 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
         }
 
         .btn-small {
@@ -559,7 +562,7 @@
         .btn-outline:hover {
             background: var(--accent-primary);
             color: white;
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
         }
 
         .btn-white {
@@ -682,9 +685,9 @@
         }
 
         .map-control-btn:hover {
-            background: rgba(139, 92, 246, 0.3);
+            background: rgba(245, 158, 11, 0.3);
             border-color: var(--accent-primary);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
         }
 
         .map-control-btn.loading {
@@ -817,7 +820,7 @@
         .modal-close:hover {
             color: var(--text-primary);
             background: var(--accent-primary);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
         }
 
         .poster-btn {
@@ -826,14 +829,14 @@
             gap: 5px;
             margin-top: 5px;
             margin-right: 10px;
-            color: #667eea;
+            color: #f59e0b;
             cursor: pointer;
             font-size: 0.875rem;
             text-decoration: underline;
         }
 
         .poster-btn:hover {
-            color: #4c1d95;
+            color: #78350f;
         }
 
         footer {
@@ -920,14 +923,14 @@
 
         .toggle-btn:hover {
             background: var(--bg-tertiary);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
         }
 
         .toggle-btn.active {
             background: var(--accent-primary);
             color: white;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
         }
 
         .toggle-btn.places-toggle {
@@ -1042,15 +1045,15 @@
         }
 
         .filter-checkbox:hover {
-            border-color: rgba(139, 92, 246, 0.5);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
         .filter-checkbox.checked {
             background: var(--accent-primary);
             color: white;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
         }
 
         .filter-checkbox.places-filter {
@@ -1271,7 +1274,7 @@
 
         <!-- Sezione Luoghi di Interesse -->
         <div class="card" id="placesCard">
-            <div class="card-header" style="background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);">
+            <div class="card-header" style="background: linear-gradient(135deg, #92400e 0%, #b45309 100%);">
                 <h2 id="placesTitle">🏛️ Lista Luoghi</h2>
             </div>
             <div class="card-content">
@@ -1290,7 +1293,7 @@
                     <!-- Categories will be loaded here -->
                 </div>
 
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e7ff;">
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #fef3c7;">
                     <p class="chat-description"><strong>Community Generale</strong> - Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi</p>
                     <button class="btn" id="generalChatBtn">
                         Unisciti alla Community Generale
@@ -2302,7 +2305,7 @@
             // Icone per gli eventi
             const defaultIcon = L.divIcon({
                 className: 'custom-marker',
-                html: '<div style="background: #667eea; width: 25px; height: 25px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><div style="position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 6.5px; left: 6.5px;"></div></div>',
+                html: '<div style="background: #f59e0b; width: 25px; height: 25px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><div style="position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 6.5px; left: 6.5px;"></div></div>',
                 iconSize: [25, 25],
                 iconAnchor: [12, 25]
             });
@@ -2317,7 +2320,7 @@
             // Icona per i luoghi
             const placeIcon = L.divIcon({
                 className: 'custom-marker',
-                html: '<div style="background: #8B4513; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏛️</div>',
+                html: '<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏛️</div>',
                 iconSize: [28, 28],
                 iconAnchor: [14, 28]
             });
@@ -2332,10 +2335,10 @@
                     ).addTo(map);
 
                     const categoryInfo = getCategoryInfo(event.category);
-                    const tagsHtml = event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
+                    const tagsHtml = event.tags.map(tag => `<span style="background: #fef3c7; color: #78350f; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
 
                     const posterBtn = event.poster ?
-                        `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
+                        `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
 
                     const popupContent = `
                         <div style="min-width: 200px;">
@@ -2344,9 +2347,9 @@
                             <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
                             <div style="margin-bottom: 8px;">${tagsHtml}</div>
                             ${posterBtn}
-                            <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+                            <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
                             <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
-                            <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
+                            <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #f59e0b; border: 2px solid #f59e0b; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
                         </div>
                     `;
 
@@ -2400,7 +2403,7 @@
 
                     const placeMarkerIcon = L.divIcon({
                         className: 'custom-marker',
-                        html: `<div style="background: #8B4513; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">${icon}</div>`,
+                        html: `<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">${icon}</div>`,
                         iconSize: [28, 28],
                         iconAnchor: [14, 28]
                     });
@@ -2414,11 +2417,11 @@
                         `<a href="${place.website}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; padding: 8px; margin-top: 5px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none;">🌐 Sito Web</a>` : '';
 
                     const imageBtn = place.image ?
-                        `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #8B4513; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>` : '';
+                        `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #92400e; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>` : '';
 
                     const popupContent = `
                         <div style="min-width: 200px;">
-                            <h4 style="margin-bottom: 8px; color: #8B4513;">${icon} ${place.name}</h4>
+                            <h4 style="margin-bottom: 8px; color: #92400e;">${icon} ${place.name}</h4>
                             <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
                             ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
                             ${websiteBtn}
@@ -2453,9 +2456,9 @@
             if (!container) return;
             
             container.innerHTML = categories.categories.map(cat => `
-                <div style="border: 2px solid #e0e7ff; border-radius: 8px; padding: 15px; text-align: center; transition: all 0.3s; cursor: pointer;" 
-                     onmouseover="this.style.borderColor='#667eea'; this.style.background='#f0f4ff'" 
-                     onmouseout="this.style.borderColor='#e0e7ff'; this.style.background='white'"
+                <div style="border: 2px solid #fef3c7; border-radius: 8px; padding: 15px; text-align: center; transition: all 0.3s; cursor: pointer;" 
+                     onmouseover="this.style.borderColor='#f59e0b'; this.style.background='#fefce8'" 
+                     onmouseout="this.style.borderColor='#fef3c7'; this.style.background='white'"
                      onclick="window.open('${cat.whatsappLink}', '_blank')">
                     <div style="font-size: 2rem; margin-bottom: 10px;">${cat.icon}</div>
                     <div style="font-weight: 600; margin-bottom: 5px;">${cat.name}</div>

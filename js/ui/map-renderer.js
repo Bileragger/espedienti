@@ -288,11 +288,11 @@ export class MapRenderer {
   _createEventPopup(event) {
     const categoryInfo = this.categoriesLoader.getCategoryInfo(event.category);
     const tagsHtml = event.tags
-      ? event.tags.map(tag => `<span style="background: #e0e7ff; color: #4c1d95; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('')
+      ? event.tags.map(tag => `<span style="background: #fef3c7; color: #78350f; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('')
       : '';
 
     const posterBtn = event.poster
-      ? `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>`
+      ? `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>`
       : '';
 
     return `
@@ -302,9 +302,9 @@ export class MapRenderer {
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
         <div style="margin-bottom: 8px;">${tagsHtml}</div>
         ${posterBtn}
-        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
         <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
-        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
+        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #f59e0b; border: 2px solid #f59e0b; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
       </div>
     `;
   }
@@ -322,12 +322,12 @@ export class MapRenderer {
       : '';
 
     const imageBtn = place.image
-      ? `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #8B4513; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>`
+      ? `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #92400e; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>`
       : '';
 
     return `
       <div style="min-width: 200px;">
-        <h4 style="margin-bottom: 8px; color: #8B4513;">${icon} ${place.name}</h4>
+        <h4 style="margin-bottom: 8px; color: #92400e;">${icon} ${place.name}</h4>
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
         ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
         ${websiteBtn}
