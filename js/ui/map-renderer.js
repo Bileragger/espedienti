@@ -97,6 +97,15 @@ export class MapRenderer {
   }
 
   /**
+   * Tell Leaflet to recalculate its container size (e.g. after fullscreen toggle)
+   */
+  invalidateSize() {
+    if (this.map) {
+      this.map.invalidateSize();
+    }
+  }
+
+  /**
    * Render map with markers
    */
   render() {

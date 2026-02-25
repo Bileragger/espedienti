@@ -282,13 +282,54 @@ function setupSmoothScroll() {
 }
 
 /**
+ * Set up map fullscreen toggle
+ */
+function setupMapFullscreen() {
+  window.toggleMapFullscreen = () => {
+    const mapContainer = document.querySelector('.map-container');
+    const btn = document.getElementById('fullscreenMapBtn');
+    if (!mapContainer) return;
+
+    const isFullscreen = mapContainer.classList.toggle('fullscreen');
+    if (btn) btn.textContent = isFullscreen ? '✕' : '⛶';
+
+    // Let Leaflet recalculate size after transition
+    setTimeout(() => mapRenderer.invalidateSize(), 50);
+  };
+
+  // Exit fullscreen on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const mapContainer = document.querySelector('.map-container');
+      if (mapContainer && mapContainer.classList.contains('fullscreen')) {
+        mapContainer.classList.remove('fullscreen');
+        const btn = document.getElementById('fullscreenMapBtn');
+        if (btn) btn.textContent = '⛶';
+        setTimeout(() => mapRenderer.invalidateSize(), 50);
+      }
+    }
+  });
+
+  console.log('✅ Map fullscreen set up');
+}
+
+/**
  * Set up search bar filter
  */
 function setupSearchBar() {
   const searchBar = document.getElementById('searchBar');
   if (searchBar) {
-    // searchFilter already has its own initialization with debouncing
-    // Just ensure it triggers filter coordinator
+    // On Enter: scroll to the map/calendar section
+    searchBar.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const target = document.getElementById('events');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+
     console.log('✅ Search bar connected to filters');
   }
 }
@@ -323,6 +364,7 @@ async function initializeApp() {
     setupFilterToday();
     setupFilterOpenNow();
     setupResetFilters();
+    setupMapFullscreen();
 
     // Set up UI enhancements
     setupSmoothScroll();
@@ -343,6 +385,15 @@ async function initializeApp() {
   } catch (error) {
     console.error('❌ Initialization error:', error);
   }
+}
+
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('⚠️ Service worker registration failed:', err);
+    });
+  });
 }
 
 // Wait for DOM to be ready

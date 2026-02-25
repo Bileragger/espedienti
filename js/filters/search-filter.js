@@ -23,7 +23,7 @@ export class SearchFilter {
    * Sets up event listeners for search input
    */
   initialize() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('searchBar');
 
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -146,7 +146,7 @@ export class SearchFilter {
    * Clear search term
    */
   clear() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('searchBar');
     if (searchInput) {
       searchInput.value = '';
     }
