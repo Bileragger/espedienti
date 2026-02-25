@@ -637,18 +637,16 @@
             position: relative;
         }
 
-        .map-container.fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Native fullscreen styles */
+        .map-container:fullscreen,
+        .map-container:-webkit-full-screen {
             width: 100vw;
             height: 100vh;
-            z-index: 9999;
-            border-radius: 0;
             background: var(--bg-primary);
         }
 
-        .map-container.fullscreen #map {
+        .map-container:fullscreen #map,
+        .map-container:-webkit-full-screen #map {
             height: 100vh;
             border-radius: 0;
             border: none;

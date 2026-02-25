@@ -282,33 +282,48 @@ function setupSmoothScroll() {
 }
 
 /**
- * Set up map fullscreen toggle
+ * Set up map fullscreen toggle (native Fullscreen API)
  */
 function setupMapFullscreen() {
-  window.toggleMapFullscreen = () => {
-    const mapContainer = document.querySelector('.map-container');
+  const updateBtn = (isFs) => {
     const btn = document.getElementById('fullscreenMapBtn');
-    if (!mapContainer) return;
-
-    const isFullscreen = mapContainer.classList.toggle('fullscreen');
-    if (btn) btn.textContent = isFullscreen ? '✕' : '⛶';
-
-    // Let Leaflet recalculate size after transition
-    setTimeout(() => mapRenderer.invalidateSize(), 50);
+    if (btn) btn.textContent = isFs ? '✕' : '⛶';
   };
 
-  // Exit fullscreen on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const mapContainer = document.querySelector('.map-container');
-      if (mapContainer && mapContainer.classList.contains('fullscreen')) {
-        mapContainer.classList.remove('fullscreen');
-        const btn = document.getElementById('fullscreenMapBtn');
-        if (btn) btn.textContent = '⛶';
-        setTimeout(() => mapRenderer.invalidateSize(), 50);
-      }
+  window.toggleMapFullscreen = () => {
+    const mapContainer = document.querySelector('.map-container');
+    if (!mapContainer) return;
+
+    if (!document.fullscreenElement) {
+      mapContainer.requestFullscreen().catch(() => {
+        // Safari / older Android fallback: not needed, they support it now
+        console.warn('⚠️ Fullscreen API not available');
+      });
+    } else {
+      document.exitFullscreen();
     }
+  };
+
+  // Sync button icon and resize Leaflet whenever fullscreen state changes
+  document.addEventListener('fullscreenchange', () => {
+    const isFs = !!document.fullscreenElement;
+    updateBtn(isFs);
+    setTimeout(() => mapRenderer.invalidateSize(), 100);
   });
+
+  // webkit prefix (older Safari / some Android WebView)
+  document.addEventListener('webkitfullscreenchange', () => {
+    const isFs = !!document.webkitFullscreenElement;
+    updateBtn(isFs);
+    setTimeout(() => mapRenderer.invalidateSize(), 100);
+  });
+
+  // Disable browser pinch-zoom on the page; allow it only on the map
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1 && !e.target.closest('#map')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 
   console.log('✅ Map fullscreen set up');
 }
