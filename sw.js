@@ -3,7 +3,7 @@
  * Caches shell assets for offline support and faster loads.
  */
 
-const CACHE_NAME = 'espedienti-v1';
+const CACHE_NAME = 'espedienti-v7';
 
 // Assets to cache on install (app shell)
 const SHELL_ASSETS = [

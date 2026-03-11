@@ -14,7 +14,8 @@ import { categoriesLoader } from '../data/categories-loader.js';
 import { geolocationService } from '../utils/geolocation-service.js';
 import { calendarExport } from '../utils/calendar-export.js';
 import { dateFilter } from '../filters/date-filter.js';
-import { PLACE_CATEGORY_ICONS, MAP_CONFIG, MARKER_STYLES } from '../config/constants.js';
+import { PLACE_CATEGORY_ICONS, MAP_CONFIG, MARKER_STYLES, EVENT_CATEGORY_COLORS, PLACE_CATEGORY_COLORS, EVENT_CATEGORIES, PLACE_CATEGORIES } from '../config/constants.js';
+import { openingHoursParser } from '../utils/opening-hours-parser.js';
 
 export class MapRenderer {
   constructor(
@@ -138,6 +139,53 @@ export class MapRenderer {
 
     // Fit bounds to show all markers
     this._fitBounds();
+
+    // Update legend
+    this._updateLegend(
+      showEvents ? filteredEvents : [],
+      showPlaces ? filteredPlaces : []
+    );
+  }
+
+  /**
+   * Update map legend with visible categories
+   */
+  _updateLegend(events, places) {
+    const legend = document.getElementById('mapLegend');
+    if (!legend) return;
+
+    const eventCats = [...new Set(events.map(e => e.category))];
+    const placeCats = [...new Set(places.map(p => p.category))];
+
+    const rows = [];
+
+    if (eventCats.length > 0) {
+      rows.push('<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#555;">Eventi</div>');
+      eventCats.forEach(cat => {
+        const color = EVENT_CATEGORY_COLORS[cat] || EVENT_CATEGORY_COLORS['altro'];
+        const name = EVENT_CATEGORIES[cat]?.name || cat;
+        rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+          <span style="font-size:0.72rem;white-space:nowrap;">${name}</span>
+        </div>`);
+      });
+    }
+
+    if (placeCats.length > 0) {
+      if (eventCats.length > 0) rows.push('<div style="height:6px;"></div>');
+      rows.push('<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#555;">Luoghi</div>');
+      placeCats.forEach(cat => {
+        const color = PLACE_CATEGORY_COLORS[cat] || PLACE_CATEGORY_COLORS['altro'];
+        const name = PLACE_CATEGORIES[cat]?.name || cat;
+        rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+          <span style="font-size:0.72rem;white-space:nowrap;">${name}</span>
+        </div>`);
+      });
+    }
+
+    legend.innerHTML = rows.join('');
+    legend.style.display = rows.length > 0 ? 'block' : 'none';
   }
 
   /**
@@ -165,7 +213,7 @@ export class MapRenderer {
 
     events.forEach(event => {
       const isSelected = selectedLocation === event.location;
-      const icon = this._createEventIcon(isSelected);
+      const icon = this._createEventIcon(event.category, isSelected);
 
       const marker = L.marker(
         [event.coordinates.lat, event.coordinates.lng],
@@ -224,37 +272,24 @@ export class MapRenderer {
    * @param {boolean} isSelected - Is marker selected
    * @returns {L.DivIcon} Leaflet icon
    */
-  _createEventIcon(isSelected) {
-    const style = isSelected
-      ? this.markerStyles.event.selected
-      : this.markerStyles.event.default;
+  _createEventIcon(category, isSelected) {
+    const size = isSelected ? 14 : 10;
+    const color = EVENT_CATEGORY_COLORS[category] || EVENT_CATEGORY_COLORS['altro'];
+    const shadow = isSelected ? '0 0 0 3px rgba(255,255,255,0.8), 0 3px 10px rgba(0,0,0,0.4)' : '0 1px 4px rgba(0,0,0,0.35)';
 
-    const html = `
-      <div style="
-        background: ${style.background};
-        width: ${style.width}px;
-        height: ${style.height}px;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: 0 ${isSelected ? '4px 16px' : '2px 8px'} rgba(0,0,0,0.3);
-      ">
-        <div style="
-          position: absolute;
-          width: ${Math.floor(style.width / 2)}px;
-          height: ${Math.floor(style.height / 2)}px;
-          background: white;
-          border-radius: 50%;
-          top: ${Math.floor(style.width / 4)}px;
-          left: ${Math.floor(style.height / 4)}px;
-        "></div>
-      </div>
-    `;
+    const html = `<div style="
+      background: ${color};
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      box-shadow: ${shadow};
+    "></div>`;
 
     return L.divIcon({
       className: 'custom-marker',
       html,
-      iconSize: [style.width, style.height],
-      iconAnchor: [style.width / 2, style.height]
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2]
     });
   }
 
@@ -264,28 +299,22 @@ export class MapRenderer {
    * @returns {L.DivIcon} Leaflet icon
    */
   _createPlaceIcon(place) {
-    const icon = this.placeCategoryIcons[place.category] || '📍';
-    const style = this.markerStyles.place;
+    const size = 10;
+    const color = PLACE_CATEGORY_COLORS[place.category] || PLACE_CATEGORY_COLORS['altro'];
 
-    const html = `
-      <div style="
-        background: ${style.background};
-        width: ${style.width}px;
-        height: ${style.height}px;
-        border-radius: ${style.borderRadius}px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: ${style.fontSize}px;
-      ">${icon}</div>
-    `;
+    const html = `<div style="
+      background: ${color};
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    "></div>`;
 
     return L.divIcon({
       className: 'custom-marker',
       html,
-      iconSize: [style.width, style.height],
-      iconAnchor: [style.width / 2, style.height]
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2]
     });
   }
 
@@ -301,19 +330,19 @@ export class MapRenderer {
       : '';
 
     const posterBtn = event.poster
-      ? `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>`
+      ? `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1a1410; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">🖼️ Locandina</button>`
       : '';
 
     return `
-      <div style="min-width: 200px;">
+      <div style="min-width: 200px; font-family: 'JetBrains Mono', 'Courier New', monospace;">
         <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
         <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${this.dateFormatter.formatEventDate(event)}</p>
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
         <div style="margin-bottom: 8px;">${tagsHtml}</div>
         ${posterBtn}
-        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
+        <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1a1410; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">➕ Aggiungi</button>
         <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
-        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #f59e0b; border: 2px solid #f59e0b; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
+        <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1a1410; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">${categoryInfo.icon} Chat</button>
       </div>
     `;
   }
@@ -330,15 +359,33 @@ export class MapRenderer {
       ? `<a href="${place.website}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; padding: 8px; margin-top: 5px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none;">🌐 Sito Web</a>`
       : '';
 
+    let hoursHtml = '';
+    if (place.openingHours) {
+      const status = openingHoursParser.getStatusMessage(place);
+      const isOpen = openingHoursParser.isOpenNow(place);
+      const nextInfo = openingHoursParser.getNextOpeningTime(place);
+      const statusColor = isOpen ? '#16a34a' : '#dc2626';
+      const now = new Date();
+      const currentDay = openingHoursParser.daysOfWeek[now.getDay()];
+      const todayHours = place.openingHours[currentDay];
+      hoursHtml = `
+        <div style="margin-bottom: 8px; padding: 6px 8px; background: #f5f0e0; border-radius: 6px; font-size: 0.8rem;">
+          <span style="color: ${statusColor}; font-weight: 600;">🕐 ${status}</span>
+          ${todayHours && todayHours.toLowerCase() !== 'su appuntamento' ? `<span style="color: #555; margin-left: 6px;">${todayHours}</span>` : ''}
+          ${nextInfo ? `<div style="color: #888; margin-top: 2px;">${nextInfo}</div>` : ''}
+        </div>`;
+    }
+
     const imageBtn = place.image
       ? `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #92400e; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>`
       : '';
 
     return `
-      <div style="min-width: 200px;">
+      <div style="min-width: 200px; font-family: 'JetBrains Mono', 'Courier New', monospace;">
         <h4 style="margin-bottom: 8px; color: #92400e;">${icon} ${place.name}</h4>
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
         ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
+        ${hoursHtml}
         ${websiteBtn}
         ${imageBtn}
         <button onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>

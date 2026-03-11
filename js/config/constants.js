@@ -78,6 +78,34 @@ export const PLACE_CATEGORY_NAMES = {
 };
 
 // ============================================================================
+// CATEGORY COLORS (for map markers)
+// ============================================================================
+
+export const EVENT_CATEGORY_COLORS = {
+  'live-music':          '#e53935',
+  'open-mic':            '#8e24aa',
+  'concerto':            '#d81b60',
+  'spettacolo-teatrale': '#5e35b1',
+  'mostra':              '#f57c00',
+  'workshop':            '#0288d1',
+  'fiera':               '#00897b',
+  'altro':               '#78909c'
+};
+
+export const PLACE_CATEGORY_COLORS = {
+  'museo':          '#1565c0',
+  'galleria':       '#6a1fa0',
+  'parco':          '#2e7d32',
+  'biblioteca':     '#4527a0',
+  'teatro':         '#ad1457',
+  'coworking':      '#00695c',
+  'ristorante':     '#e64a19',
+  'centro-sociale': '#f57f17',
+  'fondazione':     '#37474f',
+  'altro':          '#546e7a'
+};
+
+// ============================================================================
 // DAY AND MONTH NAMES
 // ============================================================================
 
@@ -178,25 +206,25 @@ export const MAP_CONFIG = {
 export const MARKER_STYLES = {
   event: {
     default: {
-      background: '#667eea',
+      background: '#ffe500',
       width: 32,
       height: 32,
-      borderRadius: 8,
+      borderRadius: 16,
       fontSize: 18
     },
     selected: {
-      background: '#4338ca',
+      background: '#f0c800',
       width: 38,
       height: 38,
-      borderRadius: 10,
+      borderRadius: 19,
       fontSize: 20
     }
   },
   place: {
-    background: '#8B4513',
+    background: '#ffe500',
     width: 28,
     height: 28,
-    borderRadius: 6,
+    borderRadius: 14,
     fontSize: 16
   },
   user: {
