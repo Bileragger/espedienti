@@ -79,7 +79,7 @@ export class MapRenderer {
       return;
     }
 
-    this.map = L.map('map', { gestureHandling: true }).setView(
+    this.map = L.map('map').setView(
       [this.mapConfig.defaultCenter.lat, this.mapConfig.defaultCenter.lng],
       this.mapConfig.defaultZoom
     );

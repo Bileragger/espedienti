@@ -397,6 +397,7 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 52px;
             border-top: 1px solid var(--border-subtle);
             border-left: 1px solid var(--border-subtle);
         }
@@ -410,7 +411,6 @@
         }
 
         .calendar-day {
-            min-height: 56px;
             padding: 4px 5px;
             border-right: 1px solid var(--border-subtle);
             border-bottom: 1px solid var(--border-subtle);
