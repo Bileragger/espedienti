@@ -3,14 +3,14 @@
  * Caches shell assets for offline support and faster loads.
  */
 
-const CACHE_NAME = 'espedienti-v7';
+const CACHE_NAME = 'espedienti-v8';
 
 // Assets to cache on install (app shell)
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/about.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icons/icon-192.svg',
   '/icons/icon-512.svg',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',

@@ -82,27 +82,27 @@ export const PLACE_CATEGORY_NAMES = {
 // ============================================================================
 
 export const EVENT_CATEGORY_COLORS = {
-  'live-music':          '#e53935',
-  'open-mic':            '#8e24aa',
-  'concerto':            '#d81b60',
-  'spettacolo-teatrale': '#5e35b1',
-  'mostra':              '#f57c00',
-  'workshop':            '#0288d1',
-  'fiera':               '#00897b',
-  'altro':               '#78909c'
+  'live-music':          '#ef4444', // rosso
+  'open-mic':            '#f97316', // arancio
+  'concerto':            '#eab308', // giallo
+  'spettacolo-teatrale': '#a855f7', // viola
+  'mostra':              '#0ea5e9', // azzurro
+  'workshop':            '#10b981', // verde
+  'fiera':               '#ec4899', // rosa
+  'altro':               '#94a3b8'  // grigio
 };
 
 export const PLACE_CATEGORY_COLORS = {
-  'museo':          '#1565c0',
-  'galleria':       '#6a1fa0',
-  'parco':          '#2e7d32',
-  'biblioteca':     '#4527a0',
-  'teatro':         '#ad1457',
-  'coworking':      '#00695c',
-  'ristorante':     '#e64a19',
-  'centro-sociale': '#f57f17',
-  'fondazione':     '#37474f',
-  'altro':          '#546e7a'
+  'museo':          '#2563eb', // blu
+  'galleria':       '#d946ef', // fucsia
+  'parco':          '#16a34a', // verde
+  'biblioteca':     '#7c3aed', // indaco
+  'teatro':         '#f43f5e', // rosso-rosa
+  'coworking':      '#0891b2', // ciano
+  'ristorante':     '#dc2626', // rosso scuro
+  'centro-sociale': '#d97706', // ambra
+  'fondazione':     '#475569', // ardesia
+  'altro':          '#64748b'  // grigio
 };
 
 // ============================================================================

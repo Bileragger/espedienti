@@ -79,7 +79,7 @@ export class MapRenderer {
       return;
     }
 
-    this.map = L.map('map').setView(
+    this.map = L.map('map', { gestureHandling: true }).setView(
       [this.mapConfig.defaultCenter.lat, this.mapConfig.defaultCenter.lng],
       this.mapConfig.defaultZoom
     );
@@ -273,15 +273,17 @@ export class MapRenderer {
    * @returns {L.DivIcon} Leaflet icon
    */
   _createEventIcon(category, isSelected) {
-    const size = isSelected ? 14 : 10;
+    const size = isSelected ? 16 : 12;
     const color = EVENT_CATEGORY_COLORS[category] || EVENT_CATEGORY_COLORS['altro'];
-    const shadow = isSelected ? '0 0 0 3px rgba(255,255,255,0.8), 0 3px 10px rgba(0,0,0,0.4)' : '0 1px 4px rgba(0,0,0,0.35)';
+    const border = isSelected ? '2px solid white' : '2px solid white';
+    const shadow = isSelected ? '0 0 0 2px ' + color + ', 0 3px 10px rgba(0,0,0,0.4)' : '0 1px 5px rgba(0,0,0,0.45)';
 
     const html = `<div style="
       background: ${color};
       width: ${size}px;
       height: ${size}px;
       border-radius: 50%;
+      border: ${border};
       box-shadow: ${shadow};
     "></div>`;
 
@@ -299,7 +301,7 @@ export class MapRenderer {
    * @returns {L.DivIcon} Leaflet icon
    */
   _createPlaceIcon(place) {
-    const size = 10;
+    const size = 12;
     const color = PLACE_CATEGORY_COLORS[place.category] || PLACE_CATEGORY_COLORS['altro'];
 
     const html = `<div style="
@@ -307,7 +309,8 @@ export class MapRenderer {
       width: ${size}px;
       height: ${size}px;
       border-radius: 50%;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+      border: 2px solid white;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.45);
     "></div>`;
 
     return L.divIcon({
