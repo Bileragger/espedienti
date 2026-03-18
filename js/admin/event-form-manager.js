@@ -194,9 +194,14 @@ export class EventFormManager {
         return;
       }
 
+      const primaryCategory = document.getElementById('eventPrimaryCategory').value;
+      const extraCats = Array.from(document.querySelectorAll('input[name="eventCatExtra"]:checked')).map(cb => cb.value);
+      const categories = [primaryCategory, ...extraCats.filter(c => c !== primaryCategory)];
+
       const eventData = {
         title: document.getElementById('title').value,
-        category: document.getElementById('eventCategory').value,
+        primaryCategory,
+        categories,
         date: document.getElementById('date').value,
         location: document.getElementById('location').value,
         coordinates: coords,
@@ -265,7 +270,11 @@ export class EventFormManager {
     this.editingEventId = id;
 
     document.getElementById('title').value = event.title;
-    document.getElementById('eventCategory').value = event.category || '';
+    document.getElementById('eventPrimaryCategory').value = event.primaryCategory || event.category || '';
+    const eventCats = event.categories || (event.category ? [event.category] : []);
+    document.querySelectorAll('input[name="eventCatExtra"]').forEach(cb => {
+      cb.checked = eventCats.includes(cb.value) && cb.value !== (event.primaryCategory || event.category);
+    });
     document.getElementById('date').value = event.date;
     document.getElementById('whatsapp').value = event.whatsappLink || '';
     document.getElementById('location').value = event.location;

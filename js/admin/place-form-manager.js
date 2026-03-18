@@ -185,9 +185,14 @@ export class PlaceFormManager {
 
       const openingHours = this.collectOpeningHours();
 
+      const primaryCategory = document.getElementById('placePrimaryCategory').value;
+      const extraCats = Array.from(document.querySelectorAll('input[name="placeCatExtra"]:checked')).map(cb => cb.value);
+      const categories = [primaryCategory, ...extraCats.filter(c => c !== primaryCategory)];
+
       const placeData = {
         name: document.getElementById('placeName').value,
-        category: document.getElementById('placeCategory').value,
+        primaryCategory,
+        categories,
         address: document.getElementById('placeAddress').value,
         coordinates: coords,
         description: document.getElementById('placeDescription').value || null,
@@ -251,7 +256,11 @@ export class PlaceFormManager {
     this.editingPlaceId = id;
 
     document.getElementById('placeName').value = place.name;
-    document.getElementById('placeCategory').value = place.category;
+    document.getElementById('placePrimaryCategory').value = place.primaryCategory || place.category || '';
+    const placeCats = place.categories || (place.category ? [place.category] : []);
+    document.querySelectorAll('input[name="placeCatExtra"]').forEach(cb => {
+      cb.checked = placeCats.includes(cb.value) && cb.value !== (place.primaryCategory || place.category);
+    });
     document.getElementById('placeAddress').value = place.address;
     document.getElementById('placeCoordinates').value = `${place.coordinates.lat}, ${place.coordinates.lng}`;
     document.getElementById('placeDescription').value = place.description || '';
@@ -307,22 +316,12 @@ export class PlaceFormManager {
     const sortedPlaces = [...this.places].sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
     list.innerHTML = sortedPlaces.map(place => {
-      const icon = this.categoryIcons[place.category] || '📍';
-
       return `
-        <li class="event-item place-item">
-          <div class="place-item-header">
-            <h3 class="place-item-title">${icon} ${place.name}</h3>
-            <div class="place-item-actions">
-              <button type="button" class="btn btn-small" onclick="editPlace(${place.id})">✏️</button>
-              <button type="button" class="btn btn-danger btn-small" onclick="deletePlace(${place.id})">🗑️</button>
-            </div>
-          </div>
-          <div class="place-info-icons">
-            <div class="info-icon" title="Indirizzo">
-              <span>📍</span>
-              <div class="tooltip">${place.address}</div>
-            </div>
+        <li class="event-item place-item place-item--compact">
+          <span class="place-item-name">${place.name}</span>
+          <div class="place-item-actions">
+            <button type="button" class="btn btn-small" onclick="editPlace(${place.id})">Modifica</button>
+            <button type="button" class="btn btn-danger btn-small" onclick="deletePlace(${place.id})">Elimina</button>
           </div>
         </li>
       `;

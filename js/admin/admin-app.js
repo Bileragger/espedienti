@@ -18,6 +18,7 @@ import { imageUploadService } from './image-upload-service.js';
 import { miniMapService } from './mini-map-service.js';
 import { eventFormManager } from './event-form-manager.js';
 import { placeFormManager } from './place-form-manager.js';
+import { newsletterManager } from './newsletter-manager.js';
 
 /**
  * Initialize all admin modules
@@ -31,6 +32,7 @@ async function initializeModules() {
   // Initialize form managers
   await eventFormManager.initialize();
   await placeFormManager.initialize();
+  newsletterManager.initialize();
 
   console.log('✅ All admin modules initialized');
 }

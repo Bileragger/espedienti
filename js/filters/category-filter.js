@@ -128,7 +128,8 @@ export class CategoryFilter {
     }
 
     return events.filter(event => {
-      return event.category && selected.has(event.category);
+      const cats = event.categories || (event.category ? [event.category] : []);
+      return cats.some(cat => selected.has(cat));
     });
   }
 
@@ -146,7 +147,8 @@ export class CategoryFilter {
     }
 
     return places.filter(place => {
-      return place.category && selected.has(place.category);
+      const cats = place.categories || (place.category ? [place.category] : []);
+      return cats.some(cat => selected.has(cat));
     });
   }
 

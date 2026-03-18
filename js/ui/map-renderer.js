@@ -154,8 +154,8 @@ export class MapRenderer {
     const legend = document.getElementById('mapLegend');
     if (!legend) return;
 
-    const eventCats = [...new Set(events.map(e => e.category))];
-    const placeCats = [...new Set(places.map(p => p.category))];
+    const eventCats = [...new Set(events.map(e => e.primaryCategory || e.category))];
+    const placeCats = [...new Set(places.map(p => p.primaryCategory || p.category))];
 
     const rows = [];
 
@@ -213,7 +213,7 @@ export class MapRenderer {
 
     events.forEach(event => {
       const isSelected = selectedLocation === event.location;
-      const icon = this._createEventIcon(event.category, isSelected);
+      const icon = this._createEventIcon(event.primaryCategory || event.category, isSelected);
 
       const marker = L.marker(
         [event.coordinates.lat, event.coordinates.lng],
@@ -302,7 +302,7 @@ export class MapRenderer {
    */
   _createPlaceIcon(place) {
     const size = 12;
-    const color = PLACE_CATEGORY_COLORS[place.category] || PLACE_CATEGORY_COLORS['altro'];
+    const color = PLACE_CATEGORY_COLORS[place.primaryCategory || place.category] || PLACE_CATEGORY_COLORS['altro'];
 
     const html = `<div style="
       background: ${color};
@@ -327,7 +327,13 @@ export class MapRenderer {
    * @returns {string} HTML content
    */
   _createEventPopup(event) {
-    const categoryInfo = this.categoriesLoader.getCategoryInfo(event.category);
+    const categoryInfo = this.categoriesLoader.getCategoryInfo(event.primaryCategory || event.category);
+    const allCats = event.categories || (event.category ? [event.category] : []);
+    const catsHtml = allCats.map(cat => {
+      const info = EVENT_CATEGORIES[cat];
+      return info ? `<span style="display:inline-block;background:#fef3c7;color:#78350f;padding:1px 7px;border-radius:8px;font-size:0.68rem;margin-right:3px;margin-bottom:3px;">${info.icon} ${info.name}</span>` : '';
+    }).join('');
+
     const tagsHtml = event.tags
       ? event.tags.map(tag => `<span style="background: #fef3c7; color: #78350f; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('')
       : '';
@@ -338,7 +344,8 @@ export class MapRenderer {
 
     return `
       <div style="min-width: 200px; font-family: 'JetBrains Mono', 'Courier New', monospace;">
-        <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
+        <h4 style="margin-bottom: 5px;">${event.title}</h4>
+        <div style="margin-bottom: 8px;">${catsHtml}</div>
         <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${this.dateFormatter.formatEventDate(event)}</p>
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
         <div style="margin-bottom: 8px;">${tagsHtml}</div>
@@ -356,7 +363,12 @@ export class MapRenderer {
    * @returns {string} HTML content
    */
   _createPlacePopup(place) {
-    const icon = this.placeCategoryIcons[place.category] || '📍';
+    const primaryCat = place.primaryCategory || place.category;
+    const allCats = place.categories || (place.category ? [place.category] : []);
+    const catsHtml = allCats.map(cat => {
+      const info = PLACE_CATEGORIES[cat];
+      return info ? `<span style="display:inline-block;background:#fef3c7;color:#78350f;padding:1px 7px;border-radius:8px;font-size:0.68rem;margin-right:3px;margin-bottom:3px;">${info.icon} ${info.name}</span>` : '';
+    }).join('');
 
     const websiteBtn = place.website
       ? `<a href="${place.website}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; padding: 8px; margin-top: 5px; background: var(--accent-primary); color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none;">🌐 Sito Web</a>`
@@ -385,9 +397,9 @@ export class MapRenderer {
 
     return `
       <div style="min-width: 200px; font-family: 'JetBrains Mono', 'Courier New', monospace;">
-        <h4 style="margin-bottom: 8px; color: #92400e;">${icon} ${place.name}</h4>
+        <h4 style="margin-bottom: 5px; color: #92400e;">${place.name}</h4>
+        <div style="margin-bottom: 8px;">${catsHtml}</div>
         <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${place.address}</p>
-        ${place.description ? `<p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
         ${hoursHtml}
         ${websiteBtn}
         ${imageBtn}
