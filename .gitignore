@@ -1,8 +1,5 @@
 # File da non caricare su GitHub
 
-# Pannello admin (solo locale)
-admin.html
-
 # File di sistema
 .DS_Store
 Thumbs.db

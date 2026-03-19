@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestione Eventi e Luoghi</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
+            authDomain: "espedienti-napoli.firebaseapp.com",
+            projectId: "espedienti-napoli",
+            storageBucket: "espedienti-napoli.firebasestorage.app",
+            messagingSenderId: "450345618879",
+            appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a",
+            measurementId: "G-Q48FHGR60K"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Rendi disponibili globalmente
+        window.db = db;
+        window.auth = auth;
+        window.firestoreModules = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
+
+        // Gestione login form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const errorEl = document.getElementById('loginError');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            errorEl.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Accesso...';
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                errorEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Accedi';
+            }
+        });
+
+        // Gestione logout
+        window.adminLogout = async () => {
+            await signOut(auth);
+        };
+
+        // Osserva stato autenticazione
+        onAuthStateChanged(auth, (user) => {
+            const overlay = document.getElementById('loginOverlay');
+            if (user) {
+                overlay.classList.add('hidden');
+                // Segnala che Firebase è pronto solo dopo auth
+                if (!window.firebaseReady) {
+                    window.firebaseReady = true;
+                    window.dispatchEvent(new Event('firebaseReady'));
+                }
+            } else {
+                overlay.classList.remove('hidden');
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                document.getElementById('loginError').style.display = 'none';
+                const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Accedi';
+                }
+            }
+        });
+    </script>
+
+    <style>
+        :root {
+            --bg-primary: #fefdf5;
+            --bg-secondary: #f9f4e4;
+            --bg-tertiary: #ede7cf;
+            --text-primary: #1c1409;
+            --text-secondary: #4a3818;
+            --text-tertiary: #7a6025;
+            --accent-primary: #c9a200;
+            --accent-secondary: #a07800;
+            --accent-places: #92400e;
+            --border-subtle: rgba(180, 140, 0, 0.25);
+            --shadow-glow: 0 0 15px rgba(180, 140, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 13px;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 12px;
+            color: var(--text-primary);
+        }
+
+        input, button, textarea, select {
+            font-family: inherit;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .header {
+            background: var(--accent-primary);
+            color: #1c1409;
+            padding: 14px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+        .content {
+            padding: 16px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            color: var(--accent-primary);
+            font-size: 1rem;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(180, 140, 0, 0.18), var(--shadow-glow);
+            background: var(--bg-secondary);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: #1c1409;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(180, 140, 0, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-subtle);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.875rem;
+        }
+
+        .events-list {
+            list-style: none;
+        }
+
+        .event-item {
+            background: var(--bg-tertiary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid var(--accent-primary);
+            border: 1px solid var(--border-subtle);
+            border-left-width: 3px;
+        }
+
+        .event-item h3 {
+            color: var(--text-primary);
+            font-size: 0.88rem;
+            margin-bottom: 4px;
+        }
+
+        .event-item p {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            margin-bottom: 3px;
+        }
+
+        .event-actions {
+            margin-top: 7px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .output-box {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #fef3c7;
+            margin-top: 20px;
+        }
+
+        .output-box pre {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .alert-warning {
+            background: rgba(180, 140, 0, 0.12);
+            color: #c9a200;
+            border-color: rgba(180, 140, 0, 0.25);
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag-chip {
+            background: rgba(180, 140, 0, 0.18);
+            color: var(--accent-primary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-subtle);
+            transition: all 0.3s;
+        }
+
+        .tag-chip:hover {
+            box-shadow: 0 0 15px rgba(180, 140, 0, 0.25);
+        }
+
+        .tag-chip button {
+            background: none;
+            border: none;
+            color: var(--accent-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .tag-chip button:hover {
+            transform: scale(1.2);
+        }
+
+        small {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        .cat-dropdown {
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            position: relative;
+        }
+
+        .cat-dropdown-summary {
+            padding: 7px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            list-style: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .cat-dropdown-summary::-webkit-details-marker { display: none; }
+
+        .cat-dropdown-summary::after {
+            content: ' ▾';
+            font-size: 0.75rem;
+        }
+
+        .cat-dropdown[open] .cat-dropdown-summary::after {
+            content: ' ▴';
+        }
+
+        .category-checkboxes {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .category-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: normal;
+        }
+
+        .category-checkboxes input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .search-results {
+            position: absolute;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: calc(100% - 4px);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        #miniMap {
+            height: 300px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border: 2px solid var(--border-subtle);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .dropzone {
+            border: 3px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(180, 140, 0, 0.1);
+            box-shadow: 0 0 20px rgba(180, 140, 0, 0.18);
+        }
+
+        .dropzone.has-image {
+            padding: 20px;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .upload-status {
+            margin-top: 10px;
+            font-size: 0.875rem;
+        }
+
+        .api-config {
+            background: rgba(180, 140, 0, 0.12);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(180, 140, 0, 0.25);
+        }
+
+        .api-config input {
+            margin-top: 10px;
+        }
+
+        .api-config a {
+            color: var(--accent-primary);
+            text-decoration: underline;
+        }
+
+        .api-config a:hover {
+            color: var(--accent-secondary);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #c9a200;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .location-group {
+            position: relative;
+        }
+
+        /* Tab styles */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-subtle);
+            margin-bottom: 16px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            padding: 8px 20px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+            border: 1px solid var(--border-subtle);
+            border-bottom: none;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-secondary);
+            box-shadow: 0 -4px 12px rgba(180, 140, 0, 0.18);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: #1c1409;
+            box-shadow: 0 0 20px rgba(180, 140, 0, 0.35);
+        }
+
+        .tab-btn.places-tab.active {
+            background: var(--accent-secondary);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Place-specific styles */
+        .place-item {
+            border-left-color: var(--accent-places);
+            padding: 12px 16px;
+        }
+
+        .place-item--compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 16px;
+        }
+
+        .place-item-name {
+            flex: 1;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 12px;
+        }
+
+        .opening-hours-grid {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .hours-row {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hours-row label {
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+
+        .hours-row input {
+            padding: 8px 12px;
+        }
+
+        #placeMiniMap {
+            height: 300px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border: 2px solid var(--border-subtle);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Compact place item styles */
+        .place-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .place-item-title {
+            flex: 1;
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: normal;
+            font-size: 1rem;
+        }
+
+        .place-item-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 15px;
+        }
+
+        .place-info-icons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .info-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(180, 140, 0, 0.12);
+            border-radius: 8px;
+            cursor: help;
+            transition: all 0.2s;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .info-icon:hover {
+            background: rgba(255, 225, 53, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .info-icon .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 1000;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s;
+            pointer-events: none;
+            margin-bottom: 5px;
+        }
+
+        .info-icon:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-multiline {
+            white-space: normal;
+            max-width: 250px;
+        }
+
+        .list-empty {
+            color: #666;
+            text-align: center;
+        }
+
+        .newsletter-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 16px;
+        }
+
+        .newsletter-item-email {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .newsletter-item-date {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            margin-left: 12px;
+        }
+
+        /* Login overlay */
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #loginOverlay.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 36px 32px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        .login-box h2 {
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin-bottom: 6px;
+        }
+
+        .login-box p {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-bottom: 24px;
+        }
+
+        .login-box .form-group {
+            text-align: left;
+        }
+
+        .login-error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .login-box .btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 10px;
+        }
+
+        .logout-btn {
+            float: right;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: var(--bg-primary);
+        }
+
+        .login-form-group-pass {
+            margin-top: 10px;
+        }
+
+        .alert--hidden {
+            display: none;
+        }
+
+        .api-config-note {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .btn-full-top {
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .dropzone-hint {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .input-hidden {
+            display: none;
+        }
+
+        .input-top {
+            margin-top: 10px;
+        }
+
+        .hours-hint {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login overlay -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Accesso Admin</h2>
+            <p>Espedienti a Napoli — area riservata</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUser">Nome utente</label>
+                    <input type="text" id="loginUser" autocomplete="username" placeholder="admin">
+                </div>
+                <div class="form-group login-form-group-pass">
+                    <label for="loginPass">Password</label>
+                    <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••">
+                </div>
+                <div class="login-error" id="loginError">⚠️ Credenziali non valide.</div>
+                <button type="submit" class="btn">Accedi</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Pannello Admin Avanzato</h1>
+            <p>Gestione Eventi e Luoghi - Espedienti a Napoli</p>
+            <button type="button" class="logout-btn" onclick="adminLogout()">Esci</button>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-success">
+                ✅ <strong>Connesso a Firebase:</strong> Tutti i cambiamenti vengono salvati automaticamente e la pagina index.html si aggiorna in tempo reale.
+            </div>
+
+            <div class="alert alert-warning alert--hidden" id="firebaseWarning">
+                ⚠️ <strong>Attenzione:</strong> Firebase non è ancora configurato. Modifica le credenziali nel codice HTML (cerca "firebaseConfig").
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button type="button" class="tab-btn active" onclick="switchTab('events')">🎭 Eventi</button>
+                <button type="button" class="tab-btn places-tab" onclick="switchTab('places')">🏛️ Luoghi</button>
+                <button type="button" class="tab-btn" onclick="switchTab('newsletter')">📬 Newsletter</button>
+            </div>
+
+            <!-- TAB EVENTI -->
+            <div id="eventsTab" class="tab-content active">
+
+            <!-- API Configuration -->
+            <div class="api-config" id="apiConfig">
+                <strong>⚙️ Configurazione API (Opzionale)</strong>
+                <p class="api-config-note">Per caricare immagini automaticamente, ottieni una API key gratuita da <a href="https://imgbb.com/api" target="_blank" rel="noopener noreferrer">ImgBB</a></p>
+                <input type="text" id="imgbbApiKey" placeholder="Incolla qui la tua API key ImgBB (opzionale)">
+                <small>La key verrà salvata solo nel tuo browser</small>
+            </div>
+
+            <!-- Form per nuovo evento -->
+            <div class="section">
+                <h2>➕ Aggiungi Nuovo Evento</h2>
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label for="title">Titolo Evento *</label>
+                        <input type="text" id="title" required placeholder="es. Concerto in Piazza">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="eventPrimaryCategory">Categoria Principale *</label>
+                            <select id="eventPrimaryCategory" required>
+                                <option value="">Seleziona categoria principale</option>
+                                <option value="live-music">🎵 Live Music</option>
+                                <option value="open-mic">🎤 Open Mic</option>
+                                <option value="concerto">🎸 Concerto</option>
+                                <option value="spettacolo-teatrale">🎭 Spettacolo Teatrale</option>
+                                <option value="mostra">🖼️ Mostra</option>
+                                <option value="workshop">🛠️ Workshop</option>
+                                <option value="fiera">🎪 Fiera</option>
+                                <option value="altro">📍 Altro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Categorie Aggiuntive</label>
+                            <details class="cat-dropdown">
+                                <summary class="cat-dropdown-summary">Seleziona…</summary>
+                                <div class="category-checkboxes">
+                                    <label><input type="checkbox" name="eventCatExtra" value="live-music"> Live Music</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="open-mic"> Open Mic</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="concerto"> Concerto</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="spettacolo-teatrale"> Spettacolo Teatrale</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="mostra"> Mostra</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="workshop"> Workshop</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="fiera"> Fiera</label>
+                                    <label><input type="checkbox" name="eventCatExtra" value="altro"> Altro</label>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Data *</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="whatsapp">Link WhatsApp (opzionale)</label>
+                            <input type="url" id="whatsapp" placeholder="https://chat.whatsapp.com/...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="existingPlace">📍 Seleziona da Luoghi Esistenti</label>
+                        <select id="existingPlace" onchange="selectExistingPlace()">
+                            <option value="">-- Oppure aggiungi un nuovo luogo --</option>
+                        </select>
+                        <small>Puoi scegliere un luogo già registrato o aggiungerne uno nuovo qui sotto</small>
+                    </div>
+
+                    <div class="form-group location-group">
+                        <label for="locationSearch">🔍 Cerca Nuovo Indirizzo</label>
+                        <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli (senza numero civico)">
+                        <small>Inizia a digitare per cercare la via o il luogo</small>
+                        <div class="search-results" id="searchResults"></div>
+                        <button type="button" class="btn btn-secondary btn-small btn-full-top" onclick="useManualAddress()">
+                            ✏️ Usa questo indirizzo (manuale)
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="houseNumber">🔢 Numero Civico (opzionale)</label>
+                        <input type="text" id="houseNumber" placeholder="es. 205">
+                        <small>Aggiungi manualmente il numero civico se presente</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Nome Luogo (selezionato) *</label>
+                            <input type="text" id="location" required placeholder="Verrà compilato automaticamente o inserisci manualmente">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="coordinates">📍 Coordinate (Lat, Lng) *</label>
+                        <input type="text" id="coordinates" required placeholder="es. 40.8536, 14.2503">
+                        <small>Formato: latitudine, longitudine (es. 40.8536, 14.2503)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📍 Mappa di Verifica</label>
+                        <div id="miniMap"></div>
+                        <small>La mappa si aggiornerà dopo aver selezionato un luogo</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🖼️ Carica Locandina (opzionale)</label>
+                        <div class="dropzone" id="dropzone">
+                            <p>📤 Trascina qui l'immagine o clicca per selezionare</p>
+                            <p class="dropzone-hint">Formati supportati: JPG, PNG, GIF (max 5MB)</p>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" class="input-hidden">
+                        <div class="upload-status" id="uploadStatus"></div>
+                        <input type="url" id="poster" placeholder="Oppure incolla direttamente un link all'immagine" class="input-top">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tagInput">Tags</label>
+                        <input type="text" id="tagInput" placeholder="Scrivi un tag e premi Invio (es. #musica)">
+                        <small>I tag devono iniziare con #. Premi Invio per aggiungere</small>
+                        <div class="tag-input-container" id="tagsContainer"></div>
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">✅ Aggiungi Evento</button>
+                </form>
+            </div>
+
+            <!-- Lista eventi correnti -->
+            <div class="section">
+                <h2>📋 Eventi Correnti (<span id="eventCount">0</span>)</h2>
+                <ul class="events-list" id="eventsList"></ul>
+            </div>
+
+            </div><!-- Fine TAB EVENTI -->
+
+            <!-- TAB LUOGHI -->
+            <div id="placesTab" class="tab-content">
+
+            <!-- Form per nuovo luogo -->
+            <div class="section">
+                <h2>➕ Aggiungi Nuovo Luogo</h2>
+                <form id="placeForm">
+                    <div class="form-group">
+                        <label for="placeName">Nome Luogo *</label>
+                        <input type="text" id="placeName" required placeholder="es. Museo Archeologico Nazionale">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="placePrimaryCategory">Categoria Principale *</label>
+                            <select id="placePrimaryCategory" required>
+                                <option value="">Seleziona categoria principale</option>
+                                <option value="museo">🏛️ Museo</option>
+                                <option value="galleria">🖼️ Galleria d'Arte</option>
+                                <option value="parco">🌳 Parco</option>
+                                <option value="biblioteca">📚 Biblioteca</option>
+                                <option value="teatro">🎭 Teatro</option>
+                                <option value="coworking">💼 Coworking Space</option>
+                                <option value="ristorante">🍽️ Ristorante</option>
+                                <option value="centro-sociale">🤝 Centro Sociale</option>
+                                <option value="fondazione">🏢 Fondazione</option>
+                                <option value="altro">📍 Altro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Categorie Aggiuntive</label>
+                            <details class="cat-dropdown">
+                                <summary class="cat-dropdown-summary">Seleziona…</summary>
+                                <div class="category-checkboxes">
+                                    <label><input type="checkbox" name="placeCatExtra" value="museo"> Museo</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="galleria"> Galleria d'Arte</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="parco"> Parco</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="biblioteca"> Biblioteca</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="teatro"> Teatro</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="coworking"> Coworking Space</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="ristorante"> Ristorante</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="centro-sociale"> Centro Sociale</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="fondazione"> Fondazione</label>
+                                    <label><input type="checkbox" name="placeCatExtra" value="altro"> Altro</label>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeDescription">Descrizione</label>
+                        <textarea id="placeDescription" rows="3" placeholder="Breve descrizione del luogo (puoi includere anche il sito web qui)..."></textarea>
+                    </div>
+
+                    <div class="form-group location-group">
+                        <label for="placeLocationSearch">🔍 Cerca Indirizzo</label>
+                        <input type="text" id="placeLocationSearch" placeholder="es. Piazza Museo, Napoli (senza numero civico)">
+                        <small>Inizia a digitare per cercare la via o il luogo</small>
+                        <div class="search-results" id="placeSearchResults"></div>
+                        <button type="button" class="btn btn-secondary btn-small btn-full-top" onclick="usePlaceManualAddress()">
+                            ✏️ Usa questo indirizzo (manuale)
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeHouseNumber">🔢 Numero Civico (opzionale)</label>
+                        <input type="text" id="placeHouseNumber" placeholder="es. 19">
+                        <small>Aggiungi manualmente il numero civico se presente</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeAddress">Indirizzo (selezionato) *</label>
+                        <input type="text" id="placeAddress" required placeholder="Verrà compilato automaticamente o inserisci manualmente">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeCoordinates">📍 Coordinate (Lat, Lng) *</label>
+                        <input type="text" id="placeCoordinates" required placeholder="es. 40.8536, 14.2503">
+                        <small>Formato: latitudine, longitudine (es. 40.8536, 14.2503)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📍 Mappa di Verifica</label>
+                        <div id="placeMiniMap"></div>
+                        <small>La mappa si aggiornerà dopo aver selezionato un luogo</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🕐 Orari di Apertura</label>
+                        <small class="hours-hint">Formati accettati: "10:30-13:30" (singola apertura), "10:30-13:30 - 16:00-18:00" (doppia apertura), "su appuntamento", oppure vuoto (chiuso)</small>
+                        <div class="opening-hours-grid">
+                            <div class="hours-row">
+                                <label>Lunedì</label>
+                                <input type="text" id="hours-lunedi" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Martedì</label>
+                                <input type="text" id="hours-martedi" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Mercoledì</label>
+                                <input type="text" id="hours-mercoledi" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Giovedì</label>
+                                <input type="text" id="hours-giovedi" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Venerdì</label>
+                                <input type="text" id="hours-venerdi" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Sabato</label>
+                                <input type="text" id="hours-sabato" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                            <div class="hours-row">
+                                <label>Domenica</label>
+                                <input type="text" id="hours-domenica" placeholder="10:30-13:30 o 10:30-13:30 - 16:00-18:00 o su appuntamento">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeWebsite">🌐 Sito Web (opzionale)</label>
+                        <input type="url" id="placeWebsite" placeholder="https://esempio.com">
+                        <small>Inserisci il sito web ufficiale del luogo</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placeImage">🖼️ Immagine (opzionale)</label>
+                        <input type="url" id="placeImage" placeholder="Incolla un link all'immagine">
+                    </div>
+
+                    <button type="submit" class="btn">✅ Aggiungi Luogo</button>
+                </form>
+            </div>
+
+            <!-- Lista luoghi correnti -->
+            <div class="section">
+                <h2>📋 Luoghi Correnti (<span id="placeCount">0</span>)</h2>
+                <ul class="events-list" id="placesList"></ul>
+            </div>
+
+            </div><!-- Fine TAB LUOGHI -->
+
+            <!-- TAB NEWSLETTER -->
+            <div id="newsletterTab" class="tab-content">
+                <div class="section">
+                    <h2>📬 Iscritti alla Newsletter (<span id="newsletterCount">0</span>)</h2>
+                    <ul class="events-list" id="newsletterList">
+                        <li class="list-empty">Caricamento...</li>
+                    </ul>
+                </div>
+            </div><!-- Fine TAB NEWSLETTER -->
+
+        </div>
+    </div>
+
+    <!-- Inline script moved to modular JS files in /js/admin/ directory -->
+    <!-- See js/admin/admin-app.js for the new modular entry point -->
+    <script type="module" src="js/admin/admin-app.js"></script>
+
+    <!--
+    ORIGINAL INLINE SCRIPT (COMMENTED OUT - NOW USING MODULAR ARCHITECTURE)
+    <script>
+        // === VARIABILI EVENTI ===
+        let events = [];
+        let currentTags = [];
+        let nextId = 1;
+        let miniMap = null;
+        let marker = null;
+        let searchTimeout = null;
+        let selectedImageUrl = null;
+
+        // === VARIABILI LUOGHI ===
+        let places = [];
+        let nextPlaceId = 1;
+        let placeMiniMap = null;
+        let placeMarker = null;
+        let placeSearchTimeout = null;
+
+        // === CARICAMENTO DATI DA FIREBASE ===
+        async function loadEventsFromFirebase() {
+            try {
+                const { collection, getDocs } = window.firestoreModules;
+                const querySnapshot = await getDocs(collection(window.db, 'events'));
+                events = [];
+                querySnapshot.forEach((doc) => {
+                    events.push({ firebaseId: doc.id, ...doc.data() });
+                });
+                nextId = events.length > 0 ? Math.max(...events.map(e => e.id), 0) + 1 : 1;
+                renderEvents();
+            } catch (error) {
+                console.error('Errore caricamento eventi:', error);
+                showFirebaseWarning();
+            }
+        }
+
+        async function loadPlacesFromFirebase() {
+            try {
+                const { collection, getDocs } = window.firestoreModules;
+                const querySnapshot = await getDocs(collection(window.db, 'places'));
+                places = [];
+                querySnapshot.forEach((doc) => {
+                    places.push({ firebaseId: doc.id, ...doc.data() });
+                });
+                nextPlaceId = places.length > 0 ? Math.max(...places.map(p => p.id), 0) + 1 : 1;
+                renderPlaces();
+                populateExistingPlaces();
+            } catch (error) {
+                console.error('Errore caricamento luoghi:', error);
+                showFirebaseWarning();
+            }
+        }
+
+        function showFirebaseWarning() {
+            document.getElementById('firebaseWarning').style.display = 'block';
+        }
+
+        // Carica dati quando Firebase è pronto
+        function initializeApp() {
+            if (window.firebaseReady && window.firestoreModules) {
+                loadEventsFromFirebase();
+                loadPlacesFromFirebase();
+            } else {
+                // Riprova dopo 100ms
+                setTimeout(initializeApp, 100);
+            }
+        }
+
+        // Avvia quando la pagina è caricata
+        window.addEventListener('load', initializeApp);
+
+        // Initialize house number listeners
+        window.addEventListener('load', function() {
+            // Event form house number
+            const houseNumberField = document.getElementById('houseNumber');
+            const locationField = document.getElementById('location');
+
+            if (houseNumberField && locationField) {
+                houseNumberField.addEventListener('input', function() {
+                    if (!locationField.dataset.originalAddress || locationField.dataset.originalAddress === '') {
+                        locationField.dataset.originalAddress = locationField.value;
+                    }
+
+                    const originalAddress = locationField.dataset.originalAddress;
+                    const houseNumber = this.value.trim();
+
+                    if (houseNumber) {
+                        const parts = originalAddress.split(',');
+                        const road = parts[0].trim();
+                        const rest = parts.slice(1).join(',');
+                        locationField.value = `${road}, ${houseNumber}${rest ? ',' + rest : ''}`;
+                    } else {
+                        locationField.value = originalAddress;
+                    }
+                });
+            }
+
+            // Place form house number
+            const placeHouseNumberField = document.getElementById('placeHouseNumber');
+            const placeAddressField = document.getElementById('placeAddress');
+
+            if (placeHouseNumberField && placeAddressField) {
+                placeHouseNumberField.addEventListener('input', function() {
+                    if (!placeAddressField.dataset.originalAddress || placeAddressField.dataset.originalAddress === '') {
+                        placeAddressField.dataset.originalAddress = placeAddressField.value;
+                    }
+
+                    const originalAddress = placeAddressField.dataset.originalAddress;
+                    const houseNumber = this.value.trim();
+
+                    if (houseNumber) {
+                        const parts = originalAddress.split(',');
+                        const road = parts[0].trim();
+                        const rest = parts.slice(1).join(',');
+                        placeAddressField.value = `${road}, ${houseNumber}${rest ? ',' + rest : ''}`;
+                    } else {
+                        placeAddressField.value = originalAddress;
+                    }
+                });
+            }
+        });
+
+        const savedApiKey = localStorage.getItem('imgbbApiKey');
+        if (savedApiKey) {
+            document.getElementById('imgbbApiKey').value = savedApiKey;
+        }
+
+        // Save API key
+        document.getElementById('imgbbApiKey').addEventListener('change', function() {
+            localStorage.setItem('imgbbApiKey', this.value);
+        });
+
+        // Initialize mini map
+        function initMiniMap() {
+            if (!miniMap) {
+                miniMap = L.map('miniMap').setView([40.8359, 14.2489], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(miniMap);
+            }
+        }
+
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                initMiniMap();
+            }, 100);
+        });
+
+        function updateMapMarker(lat, lng) {
+            if (!miniMap) return;
+            
+            if (marker) {
+                miniMap.removeLayer(marker);
+            }
+            
+            marker = L.marker([lat, lng]).addTo(miniMap);
+            miniMap.setView([lat, lng], 15);
+        }
+
+        // Location search with Nominatim API
+        document.getElementById('locationSearch').addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 3) {
+                document.getElementById('searchResults').classList.remove('show');
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                searchLocation(query);
+            }, 500);
+        });
+
+        async function searchLocation(query) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+                );
+                const results = await response.json();
+                displaySearchResults(results);
+            } catch (error) {
+                console.error('Error searching location:', error);
+            }
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+
+            if (results.length === 0) {
+                container.innerHTML = '<div class="search-result-item">Nessun risultato trovato</div>';
+                container.classList.add('show');
+                return;
+            }
+
+            container.innerHTML = results.map((result, index) => `
+                <div class="search-result-item" onclick="selectLocation(${index})">
+                    <strong>${result.display_name}</strong>
+                </div>
+            `).join('');
+
+            container.classList.add('show');
+            container.searchResults = results; // Store results for later access
+        }
+
+        function selectLocation(resultIndex) {
+            const container = document.getElementById('searchResults');
+            const result = container.searchResults[resultIndex];
+
+            // Construct address from structured data
+            let address = '';
+            if (result.address) {
+                const addr = result.address;
+                // Build address with house number if available
+                if (addr.house_number && addr.road) {
+                    address = `${addr.road}, ${addr.house_number}`;
+                } else if (addr.road) {
+                    address = addr.road;
+                }
+
+                // Add additional details
+                if (addr.suburb) address += `, ${addr.suburb}`;
+                if (addr.city) address += `, ${addr.city}`;
+                else if (addr.town) address += `, ${addr.town}`;
+                else if (addr.village) address += `, ${addr.village}`;
+            }
+
+            // Fallback to display_name if address construction failed
+            if (!address) {
+                address = result.display_name;
+            }
+
+            document.getElementById('coordinates').value = `${result.lat}, ${result.lon}`;
+            document.getElementById('location').value = address;
+
+            // Store original address for house number updates
+            const locationField = document.getElementById('location');
+            locationField.dataset.originalAddress = address;
+
+            container.classList.remove('show');
+
+            updateMapMarker(result.lat, result.lon);
+        }
+
+        // Use manual address (eventi)
+        function useManualAddress() {
+            const manualAddress = document.getElementById('locationSearch').value.trim();
+
+            if (!manualAddress) {
+                alert('⚠️ Inserisci prima un indirizzo nel campo di ricerca');
+                return;
+            }
+
+            // Set the address
+            document.getElementById('location').value = manualAddress;
+            document.getElementById('location').dataset.originalAddress = manualAddress;
+
+            // Close search results
+            document.getElementById('searchResults').classList.remove('show');
+
+            alert('✅ Indirizzo inserito manualmente. Ora inserisci le coordinate nel formato "latitudine, longitudine" (es. 40.8536, 14.2503). Puoi cercarle su Google Maps cliccando col tasto destro.');
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.location-group')) {
+                document.getElementById('searchResults').classList.remove('show');
+            }
+        });
+
+        // Image upload handling
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Per favore seleziona un file immagine');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Il file è troppo grande. Massimo 5MB');
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'image-preview';
+                dropzone.innerHTML = '';
+                dropzone.appendChild(img);
+                dropzone.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to ImgBB if API key is provided
+            const apiKey = document.getElementById('imgbbApiKey').value;
+            if (apiKey) {
+                await uploadToImgBB(file, apiKey);
+            } else {
+                document.getElementById('uploadStatus').innerHTML = 
+                    '<span style="color: #856404;">ℹ️ Immagine caricata localmente. Per caricarla online, aggiungi una API key ImgBB</span>';
+                
+                // Store base64 for local use
+                const reader2 = new FileReader();
+                reader2.onload = (e) => {
+                    selectedImageUrl = e.target.result;
+                };
+                reader2.readAsDataURL(file);
+            }
+        }
+
+        async function uploadToImgBB(file, apiKey) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="loading"></div> Caricamento in corso...';
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    selectedImageUrl = data.data.url;
+                    document.getElementById('poster').value = selectedImageUrl;
+                    statusDiv.innerHTML = '<span style="color: #155724;">✅ Immagine caricata con successo!</span>';
+                } else {
+                    throw new Error(data.error.message);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<span style="color: #721c24;">❌ Errore nel caricamento: ' + error.message + '</span>';
+                console.error('Upload error:', error);
+            }
+        }
+
+        // Tag handling
+        document.getElementById('tagInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const tag = this.value.trim();
+                if (tag && tag.startsWith('#') && !currentTags.includes(tag)) {
+                    currentTags.push(tag);
+                    renderTags();
+                    this.value = '';
+                } else if (tag && !tag.startsWith('#')) {
+                    alert('I tag devono iniziare con #');
+                }
+            }
+        });
+
+        function renderTags() {
+            const container = document.getElementById('tagsContainer');
+            container.innerHTML = currentTags.map(tag => `
+                <span class="tag-chip">
+                    ${tag}
+                    <button type="button" onclick="removeTag('${tag}')">×</button>
+                </span>
+            `).join('');
+        }
+
+        function removeTag(tag) {
+            currentTags = currentTags.filter(t => t !== tag);
+            renderTags();
+        }
+
+        // Form submission
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Salvataggio...';
+
+            const whatsappValue = document.getElementById('whatsapp').value.trim();
+
+            // Parse coordinates from single field "lat, lng"
+            const coordsValue = document.getElementById('coordinates').value.trim();
+            const coordsParts = coordsValue.split(',').map(s => s.trim());
+            if (coordsParts.length !== 2 || isNaN(coordsParts[0]) || isNaN(coordsParts[1])) {
+                alert('⚠️ Formato coordinate non valido. Usa: latitudine, longitudine (es. 40.8536, 14.2503)');
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingEventId ? '✅ Salva Modifiche' : '✅ Aggiungi Evento';
+                return;
+            }
+
+            const eventData = {
+                title: document.getElementById('title').value,
+                category: document.getElementById('eventCategory').value,
+                date: document.getElementById('date').value,
+                location: document.getElementById('location').value,
+                coordinates: {
+                    lat: parseFloat(coordsParts[0]),
+                    lng: parseFloat(coordsParts[1])
+                },
+                tags: [...currentTags]
+            };
+
+            // Aggiungi whatsappLink solo se non è vuoto
+            if (whatsappValue) {
+                eventData.whatsappLink = whatsappValue;
+            }
+
+            const posterUrl = selectedImageUrl || document.getElementById('poster').value;
+            if (posterUrl) {
+                eventData.poster = posterUrl;
+            }
+
+            try {
+                const { collection, addDoc, doc: firestoreDoc, updateDoc } = window.firestoreModules;
+
+                if (editingEventId) {
+                    // MODIFICA evento esistente
+                    const event = events.find(e => e.id === editingEventId);
+                    if (event && event.firebaseId) {
+                        await updateDoc(firestoreDoc(window.db, 'events', event.firebaseId), eventData);
+
+                        // Aggiorna l'array locale
+                        Object.assign(event, eventData);
+                        renderEvents();
+
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-success';
+                        alert.textContent = '✅ Evento aggiornato su Firebase!';
+                        this.insertAdjacentElement('beforebegin', alert);
+                        setTimeout(() => alert.remove(), 3000);
+                    }
+                    editingEventId = null;
+                } else {
+                    // NUOVO evento
+                    eventData.id = nextId++;
+                    const docRef = await addDoc(collection(window.db, 'events'), eventData);
+                    eventData.firebaseId = docRef.id;
+                    events.push(eventData);
+                    renderEvents();
+
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success';
+                    alert.textContent = '✅ Evento salvato su Firebase!';
+                    this.insertAdjacentElement('beforebegin', alert);
+                    setTimeout(() => alert.remove(), 3000);
+                }
+
+                // Reset form
+                this.reset();
+                currentTags = [];
+                selectedImageUrl = null;
+                renderTags();
+                document.getElementById('existingPlace').value = '';
+                document.getElementById('houseNumber').value = '';
+                document.getElementById('location').dataset.originalAddress = '';
+                editingEventId = null;
+
+                // Reset button text
+                submitBtn.textContent = '✅ Aggiungi Evento';
+
+                // Reset dropzone
+                dropzone.innerHTML = '<p>📤 Trascina qui l\'immagine o clicca per selezionare</p><p style="font-size: 0.875rem; color: #666; margin-top: 10px;">Formati supportati: JPG, PNG, GIF (max 5MB)</p>';
+                dropzone.classList.remove('has-image');
+                document.getElementById('uploadStatus').innerHTML = '';
+
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('Errore salvataggio evento:', error);
+                alert('❌ Errore nel salvataggio. Verifica la configurazione Firebase.');
+                showFirebaseWarning();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingEventId ? '💾 Aggiorna Evento' : '✅ Aggiungi Evento';
+                if (!editingEventId) {
+                    submitBtn.textContent = '✅ Aggiungi Evento';
+                }
+            }
+        });
+
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            document.getElementById('eventCount').textContent = events.length;
+
+            if (events.length === 0) {
+                list.innerHTML = '<li style="color: #666; text-align: center;">Nessun evento presente</li>';
+                return;
+            }
+
+            const eventCategoryIcons = {
+                'live-music': '🎵',
+                'open-mic': '🎤',
+                'concerto': '🎸',
+                'spettacolo-teatrale': '🎭',
+                'mostra': '🖼️',
+                'workshop': '🛠️',
+                'fiera': '🎪',
+                'altro': '📍'
+            };
+
+            list.innerHTML = events.map(event => {
+                const categoryIcon = event.category ? eventCategoryIcons[event.category] || '📍' : '';
+                const categoryText = event.category ? `${categoryIcon} ${event.category}` : 'Nessuna categoria';
+
+                return `
+                    <li class="event-item">
+                        <h3>${event.title}</h3>
+                        <p>📂 ${categoryText}</p>
+                        <p>📅 ${event.date} | 📍 ${event.location}</p>
+                        <p>🏷️ ${event.tags ? event.tags.join(', ') : 'Nessun tag'}</p>
+                        ${event.poster ? '<p>🖼️ Ha locandina</p>' : ''}
+                        ${event.whatsappLink ? '<p>💬 Link WhatsApp configurato</p>' : ''}
+                        <div class="event-actions">
+                            <button type="button" class="btn btn-small" onclick="editEvent(${event.id})">✏️ Modifica</button>
+                            <button type="button" class="btn btn-danger btn-small" onclick="deleteEvent(${event.id})">🗑️ Elimina</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        async function deleteEvent(id) {
+            if (confirm('Sei sicuro di voler eliminare questo evento?')) {
+                try {
+                    const event = events.find(e => e.id === id);
+                    if (event && event.firebaseId) {
+                        const { doc, deleteDoc } = window.firestoreModules;
+                        await deleteDoc(doc(window.db, 'events', event.firebaseId));
+                    }
+                    events = events.filter(e => e.id !== id);
+                    renderEvents();
+                } catch (error) {
+                    console.error('Errore eliminazione evento:', error);
+                    alert('❌ Errore nell\'eliminazione. Riprova.');
+                }
+            }
+        }
+
+        // Funzione per popolare il select dei luoghi esistenti
+        function populateExistingPlaces() {
+            const select = document.getElementById('existingPlace');
+            if (!select) return;
+
+            // Mantieni l'opzione di default
+            select.innerHTML = '<option value="">-- Oppure aggiungi un nuovo luogo --</option>';
+
+            // Aggiungi tutti i luoghi
+            places.forEach(place => {
+                const option = document.createElement('option');
+                option.value = place.id;
+                option.textContent = `${place.name} - ${place.address}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Funzione per selezionare un luogo esistente
+        function selectExistingPlace() {
+            const select = document.getElementById('existingPlace');
+            const placeId = parseInt(select.value);
+
+            if (!placeId) {
+                // Reset campi
+                document.getElementById('location').value = '';
+                document.getElementById('coordinates').value = '';
+                return;
+            }
+
+            const place = places.find(p => p.id === placeId);
+            if (place) {
+                document.getElementById('location').value = place.name;
+                document.getElementById('coordinates').value = `${place.coordinates.lat}, ${place.coordinates.lng}`;
+                updateMapMarker(place.coordinates.lat, place.coordinates.lng);
+            }
+        }
+
+        // Variabile per tracciare se stiamo modificando un evento
+        let editingEventId = null;
+
+        // Funzione per modificare un evento
+        function editEvent(id) {
+            const event = events.find(e => e.id === id);
+            if (!event) return;
+
+            editingEventId = id;
+
+            // Popola i campi del form
+            document.getElementById('title').value = event.title;
+            document.getElementById('eventCategory').value = event.category || '';
+            document.getElementById('date').value = event.date;
+            document.getElementById('whatsapp').value = event.whatsappLink || '';
+
+            // Estrai numero civico dall'indirizzo se presente
+            const addressParts = event.location.split(',');
+            let houseNumber = '';
+            if (addressParts.length >= 2) {
+                const secondPart = addressParts[1].trim();
+                // Check if second part is a number (house number)
+                if (!isNaN(secondPart)) {
+                    houseNumber = secondPart;
+                }
+            }
+
+            document.getElementById('location').value = event.location;
+            document.getElementById('houseNumber').value = houseNumber;
+            document.getElementById('coordinates').value = `${event.coordinates.lat}, ${event.coordinates.lng}`;
+            document.getElementById('poster').value = event.poster || '';
+
+            // Store original address for house number updates
+            const locationField = document.getElementById('location');
+            locationField.dataset.originalAddress = event.location;
+
+            // Popola i tag
+            currentTags = event.tags || [];
+            renderTags();
+
+            // Aggiorna la mappa
+            updateMapMarker(event.coordinates.lat, event.coordinates.lng);
+
+            // Cambia il testo del pulsante
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = '💾 Aggiorna Evento';
+
+            // Scroll al form
+            document.getElementById('eventForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // === FUNZIONI TAB ===
+        function switchTab(tab) {
+            // Aggiorna pulsanti tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+
+            // Mostra/nascondi contenuti
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+
+            // Inizializza mappa luoghi se necessario
+            if (tab === 'places' && !placeMiniMap) {
+                setTimeout(() => initPlaceMiniMap(), 100);
+            }
+        }
+
+        // === FUNZIONI LUOGHI ===
+        function initPlaceMiniMap() {
+            if (!placeMiniMap) {
+                placeMiniMap = L.map('placeMiniMap').setView([40.8359, 14.2489], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(placeMiniMap);
+            }
+        }
+
+        function updatePlaceMapMarker(lat, lng) {
+            if (!placeMiniMap) return;
+
+            if (placeMarker) {
+                placeMiniMap.removeLayer(placeMarker);
+            }
+
+            placeMarker = L.marker([lat, lng]).addTo(placeMiniMap);
+            placeMiniMap.setView([lat, lng], 15);
+        }
+
+        // Ricerca location per luoghi
+        document.getElementById('placeLocationSearch').addEventListener('input', function() {
+            const query = this.value.trim();
+
+            clearTimeout(placeSearchTimeout);
+
+            if (query.length < 3) {
+                document.getElementById('placeSearchResults').classList.remove('show');
+                return;
+            }
+
+            placeSearchTimeout = setTimeout(() => {
+                searchPlaceLocation(query);
+            }, 500);
+        });
+
+        async function searchPlaceLocation(query) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+                );
+                const results = await response.json();
+                displayPlaceSearchResults(results);
+            } catch (error) {
+                console.error('Error searching location:', error);
+            }
+        }
+
+        function displayPlaceSearchResults(results) {
+            const container = document.getElementById('placeSearchResults');
+
+            if (results.length === 0) {
+                container.innerHTML = '<div class="search-result-item">Nessun risultato trovato</div>';
+                container.classList.add('show');
+                return;
+            }
+
+            container.innerHTML = results.map((result, index) => `
+                <div class="search-result-item" onclick="selectPlaceLocation(${index})">
+                    <strong>${result.display_name}</strong>
+                </div>
+            `).join('');
+
+            container.classList.add('show');
+            container.searchResults = results; // Store results for later access
+        }
+
+        function selectPlaceLocation(resultIndex) {
+            const container = document.getElementById('placeSearchResults');
+            const result = container.searchResults[resultIndex];
+
+            // Construct address from structured data
+            let address = '';
+            if (result.address) {
+                const addr = result.address;
+                // Build address with house number if available
+                if (addr.house_number && addr.road) {
+                    address = `${addr.road}, ${addr.house_number}`;
+                } else if (addr.road) {
+                    address = addr.road;
+                }
+
+                // Add additional details
+                if (addr.suburb) address += `, ${addr.suburb}`;
+                if (addr.city) address += `, ${addr.city}`;
+                else if (addr.town) address += `, ${addr.town}`;
+                else if (addr.village) address += `, ${addr.village}`;
+            }
+
+            // Fallback to display_name if address construction failed
+            if (!address) {
+                address = result.display_name;
+            }
+
+            document.getElementById('placeCoordinates').value = `${result.lat}, ${result.lon}`;
+            document.getElementById('placeAddress').value = address;
+
+            // Store original address for house number updates
+            const addressField = document.getElementById('placeAddress');
+            addressField.dataset.originalAddress = address;
+
+            container.classList.remove('show');
+
+            updatePlaceMapMarker(result.lat, result.lon);
+        }
+
+        // Use manual address (luoghi)
+        function usePlaceManualAddress() {
+            const manualAddress = document.getElementById('placeLocationSearch').value.trim();
+
+            if (!manualAddress) {
+                alert('⚠️ Inserisci prima un indirizzo nel campo di ricerca');
+                return;
+            }
+
+            // Set the address
+            document.getElementById('placeAddress').value = manualAddress;
+            document.getElementById('placeAddress').dataset.originalAddress = manualAddress;
+
+            // Close search results
+            document.getElementById('placeSearchResults').classList.remove('show');
+
+            alert('✅ Indirizzo inserito manualmente. Ora inserisci le coordinate nel formato "latitudine, longitudine" (es. 40.8536, 14.2503). Puoi cercarle su Google Maps cliccando col tasto destro.');
+        }
+
+        // Chiudi risultati ricerca luoghi quando si clicca fuori
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#placesTab .location-group')) {
+                document.getElementById('placeSearchResults').classList.remove('show');
+            }
+        });
+
+        // Validazione formato orari apertura
+        function validateOpeningHoursFormat(hoursString) {
+            // Empty string is valid (closed)
+            if (hoursString === '') {
+                return { valid: true };
+            }
+
+            // Check for "su appuntamento" (by appointment)
+            if (hoursString.toLowerCase() === 'su appuntamento') {
+                return { valid: true };
+            }
+
+            // Regex for single opening: HH:MM-HH:MM
+            const singleOpeningPattern = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
+            if (singleOpeningPattern.test(hoursString)) {
+                return { valid: true };
+            }
+
+            // Regex for double opening: HH:MM-HH:MM - HH:MM-HH:MM (with space-dash-space)
+            const doubleOpeningPattern = /^\d{2}:\d{2}-\d{2}:\d{2} - \d{2}:\d{2}-\d{2}:\d{2}$/;
+            if (doubleOpeningPattern.test(hoursString)) {
+                return { valid: true };
+            }
+
+            return {
+                valid: false,
+                error: 'Formato non valido. Usa: "10:30-13:30" o "10:30-13:30 - 16:00-18:00" o "su appuntamento"'
+            };
+        }
+
+        // Raccolta orari apertura
+        function collectOpeningHours() {
+            const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+            const dayNames = {
+                'lunedi': 'Lunedì',
+                'martedi': 'Martedì',
+                'mercoledi': 'Mercoledì',
+                'giovedi': 'Giovedì',
+                'venerdi': 'Venerdì',
+                'sabato': 'Sabato',
+                'domenica': 'Domenica'
+            };
+            const hours = {};
+            let hasAnyHours = false;
+
+            // Validate all hours first
+            for (const day of days) {
+                const value = document.getElementById(`hours-${day}`).value.trim();
+                if (value) {
+                    const validation = validateOpeningHoursFormat(value);
+                    if (!validation.valid) {
+                        throw new Error(`⚠️ ${dayNames[day]}: ${validation.error}\nValore inserito: "${value}"`);
+                    }
+                    hours[day] = value;
+                    hasAnyHours = true;
+                }
+            }
+
+            return hasAnyHours ? hours : null;
+        }
+
+        // Form submission luoghi
+        document.getElementById('placeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Salvataggio...';
+
+            // Parse coordinates from single field "lat, lng"
+            const coordsValue = document.getElementById('placeCoordinates').value.trim();
+            const coordsParts = coordsValue.split(',').map(s => s.trim());
+            if (coordsParts.length !== 2 || isNaN(coordsParts[0]) || isNaN(coordsParts[1])) {
+                alert('⚠️ Formato coordinate non valido. Usa: latitudine, longitudine (es. 40.8536, 14.2503)');
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingPlaceId ? '✅ Salva Modifiche' : '✅ Aggiungi Luogo';
+                return;
+            }
+
+            // Validate opening hours
+            let openingHours = null;
+            try {
+                openingHours = collectOpeningHours();
+            } catch (error) {
+                alert(error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingPlaceId ? '✅ Salva Modifiche' : '✅ Aggiungi Luogo';
+                return;
+            }
+
+            const placeData = {
+                name: document.getElementById('placeName').value,
+                category: document.getElementById('placeCategory').value,
+                address: document.getElementById('placeAddress').value,
+                coordinates: {
+                    lat: parseFloat(coordsParts[0]),
+                    lng: parseFloat(coordsParts[1])
+                },
+                description: document.getElementById('placeDescription').value || null,
+                openingHours: openingHours,
+                website: document.getElementById('placeWebsite').value || null,
+                image: document.getElementById('placeImage').value || null
+            };
+
+            try {
+                const { collection, addDoc, doc: firestoreDoc, updateDoc } = window.firestoreModules;
+
+                if (editingPlaceId) {
+                    // MODIFICA luogo esistente
+                    const place = places.find(p => p.id === editingPlaceId);
+                    if (place && place.firebaseId) {
+                        await updateDoc(firestoreDoc(window.db, 'places', place.firebaseId), placeData);
+
+                        // Aggiorna l'array locale
+                        Object.assign(place, placeData);
+                        renderPlaces();
+                        populateExistingPlaces(); // Aggiorna la lista luoghi per gli eventi
+
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-success';
+                        alert.textContent = '✅ Luogo aggiornato su Firebase!';
+                        this.insertAdjacentElement('beforebegin', alert);
+                        setTimeout(() => alert.remove(), 3000);
+                    }
+                    editingPlaceId = null;
+                } else {
+                    // NUOVO luogo
+                    placeData.id = nextPlaceId++;
+                    const docRef = await addDoc(collection(window.db, 'places'), placeData);
+                    placeData.firebaseId = docRef.id;
+                    places.push(placeData);
+                    renderPlaces();
+                    populateExistingPlaces(); // Aggiorna la lista luoghi per gli eventi
+
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success';
+                    alert.textContent = '✅ Luogo salvato su Firebase!';
+                    this.insertAdjacentElement('beforebegin', alert);
+                    setTimeout(() => alert.remove(), 3000);
+                }
+
+                // Reset form
+                this.reset();
+                document.getElementById('placeHouseNumber').value = '';
+                document.getElementById('placeAddress').dataset.originalAddress = '';
+                editingPlaceId = null;
+
+                // Reset button text
+                submitBtn.textContent = '✅ Aggiungi Luogo';
+
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('Errore salvataggio luogo:', error);
+                alert('❌ Errore nel salvataggio. Verifica la configurazione Firebase.');
+                showFirebaseWarning();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingPlaceId ? '💾 Aggiorna Luogo' : '✅ Aggiungi Luogo';
+                if (!editingPlaceId) {
+                    submitBtn.textContent = '✅ Aggiungi Luogo';
+                }
+            }
+        });
+
+        function renderPlaces() {
+            const list = document.getElementById('placesList');
+            document.getElementById('placeCount').textContent = places.length;
+
+            if (places.length === 0) {
+                list.innerHTML = '<li style="color: #666; text-align: center;">Nessun luogo presente</li>';
+                return;
+            }
+
+            const categoryIcons = {
+                'museo': '🏛️',
+                'galleria': '🖼️',
+                'parco': '🌳',
+                'biblioteca': '📚',
+                'teatro': '🎭',
+                'coworking': '💼',
+                'ristorante': '🍽️',
+                'centro-sociale': '🤝',
+                'fondazione': '🏢',
+                'altro': '📍'
+            };
+
+            // Ordina i luoghi alfabeticamente per nome
+            const sortedPlaces = [...places].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+
+            list.innerHTML = sortedPlaces.map(place => {
+                // Build opening hours string
+                let hoursText = '';
+                if (place.openingHours) {
+                    const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+                    hoursText = days.map(day => {
+                        const hours = place.openingHours[day];
+                        if (hours) {
+                            const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                            return `${dayName}: ${hours}`;
+                        }
+                    }).filter(Boolean).join(', ');
+                }
+
+                return `
+                    <li class="event-item place-item">
+                        <div class="place-item-header">
+                            <h3 class="place-item-title">${categoryIcons[place.category] || '📍'} ${place.name}</h3>
+                            <div class="place-item-actions">
+                                <button type="button" class="btn btn-small" onclick="editPlace(${place.id})">✏️</button>
+                                <button type="button" class="btn btn-danger btn-small" onclick="deletePlace(${place.id})">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="place-info-icons">
+                            <div class="info-icon" title="Indirizzo">
+                                <span>📍</span>
+                                <div class="tooltip">${place.address}</div>
+                            </div>
+                            <div class="info-icon" title="Categoria">
+                                <span>📂</span>
+                                <div class="tooltip">${place.category}</div>
+                            </div>
+                            <div class="info-icon" title="Coordinate">
+                                <span>🗺️</span>
+                                <div class="tooltip">${place.coordinates.lat}, ${place.coordinates.lng}</div>
+                            </div>
+                            ${place.description ? `
+                                <div class="info-icon" title="Descrizione">
+                                    <span>📝</span>
+                                    <div class="tooltip tooltip-multiline">${place.description}</div>
+                                </div>
+                            ` : ''}
+                            ${place.website ? `
+                                <div class="info-icon" title="Sito Web">
+                                    <span>🌐</span>
+                                    <div class="tooltip"><a href="${place.website}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-primary);">${place.website}</a></div>
+                                </div>
+                            ` : ''}
+                            ${place.openingHours ? `
+                                <div class="info-icon" title="Orari di apertura">
+                                    <span>🕐</span>
+                                    <div class="tooltip tooltip-multiline">${hoursText}</div>
+                                </div>
+                            ` : ''}
+                            ${place.image ? `
+                                <div class="info-icon" title="Immagine">
+                                    <span>🖼️</span>
+                                    <div class="tooltip">Ha immagine</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        async function deletePlace(id) {
+            if (confirm('Sei sicuro di voler eliminare questo luogo?')) {
+                try {
+                    const place = places.find(p => p.id === id);
+                    if (place && place.firebaseId) {
+                        const { doc, deleteDoc } = window.firestoreModules;
+                        await deleteDoc(doc(window.db, 'places', place.firebaseId));
+                    }
+                    places = places.filter(p => p.id !== id);
+                    renderPlaces();
+                    populateExistingPlaces(); // Aggiorna la lista luoghi per gli eventi
+                } catch (error) {
+                    console.error('Errore eliminazione luogo:', error);
+                    alert('❌ Errore nell\'eliminazione. Riprova.');
+                }
+            }
+        }
+
+        // Variabile per tracciare se stiamo modificando un luogo
+        let editingPlaceId = null;
+
+        // Funzione per modificare un luogo
+        function editPlace(id) {
+            const place = places.find(p => p.id === id);
+            if (!place) return;
+
+            editingPlaceId = id;
+
+            // Popola i campi del form
+            document.getElementById('placeName').value = place.name;
+            document.getElementById('placeCategory').value = place.category;
+
+            // Estrai numero civico dall'indirizzo se presente
+            const addressParts = place.address.split(',');
+            let houseNumber = '';
+            if (addressParts.length >= 2) {
+                const secondPart = addressParts[1].trim();
+                // Check if second part is a number (house number)
+                if (!isNaN(secondPart)) {
+                    houseNumber = secondPart;
+                }
+            }
+
+            document.getElementById('placeAddress').value = place.address;
+            document.getElementById('placeHouseNumber').value = houseNumber;
+            document.getElementById('placeCoordinates').value = `${place.coordinates.lat}, ${place.coordinates.lng}`;
+            document.getElementById('placeDescription').value = place.description || '';
+            document.getElementById('placeWebsite').value = place.website || '';
+            document.getElementById('placeImage').value = place.image || '';
+
+            // Store original address for house number updates
+            const addressField = document.getElementById('placeAddress');
+            addressField.dataset.originalAddress = place.address;
+
+            // Popola gli orari se esistono
+            if (place.openingHours) {
+                const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+                days.forEach(day => {
+                    const input = document.getElementById(`hours-${day}`);
+                    if (input) {
+                        input.value = place.openingHours[day] || '';
+                    }
+                });
+            }
+
+            // Aggiorna la mappa
+            updatePlaceMapMarker(place.coordinates.lat, place.coordinates.lng);
+
+            // Cambia il testo del pulsante
+            const submitBtn = document.querySelector('#placeForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = '💾 Aggiorna Luogo';
+            }
+
+            // Switch al tab luoghi e scroll al form
+            switchTab('places');
+            setTimeout(() => {
+                document.getElementById('placeForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // === INIZIALIZZAZIONE ===
+        // I dati vengono caricati automaticamente da Firebase tramite loadEventsFromFirebase() e loadPlacesFromFirebase()
+    </script>
+    -->
+</body>
+</html>
