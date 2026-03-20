@@ -1166,6 +1166,43 @@
             color: var(--accent-places);
         }
 
+        /* Bright orange accent for unified list */
+        :root {
+            --accent-orange: #ff6a00;
+        }
+
+        .card-header--search {
+            background: var(--accent-orange);
+        }
+
+        .search-bar {
+            border-width: 3px;
+            border-color: var(--accent-orange);
+        }
+
+        .search-bar:focus {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.2);
+        }
+
+        /* Unified list section headers */
+        .unified-section-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            padding: 10px 2px 4px;
+            margin-top: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 4px;
+        }
+
+        .unified-section-header:first-child {
+            margin-top: 0;
+            padding-top: 2px;
+        }
+
         /* Mobile view tabs (calendario / mappa) */
         .mobile-view-tabs {
             display: none;
@@ -1304,14 +1341,6 @@
                     </div>
                 </div>
 
-                <div class="card" id="eventsCard">
-                    <div class="card-header">
-                        <h2 id="eventsTitle">📋 Lista Eventi</h2>
-                    </div>
-                    <div class="card-content">
-                        <div class="event-list" id="eventList"></div>
-                    </div>
-                </div>
             </div>
 
             <div class="grid-col" id="mapCol">
@@ -1354,14 +1383,16 @@
                     </div>
                 </div>
 
-                <div class="card" id="placesCard">
-                    <div class="card-header card-header--places">
-                        <h2 id="placesTitle">🏛️ Lista Luoghi</h2>
-                    </div>
-                    <div class="card-content">
-                        <div class="event-list" id="placeList"></div>
-                    </div>
-                </div>
+            </div>
+        </div>
+
+        <!-- Lista unificata - larghezza piena, sempre visibile -->
+        <div class="card" id="unifiedCard">
+            <div class="card-header card-header--search">
+                <h2 id="unifiedTitle">La Tua Ricerca</h2>
+            </div>
+            <div class="card-content">
+                <div class="event-list" id="unifiedList"></div>
             </div>
         </div>
 

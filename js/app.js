@@ -23,8 +23,7 @@ import { filterCoordinator } from './filters/filter-coordinator.js';
 
 // UI modules
 import { calendarRenderer } from './ui/calendar-renderer.js';
-import { eventListRenderer } from './ui/event-list-renderer.js';
-import { placeListRenderer } from './ui/place-list-renderer.js';
+import { unifiedListRenderer } from './ui/unified-list-renderer.js';
 import { mapRenderer } from './ui/map-renderer.js';
 import { communityRenderer } from './ui/community-renderer.js';
 import { modalManager } from './ui/modal-manager.js';
@@ -50,8 +49,7 @@ async function initializeModules() {
 
   // Initialize UI renderers
   calendarRenderer.initialize();
-  eventListRenderer.initialize();
-  placeListRenderer.initialize();
+  unifiedListRenderer.initialize();
   mapRenderer.initialize();
   communityRenderer.initialize();
   modalManager.initialize();
@@ -89,37 +87,15 @@ async function loadData() {
  */
 function setupToggleView() {
   window.toggleView = (type) => {
-    if (type === 'events') {
-      const current = state.get('showEvents');
-      state.set('showEvents', !current);
+    const current = state.get(type === 'events' ? 'showEvents' : 'showPlaces');
+    state.set(type === 'events' ? 'showEvents' : 'showPlaces', !current);
 
-      // Update UI
-      const btn = document.getElementById('toggleEvents');
-      const card = document.getElementById('eventsCard');
-      const filters = document.getElementById('eventCategoryFilters');
+    const btn = document.getElementById(type === 'events' ? 'toggleEvents' : 'togglePlaces');
+    const filters = document.getElementById(type === 'events' ? 'eventCategoryFilters' : 'placeCategoryFilters');
+    if (btn) btn.classList.toggle('active');
+    if (filters) filters.classList.toggle('show', !current);
 
-      if (btn) btn.classList.toggle('active');
-      if (card) card.style.display = !current ? 'block' : 'none';
-      if (filters) filters.classList.toggle('show', !current);
-
-      // Emit event for map re-render
-      eventBus.emit('view:toggled', { type: 'events', visible: !current });
-    } else if (type === 'places') {
-      const current = state.get('showPlaces');
-      state.set('showPlaces', !current);
-
-      // Update UI
-      const btn = document.getElementById('togglePlaces');
-      const card = document.getElementById('placesCard');
-      const filters = document.getElementById('placeCategoryFilters');
-
-      if (btn) btn.classList.toggle('active');
-      if (card) card.style.display = !current ? 'block' : 'none';
-      if (filters) filters.classList.toggle('show', !current);
-
-      // Emit event for map re-render
-      eventBus.emit('view:toggled', { type: 'places', visible: !current });
-    }
+    eventBus.emit('view:toggled', { type, visible: !current });
   };
 
   console.log('✅ Toggle view handlers set up');

@@ -243,7 +243,12 @@ export class PlaceFormManager {
         description: document.getElementById('placeDescription').value || null,
         openingHours: openingHours,
         website: document.getElementById('placeWebsite').value || null,
-        image: document.getElementById('placeImage').value || null
+        image: document.getElementById('placeImage').value || null,
+        social: {
+          facebook: document.getElementById('placeFacebook').value || null,
+          instagram: document.getElementById('placeInstagram').value || null,
+          tiktok: document.getElementById('placeTiktok').value || null
+        }
       };
 
       if (this.editingPlaceId) {
@@ -314,6 +319,9 @@ export class PlaceFormManager {
     document.getElementById('placeDescription').value = place.description || '';
     document.getElementById('placeWebsite').value = place.website || '';
     document.getElementById('placeImage').value = place.image || '';
+    document.getElementById('placeFacebook').value = place.social?.facebook || '';
+    document.getElementById('placeInstagram').value = place.social?.instagram || '';
+    document.getElementById('placeTiktok').value = place.social?.tiktok || '';
 
     // Populate opening hours
     if (place.openingHours) {
