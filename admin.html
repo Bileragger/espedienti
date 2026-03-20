@@ -400,12 +400,22 @@
             content: ' ▴';
         }
 
+        .cat-dropdown[data-disabled] {
+            opacity: 0.45;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .category-checkboxes label.hidden-primary {
+            display: none;
+        }
+
         .category-checkboxes {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            z-index: 100;
+            z-index: 9999;
             display: flex;
             flex-direction: column;
             gap: 5px;
@@ -414,7 +424,7 @@
             border: 1px solid var(--border-subtle);
             border-top: none;
             border-radius: 0 0 8px 8px;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
         }
 
         .category-checkboxes label {
@@ -464,14 +474,6 @@
 
         .search-result-item:last-child {
             border-bottom: none;
-        }
-
-        #miniMap {
-            height: 300px;
-            border-radius: 12px;
-            margin-top: 10px;
-            border: 2px solid var(--border-subtle);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         .dropzone {
@@ -635,14 +637,6 @@
 
         .hours-row input {
             padding: 8px 12px;
-        }
-
-        #placeMiniMap {
-            height: 300px;
-            border-radius: 12px;
-            margin-top: 10px;
-            border: 2px solid var(--border-subtle);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         /* Compact place item styles */
@@ -856,6 +850,113 @@
             display: block;
             margin-bottom: 10px;
         }
+
+        /* Sub-tabs */
+        .subtabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+
+        .subtab-btn {
+            padding: 6px 16px;
+            border: 1px solid var(--border-subtle);
+            border-bottom: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .subtab-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .subtab-btn.active {
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
+            border-color: var(--border-subtle);
+        }
+
+        .subtab-content {
+            display: none;
+        }
+
+        .subtab-content.active {
+            display: block;
+        }
+
+        /* Search bar */
+        .list-search {
+            margin-bottom: 12px;
+        }
+
+        .list-search input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .list-search input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Address layout: fields + map side by side */
+        .address-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .address-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .address-fields .form-group {
+            margin-bottom: 0;
+        }
+
+        .address-map-col small {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        #miniMap, #placeMiniMap {
+            height: 240px;
+            border-radius: 10px;
+            border: 2px solid var(--border-subtle);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            cursor: crosshair;
+        }
+
+        .coords-field {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            background: var(--bg-primary);
+        }
+
+        @media (max-width: 700px) {
+            .address-layout {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -906,6 +1007,14 @@
             <!-- TAB EVENTI -->
             <div id="eventsTab" class="tab-content active">
 
+            <div class="subtabs">
+                <button type="button" class="subtab-btn active" onclick="switchSubTab('events', 'form')">➕ Nuovo Evento</button>
+                <button type="button" class="subtab-btn" onclick="switchSubTab('events', 'list')">📋 Lista (<span id="eventCount">0</span>)</button>
+            </div>
+
+
+            <div id="eventsFormSubTab" class="subtab-content active">
+
             <!-- API Configuration -->
             <div class="api-config" id="apiConfig">
                 <strong>⚙️ Configurazione API (Opzionale)</strong>
@@ -940,8 +1049,8 @@
                         </div>
                         <div class="form-group">
                             <label>Categorie Aggiuntive</label>
-                            <details class="cat-dropdown">
-                                <summary class="cat-dropdown-summary">Seleziona…</summary>
+                            <details class="cat-dropdown" id="eventCatDropdown" data-disabled="true">
+                                <summary class="cat-dropdown-summary">Seleziona prima la categoria principale</summary>
                                 <div class="category-checkboxes">
                                     <label><input type="checkbox" name="eventCatExtra" value="live-music"> Live Music</label>
                                     <label><input type="checkbox" name="eventCatExtra" value="open-mic"> Open Mic</label>
@@ -970,44 +1079,30 @@
                     <div class="form-group">
                         <label for="existingPlace">📍 Seleziona da Luoghi Esistenti</label>
                         <select id="existingPlace" onchange="selectExistingPlace()">
-                            <option value="">-- Oppure aggiungi un nuovo luogo --</option>
+                            <option value="">-- Oppure cerca un nuovo indirizzo --</option>
                         </select>
-                        <small>Puoi scegliere un luogo già registrato o aggiungerne uno nuovo qui sotto</small>
                     </div>
 
-                    <div class="form-group location-group">
-                        <label for="locationSearch">🔍 Cerca Nuovo Indirizzo</label>
-                        <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli (senza numero civico)">
-                        <small>Inizia a digitare per cercare la via o il luogo</small>
-                        <div class="search-results" id="searchResults"></div>
-                        <button type="button" class="btn btn-secondary btn-small btn-full-top" onclick="useManualAddress()">
-                            ✏️ Usa questo indirizzo (manuale)
-                        </button>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="houseNumber">🔢 Numero Civico (opzionale)</label>
-                        <input type="text" id="houseNumber" placeholder="es. 205">
-                        <small>Aggiungi manualmente il numero civico se presente</small>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="location">Nome Luogo (selezionato) *</label>
-                            <input type="text" id="location" required placeholder="Verrà compilato automaticamente o inserisci manualmente">
+                    <div class="address-layout">
+                        <div class="address-fields">
+                            <div class="form-group location-group">
+                                <label for="locationSearch">🔍 Cerca indirizzo</label>
+                                <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli">
+                                <div class="search-results" id="searchResults"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="location">Indirizzo *</label>
+                                <input type="text" id="location" required placeholder="Compilato dalla ricerca, modificabile">
+                            </div>
+                            <div class="form-group">
+                                <label>Coordinate</label>
+                                <input type="text" id="coordinates" class="coords-field" readonly placeholder="Automatico dalla ricerca o dalla mappa">
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="coordinates">📍 Coordinate (Lat, Lng) *</label>
-                        <input type="text" id="coordinates" required placeholder="es. 40.8536, 14.2503">
-                        <small>Formato: latitudine, longitudine (es. 40.8536, 14.2503)</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>📍 Mappa di Verifica</label>
-                        <div id="miniMap"></div>
-                        <small>La mappa si aggiornerà dopo aver selezionato un luogo</small>
+                        <div class="address-map-col">
+                            <div id="miniMap"></div>
+                            <small>Clicca sulla mappa o trascina il marker per aggiornare la posizione</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1032,16 +1127,29 @@
                 </form>
             </div>
 
-            <!-- Lista eventi correnti -->
-            <div class="section">
-                <h2>📋 Eventi Correnti (<span id="eventCount">0</span>)</h2>
-                <ul class="events-list" id="eventsList"></ul>
-            </div>
+            </div><!-- Fine eventsFormSubTab -->
+
+            <!-- Sub-tab lista eventi -->
+            <div id="eventsListSubTab" class="subtab-content">
+                <div class="section">
+                    <div class="list-search">
+                        <input type="text" id="eventsSearch" placeholder="🔍 Cerca per titolo, luogo o categoria...">
+                    </div>
+                    <ul class="events-list" id="eventsList"></ul>
+                </div>
+            </div><!-- Fine eventsListSubTab -->
 
             </div><!-- Fine TAB EVENTI -->
 
             <!-- TAB LUOGHI -->
             <div id="placesTab" class="tab-content">
+
+            <div class="subtabs">
+                <button type="button" class="subtab-btn active" onclick="switchSubTab('places', 'form')">➕ Nuovo Luogo</button>
+                <button type="button" class="subtab-btn" onclick="switchSubTab('places', 'list')">📋 Lista (<span id="placeCount">0</span>)</button>
+            </div>
+
+            <div id="placesFormSubTab" class="subtab-content active">
 
             <!-- Form per nuovo luogo -->
             <div class="section">
@@ -1071,8 +1179,8 @@
                         </div>
                         <div class="form-group">
                             <label>Categorie Aggiuntive</label>
-                            <details class="cat-dropdown">
-                                <summary class="cat-dropdown-summary">Seleziona…</summary>
+                            <details class="cat-dropdown" id="placeCatDropdown" data-disabled="true">
+                                <summary class="cat-dropdown-summary">Seleziona prima la categoria principale</summary>
                                 <div class="category-checkboxes">
                                     <label><input type="checkbox" name="placeCatExtra" value="museo"> Museo</label>
                                     <label><input type="checkbox" name="placeCatExtra" value="galleria"> Galleria d'Arte</label>
@@ -1094,37 +1202,26 @@
                         <textarea id="placeDescription" rows="3" placeholder="Breve descrizione del luogo (puoi includere anche il sito web qui)..."></textarea>
                     </div>
 
-                    <div class="form-group location-group">
-                        <label for="placeLocationSearch">🔍 Cerca Indirizzo</label>
-                        <input type="text" id="placeLocationSearch" placeholder="es. Piazza Museo, Napoli (senza numero civico)">
-                        <small>Inizia a digitare per cercare la via o il luogo</small>
-                        <div class="search-results" id="placeSearchResults"></div>
-                        <button type="button" class="btn btn-secondary btn-small btn-full-top" onclick="usePlaceManualAddress()">
-                            ✏️ Usa questo indirizzo (manuale)
-                        </button>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="placeHouseNumber">🔢 Numero Civico (opzionale)</label>
-                        <input type="text" id="placeHouseNumber" placeholder="es. 19">
-                        <small>Aggiungi manualmente il numero civico se presente</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="placeAddress">Indirizzo (selezionato) *</label>
-                        <input type="text" id="placeAddress" required placeholder="Verrà compilato automaticamente o inserisci manualmente">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="placeCoordinates">📍 Coordinate (Lat, Lng) *</label>
-                        <input type="text" id="placeCoordinates" required placeholder="es. 40.8536, 14.2503">
-                        <small>Formato: latitudine, longitudine (es. 40.8536, 14.2503)</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>📍 Mappa di Verifica</label>
-                        <div id="placeMiniMap"></div>
-                        <small>La mappa si aggiornerà dopo aver selezionato un luogo</small>
+                    <div class="address-layout">
+                        <div class="address-fields">
+                            <div class="form-group location-group">
+                                <label for="placeLocationSearch">🔍 Cerca indirizzo</label>
+                                <input type="text" id="placeLocationSearch" placeholder="es. Piazza Museo, Napoli">
+                                <div class="search-results" id="placeSearchResults"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="placeAddress">Indirizzo *</label>
+                                <input type="text" id="placeAddress" required placeholder="Compilato dalla ricerca, modificabile">
+                            </div>
+                            <div class="form-group">
+                                <label>Coordinate</label>
+                                <input type="text" id="placeCoordinates" class="coords-field" readonly placeholder="Automatico dalla ricerca o dalla mappa">
+                            </div>
+                        </div>
+                        <div class="address-map-col">
+                            <div id="placeMiniMap"></div>
+                            <small>Clicca sulla mappa o trascina il marker per aggiornare la posizione</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1177,11 +1274,17 @@
                 </form>
             </div>
 
-            <!-- Lista luoghi correnti -->
-            <div class="section">
-                <h2>📋 Luoghi Correnti (<span id="placeCount">0</span>)</h2>
-                <ul class="events-list" id="placesList"></ul>
-            </div>
+            </div><!-- Fine placesFormSubTab -->
+
+            <!-- Sub-tab lista luoghi -->
+            <div id="placesListSubTab" class="subtab-content">
+                <div class="section">
+                    <div class="list-search">
+                        <input type="text" id="placesSearch" placeholder="🔍 Cerca per nome, indirizzo o categoria...">
+                    </div>
+                    <ul class="events-list" id="placesList"></ul>
+                </div>
+            </div><!-- Fine placesListSubTab -->
 
             </div><!-- Fine TAB LUOGHI -->
 

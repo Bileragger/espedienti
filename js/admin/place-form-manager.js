@@ -37,17 +37,32 @@ export class PlaceFormManager {
       if (data.tab === 'places' && !this.miniMap.isInitialized('placeMiniMap')) {
         setTimeout(() => {
           this.miniMap.initMap('placeMiniMap');
+          this.miniMap.setupInteraction('placeMiniMap', async (lat, lng) => {
+            this.miniMap.updateMarker('placeMiniMap', lat, lng);
+            document.getElementById('placeCoordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            try {
+              const result = await this.geocoding.reverse(lat, lng);
+              if (result) document.getElementById('placeAddress').value = this.geocoding.formatAddress(result);
+            } catch (_) {}
+          });
         }, 100);
       }
     });
 
     // Set up form handlers
     this.setupFormSubmit();
+    this.setupCategoryDropdown('placePrimaryCategory', 'placeCatExtra', 'placeCatDropdown');
     this.setupLocationSearch();
     this.setupImageUpload();
 
     // Load places from Firebase
     await this.loadPlaces();
+
+    // Search
+    const searchInput = document.getElementById('placesSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => this.renderPlaces(e.target.value.trim()));
+    }
 
     // Expose functions to window
     window.editPlace = (id) => this.editPlace(id);
@@ -63,6 +78,35 @@ export class PlaceFormManager {
     if (form) {
       form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
+  }
+
+  setupCategoryDropdown(selectId, checkboxName, dropdownId) {
+    const select = document.getElementById(selectId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!select || !dropdown) return;
+
+    select.addEventListener('change', () => {
+      const primary = select.value;
+
+      if (primary) {
+        dropdown.removeAttribute('data-disabled');
+        dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona…';
+      } else {
+        dropdown.setAttribute('data-disabled', 'true');
+        dropdown.removeAttribute('open');
+        dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona prima la categoria principale';
+      }
+
+      dropdown.querySelectorAll(`input[name="${checkboxName}"]`).forEach(cb => {
+        const label = cb.closest('label');
+        if (cb.value === primary) {
+          label.classList.add('hidden-primary');
+          cb.checked = false;
+        } else {
+          label.classList.remove('hidden-primary');
+        }
+      });
+    });
   }
 
   setupLocationSearch() {
@@ -113,17 +157,18 @@ export class PlaceFormManager {
 
     document.getElementById('placeCoordinates').value = `${coords.lat}, ${coords.lng}`;
     document.getElementById('placeAddress').value = address;
+    document.getElementById('placeLocationSearch').value = '';
 
     this.miniMap.updateMarker('placeMiniMap', coords.lat, coords.lng);
+    this.miniMap.setupInteraction('placeMiniMap', async (lat, lng) => {
+      this.miniMap.updateMarker('placeMiniMap', lat, lng);
+      document.getElementById('placeCoordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      try {
+        const rev = await this.geocoding.reverse(lat, lng);
+        if (rev) document.getElementById('placeAddress').value = this.geocoding.formatAddress(rev);
+      } catch (_) {}
+    });
     container.classList.remove('show');
-  }
-
-  usePlaceManualAddress() {
-    const addressField = document.getElementById('placeAddress');
-    if (addressField) {
-      addressField.removeAttribute('readonly');
-      alert('✓ Puoi ora modificare manualmente l\'indirizzo.\n\nSe hai bisogno delle coordinate, cercale su Google Maps.');
-    }
   }
 
   setupImageUpload() {
@@ -179,7 +224,7 @@ export class PlaceFormManager {
       const coords = this.geocoding.parseCoordinateString(coordsValue);
 
       if (!coords) {
-        alert('⚠️ Formato coordinate non valido. Usa: latitudine, longitudine (es. 40.8536, 14.2503)');
+        alert('⚠️ Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
         return;
       }
 
@@ -256,10 +301,13 @@ export class PlaceFormManager {
     this.editingPlaceId = id;
 
     document.getElementById('placeName').value = place.name;
-    document.getElementById('placePrimaryCategory').value = place.primaryCategory || place.category || '';
+    const primary = place.primaryCategory || place.category || '';
+    document.getElementById('placePrimaryCategory').value = primary;
+    // Trigger dropdown update
+    document.getElementById('placePrimaryCategory').dispatchEvent(new Event('change'));
     const placeCats = place.categories || (place.category ? [place.category] : []);
     document.querySelectorAll('input[name="placeCatExtra"]').forEach(cb => {
-      cb.checked = placeCats.includes(cb.value) && cb.value !== (place.primaryCategory || place.category);
+      cb.checked = placeCats.includes(cb.value) && cb.value !== primary;
     });
     document.getElementById('placeAddress').value = place.address;
     document.getElementById('placeCoordinates').value = `${place.coordinates.lat}, ${place.coordinates.lng}`;
@@ -280,6 +328,7 @@ export class PlaceFormManager {
     const submitBtn = document.querySelector('#placeForm button[type="submit"]');
     submitBtn.textContent = '💾 Aggiorna Luogo';
 
+    window.switchSubTab('places', 'form');
     document.getElementById('placeForm').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -287,6 +336,14 @@ export class PlaceFormManager {
     document.getElementById('placeForm').reset();
     this.imageUpload.clearSelectedImage();
     this.editingPlaceId = null;
+
+    const dropdown = document.getElementById('placeCatDropdown');
+    if (dropdown) {
+      dropdown.setAttribute('data-disabled', 'true');
+      dropdown.removeAttribute('open');
+      dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona prima la categoria principale';
+      dropdown.querySelectorAll('label').forEach(l => l.classList.remove('hidden-primary'));
+    }
   }
 
   async loadPlaces() {
@@ -300,7 +357,7 @@ export class PlaceFormManager {
     }
   }
 
-  renderPlaces() {
+  renderPlaces(query = '') {
     const list = document.getElementById('placesList');
     const count = document.getElementById('placeCount');
 
@@ -308,12 +365,22 @@ export class PlaceFormManager {
 
     count.textContent = this.places.length;
 
-    if (this.places.length === 0) {
-      list.innerHTML = '<li style="color: #666; text-align: center;">Nessun luogo presente</li>';
+    const q = query.toLowerCase();
+    const filtered = query
+      ? this.places.filter(p =>
+          p.name?.toLowerCase().includes(q) ||
+          p.address?.toLowerCase().includes(q) ||
+          p.primaryCategory?.toLowerCase().includes(q) ||
+          p.categories?.some(c => c.toLowerCase().includes(q))
+        )
+      : this.places;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<li class="list-empty">${query ? 'Nessun risultato' : 'Nessun luogo presente'}</li>`;
       return;
     }
 
-    const sortedPlaces = [...this.places].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    const sortedPlaces = [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
     list.innerHTML = sortedPlaces.map(place => {
       return `

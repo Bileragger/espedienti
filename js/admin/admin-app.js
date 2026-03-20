@@ -45,6 +45,18 @@ function setupWindowHandlers() {
   // Event form handlers (already exposed by eventFormManager)
   // Place form handlers (already exposed by placeFormManager)
 
+  // Sub-tab switching
+  window.switchSubTab = (tab, subTab) => {
+    const prefix = tab === 'events' ? 'events' : 'places';
+    const tabEl = document.getElementById(`${prefix}Tab`);
+    tabEl.querySelectorAll('.subtab-btn').forEach(btn => btn.classList.remove('active'));
+    tabEl.querySelectorAll('.subtab-content').forEach(el => el.classList.remove('active'));
+    const subTabId = `${prefix}${subTab.charAt(0).toUpperCase() + subTab.slice(1)}SubTab`;
+    document.getElementById(subTabId).classList.add('active');
+    const btnIndex = subTab === 'form' ? 0 : 1;
+    tabEl.querySelectorAll('.subtab-btn')[btnIndex].classList.add('active');
+  };
+
   // Expose showPoster for modals
   window.showPoster = (posterUrl) => {
     const modal = document.getElementById('posterModal');

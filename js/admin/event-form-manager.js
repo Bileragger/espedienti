@@ -28,13 +28,24 @@ export class EventFormManager {
   }
 
   async initialize() {
-    // Initialize mini map
+    // Initialize mini map and set up interaction
     setTimeout(() => {
       this.miniMap.initMap('miniMap');
+      this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
+        this.miniMap.updateMarker('miniMap', lat, lng);
+        document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        try {
+          const result = await this.geocoding.reverse(lat, lng);
+          if (result) {
+            document.getElementById('location').value = this.geocoding.formatAddress(result);
+          }
+        } catch (_) {}
+      });
     }, 100);
 
     // Set up form handlers
     this.setupFormSubmit();
+    this.setupCategoryDropdown('eventPrimaryCategory', 'eventCatExtra', 'eventCatDropdown');
     this.setupLocationSearch();
     this.setupTagInput();
     this.setupImageUpload();
@@ -42,6 +53,12 @@ export class EventFormManager {
 
     // Load events from Firebase
     await this.loadEvents();
+
+    // Search
+    const searchInput = document.getElementById('eventsSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => this.renderEvents(e.target.value.trim()));
+    }
 
     // Expose functions to window
     window.editEvent = (id) => this.editEvent(id);
@@ -58,6 +75,36 @@ export class EventFormManager {
     if (form) {
       form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
+  }
+
+  setupCategoryDropdown(selectId, checkboxName, dropdownId) {
+    const select = document.getElementById(selectId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!select || !dropdown) return;
+
+    select.addEventListener('change', () => {
+      const primary = select.value;
+
+      if (primary) {
+        dropdown.removeAttribute('data-disabled');
+        dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona…';
+      } else {
+        dropdown.setAttribute('data-disabled', 'true');
+        dropdown.removeAttribute('open');
+        dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona prima la categoria principale';
+      }
+
+      // Hide the label matching primary, show all others
+      dropdown.querySelectorAll(`input[name="${checkboxName}"]`).forEach(cb => {
+        const label = cb.closest('label');
+        if (cb.value === primary) {
+          label.classList.add('hidden-primary');
+          cb.checked = false;
+        } else {
+          label.classList.remove('hidden-primary');
+        }
+      });
+    });
   }
 
   setupLocationSearch() {
@@ -108,18 +155,18 @@ export class EventFormManager {
 
     document.getElementById('coordinates').value = `${coords.lat}, ${coords.lng}`;
     document.getElementById('location').value = address;
-    document.getElementById('location').dataset.originalAddress = address;
+    document.getElementById('locationSearch').value = '';
 
     this.miniMap.updateMarker('miniMap', coords.lat, coords.lng);
+    this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
+      this.miniMap.updateMarker('miniMap', lat, lng);
+      document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      try {
+        const rev = await this.geocoding.reverse(lat, lng);
+        if (rev) document.getElementById('location').value = this.geocoding.formatAddress(rev);
+      } catch (_) {}
+    });
     container.classList.remove('show');
-  }
-
-  useManualAddress() {
-    const locationField = document.getElementById('location');
-    if (locationField) {
-      locationField.removeAttribute('readonly');
-      alert('✓ Puoi ora modificare manualmente l\'indirizzo.\n\nSe hai bisogno delle coordinate, cercale su Google Maps:\n1. Cerca il luogo\n2. Click destro sul marker\n3. Copia le coordinate');
-    }
   }
 
   setupTagInput() {
@@ -190,7 +237,7 @@ export class EventFormManager {
       const coords = this.geocoding.parseCoordinateString(coordsValue);
 
       if (!coords) {
-        alert('⚠️ Formato coordinate non valido. Usa: latitudine, longitudine (es. 40.8536, 14.2503)');
+        alert('⚠️ Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
         return;
       }
 
@@ -270,10 +317,13 @@ export class EventFormManager {
     this.editingEventId = id;
 
     document.getElementById('title').value = event.title;
-    document.getElementById('eventPrimaryCategory').value = event.primaryCategory || event.category || '';
+    const primary = event.primaryCategory || event.category || '';
+    document.getElementById('eventPrimaryCategory').value = primary;
+    // Trigger dropdown update
+    document.getElementById('eventPrimaryCategory').dispatchEvent(new Event('change'));
     const eventCats = event.categories || (event.category ? [event.category] : []);
     document.querySelectorAll('input[name="eventCatExtra"]').forEach(cb => {
-      cb.checked = eventCats.includes(cb.value) && cb.value !== (event.primaryCategory || event.category);
+      cb.checked = eventCats.includes(cb.value) && cb.value !== primary;
     });
     document.getElementById('date').value = event.date;
     document.getElementById('whatsapp').value = event.whatsappLink || '';
@@ -289,6 +339,7 @@ export class EventFormManager {
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.textContent = '💾 Aggiorna Evento';
 
+    window.switchSubTab('events', 'form');
     document.getElementById('eventForm').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -298,6 +349,14 @@ export class EventFormManager {
     this.renderTags();
     this.imageUpload.clearSelectedImage();
     this.editingEventId = null;
+
+    const dropdown = document.getElementById('eventCatDropdown');
+    if (dropdown) {
+      dropdown.setAttribute('data-disabled', 'true');
+      dropdown.removeAttribute('open');
+      dropdown.querySelector('.cat-dropdown-summary').textContent = 'Seleziona prima la categoria principale';
+      dropdown.querySelectorAll('label').forEach(l => l.classList.remove('hidden-primary'));
+    }
   }
 
   async loadEvents() {
@@ -311,7 +370,7 @@ export class EventFormManager {
     }
   }
 
-  renderEvents() {
+  renderEvents(query = '') {
     const list = document.getElementById('eventsList');
     const count = document.getElementById('eventCount');
 
@@ -319,12 +378,21 @@ export class EventFormManager {
 
     count.textContent = this.events.length;
 
-    if (this.events.length === 0) {
-      list.innerHTML = '<li style="color: #666; text-align: center;">Nessun evento presente</li>';
+    const filtered = query
+      ? this.events.filter(e =>
+          e.title?.toLowerCase().includes(query.toLowerCase()) ||
+          e.location?.toLowerCase().includes(query.toLowerCase()) ||
+          e.primaryCategory?.toLowerCase().includes(query.toLowerCase()) ||
+          e.categories?.some(c => c.toLowerCase().includes(query.toLowerCase()))
+        )
+      : this.events;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<li class="list-empty">${query ? 'Nessun risultato' : 'Nessun evento presente'}</li>`;
       return;
     }
 
-    list.innerHTML = this.events.map(event => {
+    list.innerHTML = filtered.map(event => {
       const categoryIcon = event.category ? this.categoryIcons[event.category] || '📍' : '';
       const categoryText = event.category ? `${categoryIcon} ${event.category}` : 'Nessuna categoria';
 

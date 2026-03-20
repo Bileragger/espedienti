@@ -90,16 +90,53 @@ export class MiniMapService {
       map.removeLayer(existingMarker);
     }
 
-    // Add new marker
-    const marker = L.marker([lat, lng]).addTo(map);
+    // Add draggable marker
+    const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
     this.markers.set(elementId, marker);
+
+    // Re-attach drag callback if one is registered
+    const dragCb = this.dragCallbacks?.get(elementId);
+    if (dragCb) {
+      marker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        dragCb(pos.lat, pos.lng);
+      });
+    }
 
     // Center map on marker
     map.setView([lat, lng], 15);
 
     // Emit event
     this.eventBus.emit('miniMap:markerUpdated', { elementId, lat, lng });
-    console.log(`📍 Marker updated on ${elementId}:`, lat, lng);
+  }
+
+  /**
+   * Set up click and drag callbacks on a map
+   * @param {string} elementId - Map element ID
+   * @param {Function} callback - Called with (lat, lng) on click or dragend
+   */
+  setupInteraction(elementId, callback) {
+    if (!this.dragCallbacks) this.dragCallbacks = new Map();
+    this.dragCallbacks.set(elementId, callback);
+
+    const map = this.maps.get(elementId);
+    if (!map) return;
+
+    // Click on map
+    map.on('click', (e) => {
+      callback(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Drag on existing marker
+    const marker = this.markers.get(elementId);
+    if (marker) {
+      marker.options.draggable = true;
+      marker.dragging?.enable();
+      marker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        callback(pos.lat, pos.lng);
+      });
+    }
   }
 
   /**
