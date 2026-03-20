@@ -1458,6 +1458,9 @@
     <!-- See js/app.js for the new modular entry point -->
     <script type="module" src="js/app.js"></script>
     <script>
+        // Inizializza la tab mobile al caricamento
+        document.addEventListener('DOMContentLoaded', () => switchMobileTab('calendar'));
+
         function switchMobileTab(tab) {
             const calendarCol = document.getElementById('calendarCol');
             const mapCol = document.getElementById('mapCol');

@@ -2,7 +2,7 @@
   "name": "Espedienti a Napoli",
   "short_name": "Espedienti",
   "description": "Scopri eventi e luoghi di interesse a Napoli",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fefdf5",
   "theme_color": "#c9a200",
@@ -29,7 +29,7 @@
       "name": "Mappa",
       "short_name": "Mappa",
       "description": "Apri la mappa interattiva",
-      "url": "/#events",
+      "url": "./index.html#events",
       "icons": [{ "src": "icons/icon-192.svg", "sizes": "192x192" }]
     }
   ]

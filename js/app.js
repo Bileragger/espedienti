@@ -301,31 +301,6 @@ function setupMapFullscreen() {
     }
   }, { passive: false });
 
-  // Require two fingers to pan the map on mobile
-  eventBus.on('map:initialized', () => {
-    const map = mapRenderer.getMap();
-    const mapEl = document.getElementById('map');
-    if (!map || !mapEl) return;
-
-    mapEl.addEventListener('touchstart', (e) => {
-      if (e.touches.length < 2) {
-        map.dragging.disable();
-      } else {
-        map.dragging.enable();
-      }
-    }, { passive: true });
-
-    mapEl.addEventListener('touchmove', (e) => {
-      if (e.touches.length >= 2) {
-        map.dragging.enable();
-      }
-    }, { passive: true });
-
-    mapEl.addEventListener('touchend', () => {
-      map.dragging.enable();
-    }, { passive: true });
-  });
-
   console.log('✅ Map fullscreen set up');
 }
 
