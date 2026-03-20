@@ -14,7 +14,7 @@ import { imageUploadService } from './image-upload-service.js';
 import { miniMapService } from './mini-map-service.js';
 import { openingHoursParser } from '../utils/opening-hours-parser.js';
 import { tabManager } from './tab-manager.js';
-import { PLACE_CATEGORY_ICONS } from '../config/constants.js';
+import { PLACE_CATEGORY_ICONS, PLACE_CATEGORY_COLORS } from '../config/constants.js';
 
 export class PlaceFormManager {
   constructor(eventBusInstance, firebase, geocoding, imageUpload, miniMap, hoursParser, tabs) {
@@ -383,9 +383,18 @@ export class PlaceFormManager {
     const sortedPlaces = [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
     list.innerHTML = sortedPlaces.map(place => {
+      const cats = place.categories || (place.primaryCategory ? [place.primaryCategory] : (place.category ? [place.category] : []));
+      const primary = place.primaryCategory || place.category || '';
+      const chips = cats.map(c => {
+        const color = (window.categoryColors?.placeColors?.[c]) || PLACE_CATEGORY_COLORS[c] || '#64748b';
+        const style = `background:${color}22;color:${color};border-color:${color}55;`;
+        return `<span class="item-cat-chip${c === primary ? ' primary' : ''}" style="${style}">${c}</span>`;
+      }).join('');
+
       return `
         <li class="event-item place-item place-item--compact">
           <span class="place-item-name">${place.name}</span>
+          <div class="item-cats">${chips}</div>
           <div class="place-item-actions">
             <button type="button" class="btn btn-small" onclick="editPlace(${place.id})">Modifica</button>
             <button type="button" class="btn btn-danger btn-small" onclick="deletePlace(${place.id})">Elimina</button>

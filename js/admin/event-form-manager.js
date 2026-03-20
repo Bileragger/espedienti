@@ -11,7 +11,7 @@ import { firebaseService } from '../data/firebase-service.js';
 import { geocodingService } from './geocoding-service.js';
 import { imageUploadService } from './image-upload-service.js';
 import { miniMapService } from './mini-map-service.js';
-import { EVENT_CATEGORY_ICONS } from '../config/constants.js';
+import { EVENT_CATEGORY_ICONS, EVENT_CATEGORY_COLORS } from '../config/constants.js';
 
 export class EventFormManager {
   constructor(eventBusInstance, firebase, geocoding, imageUpload, miniMap) {
@@ -393,20 +393,21 @@ export class EventFormManager {
     }
 
     list.innerHTML = filtered.map(event => {
-      const categoryIcon = event.category ? this.categoryIcons[event.category] || '📍' : '';
-      const categoryText = event.category ? `${categoryIcon} ${event.category}` : 'Nessuna categoria';
+      const cats = event.categories || (event.primaryCategory ? [event.primaryCategory] : (event.category ? [event.category] : []));
+      const primary = event.primaryCategory || event.category || '';
+      const chips = cats.map(c => {
+        const color = (window.categoryColors?.eventColors?.[c]) || EVENT_CATEGORY_COLORS[c] || '#94a3b8';
+        const style = `background:${color}22;color:${color};border-color:${color}55;`;
+        return `<span class="item-cat-chip${c === primary ? ' primary' : ''}" style="${style}">${c}</span>`;
+      }).join('');
 
       return `
-        <li class="event-item">
-          <h3>${event.title}</h3>
-          <p>📂 ${categoryText}</p>
-          <p>📅 ${event.date} | 📍 ${event.location}</p>
-          <p>🏷️ ${event.tags ? event.tags.join(', ') : 'Nessun tag'}</p>
-          ${event.poster ? '<p>🖼️ Ha locandina</p>' : ''}
-          ${event.whatsappLink ? '<p>💬 Link WhatsApp configurato</p>' : ''}
-          <div class="event-actions">
-            <button type="button" class="btn btn-small" onclick="editEvent(${event.id})">✏️ Modifica</button>
-            <button type="button" class="btn btn-danger btn-small" onclick="deleteEvent(${event.id})">🗑️ Elimina</button>
+        <li class="event-item place-item place-item--compact">
+          <span class="place-item-name">${event.title}</span>
+          <div class="item-cats">${chips}</div>
+          <div class="place-item-actions">
+            <button type="button" class="btn btn-small" onclick="editEvent(${event.id})">Modifica</button>
+            <button type="button" class="btn btn-danger btn-small" onclick="deleteEvent(${event.id})">Elimina</button>
           </div>
         </li>
       `;

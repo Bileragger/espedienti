@@ -52,24 +52,15 @@ export class FirebaseService {
    * @returns {Promise<void>}
    */
   _waitForFirebase() {
-    return new Promise((resolve, reject) => {
-      // Check if already ready
+    return new Promise((resolve) => {
+      // By the time this is called, firebaseReady is already true
+      // (admin-app.js only calls initialize() after the firebaseReady event)
       if (window.firebaseReady && window.db && window.firestoreModules) {
         resolve();
         return;
       }
-
-      // Wait for firebaseReady event
-      const timeout = setTimeout(() => {
-        reject(new Error('Firebase initialization timeout'));
-      }, 10000); // 10 second timeout
-
-      const handler = () => {
-        clearTimeout(timeout);
-        resolve();
-      };
-
-      window.addEventListener('firebaseReady', handler, { once: true });
+      // Fallback: wait for the event (should rarely be needed)
+      window.addEventListener('firebaseReady', resolve, { once: true });
     });
   }
 

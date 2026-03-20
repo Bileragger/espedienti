@@ -1165,6 +1165,53 @@
         .places-filters .filters-title {
             color: var(--accent-places);
         }
+
+        /* Mobile view tabs (calendario / mappa) */
+        .mobile-view-tabs {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .mobile-view-tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 12px;
+                border: 1px solid var(--border-subtle);
+                border-radius: 10px;
+                overflow: hidden;
+            }
+
+            .mobile-view-tab {
+                flex: 1;
+                padding: 10px;
+                background: var(--bg-secondary);
+                color: var(--text-secondary);
+                border: none;
+                font-family: inherit;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+
+            .mobile-view-tab:first-child {
+                border-right: 1px solid var(--border-subtle);
+            }
+
+            .mobile-view-tab.active {
+                background: var(--accent-primary);
+                color: #1c1409;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            #calendarCol.mobile-hidden,
+            #mapCol.mobile-hidden {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1221,8 +1268,14 @@
             placeholder="🔍 Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag"
         >
 
+        <!-- Tab bar visibile solo su mobile -->
+        <div class="mobile-view-tabs" id="mobileViewTabs">
+            <button type="button" class="mobile-view-tab active" onclick="switchMobileTab('calendar')">📅 Calendario</button>
+            <button type="button" class="mobile-view-tab" onclick="switchMobileTab('map')">🗺️ Mappa</button>
+        </div>
+
         <div class="grid">
-            <div class="grid-col">
+            <div class="grid-col" id="calendarCol">
                 <!-- Filtri categorie eventi -->
                 <div class="category-filters show" id="eventCategoryFilters">
                     <div class="filters-title">Che tipo di eventi cerchi?</div>
@@ -1261,7 +1314,7 @@
                 </div>
             </div>
 
-            <div class="grid-col">
+            <div class="grid-col" id="mapCol">
                 <!-- Filtri categorie luoghi -->
                 <div class="category-filters places-filters show" id="placeCategoryFilters">
                     <div class="filters-title">Che tipo di location cerchi?</div>
@@ -1373,6 +1426,27 @@
     <!-- Inline script moved to modular JS files in /js/ directory -->
     <!-- See js/app.js for the new modular entry point -->
     <script type="module" src="js/app.js"></script>
+    <script>
+        function switchMobileTab(tab) {
+            const calendarCol = document.getElementById('calendarCol');
+            const mapCol = document.getElementById('mapCol');
+            const tabs = document.querySelectorAll('.mobile-view-tab');
+
+            if (tab === 'calendar') {
+                calendarCol.classList.remove('mobile-hidden');
+                mapCol.classList.add('mobile-hidden');
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                mapCol.classList.remove('mobile-hidden');
+                calendarCol.classList.add('mobile-hidden');
+                tabs[1].classList.add('active');
+                tabs[0].classList.remove('active');
+                // Notifica Leaflet che il container è ora visibile
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+            }
+        }
+    </script>
 
     <!--
     ORIGINAL INLINE SCRIPT (COMMENTED OUT - NOW USING MODULAR ARCHITECTURE)

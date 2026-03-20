@@ -162,7 +162,7 @@ export class MapRenderer {
     if (eventCats.length > 0) {
       rows.push('<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#555;">Eventi</div>');
       eventCats.forEach(cat => {
-        const color = EVENT_CATEGORY_COLORS[cat] || EVENT_CATEGORY_COLORS['altro'];
+        const color = (window.categoryColors?.eventColors?.[cat]) || EVENT_CATEGORY_COLORS[cat] || EVENT_CATEGORY_COLORS['altro'];
         const name = EVENT_CATEGORIES[cat]?.name || cat;
         rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></span>
@@ -175,7 +175,7 @@ export class MapRenderer {
       if (eventCats.length > 0) rows.push('<div style="height:6px;"></div>');
       rows.push('<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#555;">Luoghi</div>');
       placeCats.forEach(cat => {
-        const color = PLACE_CATEGORY_COLORS[cat] || PLACE_CATEGORY_COLORS['altro'];
+        const color = (window.categoryColors?.placeColors?.[cat]) || PLACE_CATEGORY_COLORS[cat] || PLACE_CATEGORY_COLORS['altro'];
         const name = PLACE_CATEGORIES[cat]?.name || cat;
         rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></span>
@@ -274,7 +274,7 @@ export class MapRenderer {
    */
   _createEventIcon(category, isSelected) {
     const size = isSelected ? 16 : 12;
-    const color = EVENT_CATEGORY_COLORS[category] || EVENT_CATEGORY_COLORS['altro'];
+    const color = (window.categoryColors?.eventColors?.[category]) || EVENT_CATEGORY_COLORS[category] || EVENT_CATEGORY_COLORS['altro'];
     const border = isSelected ? '2px solid white' : '2px solid white';
     const shadow = isSelected ? '0 0 0 2px ' + color + ', 0 3px 10px rgba(0,0,0,0.4)' : '0 1px 5px rgba(0,0,0,0.45)';
 
@@ -302,7 +302,8 @@ export class MapRenderer {
    */
   _createPlaceIcon(place) {
     const size = 12;
-    const color = PLACE_CATEGORY_COLORS[place.primaryCategory || place.category] || PLACE_CATEGORY_COLORS['altro'];
+    const cat = place.primaryCategory || place.category;
+    const color = (window.categoryColors?.placeColors?.[cat]) || PLACE_CATEGORY_COLORS[cat] || PLACE_CATEGORY_COLORS['altro'];
 
     const html = `<div style="
       background: ${color};

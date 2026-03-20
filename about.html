@@ -341,18 +341,83 @@
             color: var(--accent-secondary);
         }
 
+        .newsletter-error {
+            display: none;
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .contact-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-inline {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .mobile-menu {
+            display: none;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 8px 16px;
+            gap: 4px;
+            z-index: 999;
+        }
+
+        .mobile-menu a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .mobile-menu a:hover {
+            background: rgba(180, 140, 0, 0.18);
+        }
+
         @media (max-width: 768px) {
             .hero h1 {
                 font-size: 1.6rem;
             }
 
             .nav-links {
-                gap: 6px;
+                display: none;
             }
 
-            .nav-links a {
-                padding: 5px 10px;
-                font-size: 0.85rem;
+            .hamburger {
+                display: block;
             }
 
             .newsletter-form {
@@ -380,7 +445,13 @@
             <div class="logo">
                 <span>Espedienti a Napoli</span>
             </div>
+            <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
             <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="#features">Funzionalità</a>
+                <a href="#contatti">Contatti</a>
+            </nav>
+            <nav class="mobile-menu" id="mobileMenu">
                 <a href="index.html">Home</a>
                 <a href="#features">Funzionalità</a>
                 <a href="#contatti">Contatti</a>
@@ -453,7 +524,7 @@
                 >
                 <button type="submit">Iscriviti</button>
             </form>
-            <div class="newsletter-error" id="newsletterError" style="display:none; color: #dc3545; margin-top: 10px; font-size: 0.9rem;">
+            <div class="newsletter-error" id="newsletterError">
                 ⚠️ Inserisci un indirizzo email valido.
             </div>
             <div class="newsletter-success" id="newsletterSuccess">
@@ -468,11 +539,11 @@
                 <h2>Contatti</h2>
                 <p>Hai una segnalazione di bug, vuoi collaborare al progetto o proporre nuovi eventi?</p>
                 <p>Scrivici direttamente via email!</p>
-                <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <div class="contact-buttons">
                     <a href="mailto:s.esposito.1101@gmail.com?subject=Segnalazione%20Bug%20-%20Espedienti%20a%20Napoli" class="btn">
                         🐛 Segnala Bug
                     </a>
-                    <a href="mailto:s.esposito.1101@gmail.com?subject=Collaborazione%20-%20Espedienti%20a%20Napoli" class="btn btn-outline" style="text-decoration: none; display: inline-flex; align-items: center;">
+                    <a href="mailto:s.esposito.1101@gmail.com?subject=Collaborazione%20-%20Espedienti%20a%20Napoli" class="btn btn-outline btn-inline">
                         ✉️ Collabora
                     </a>
                 </div>
@@ -494,7 +565,7 @@
         <div class="footer-content">
             <p><strong>Espedienti a Napoli</strong></p>
             <p>Una piattaforma per scoprire eventi e incontrare persone</p>
-            <p style="margin-top: 20px;">
+            <p class="footer-links">
                 <a href="index.html">Home</a> •
                 <a href="about.html">Chi Siamo</a> •
                 <a href="admin.html">Admin</a>

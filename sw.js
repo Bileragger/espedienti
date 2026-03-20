@@ -3,7 +3,7 @@
  * Caches shell assets for offline support and faster loads.
  */
 
-const CACHE_NAME = 'espedienti-v10';
+const CACHE_NAME = 'espedienti-v11';
 
 // Assets to cache on install (app shell)
 const SHELL_ASSETS = [
@@ -44,36 +44,70 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for Firebase/API, cache-first for shell
+// Assets that never change — safe to serve from cache indefinitely
+const IMMUTABLE_ORIGINS = [
+  'unpkg.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
+];
+
+const IMMUTABLE_PATHS = [
+  '/icons/',
+  '/manifest.webmanifest'
+];
+
+function isImmutable(url) {
+  if (IMMUTABLE_ORIGINS.some(o => url.hostname.includes(o))) return true;
+  if (IMMUTABLE_PATHS.some(p => url.pathname.startsWith(p))) return true;
+  return false;
+}
+
+// Fetch strategy:
+//   - Firebase / external APIs  → bypass SW entirely (network only)
+//   - Fonts, CDN libs, icons    → cache-first (immutable)
+//   - HTML, JS, CSS (app code)  → network-first, fall back to cache if offline
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
-  // Always go to network for Firebase and external APIs
+  // Bypass: Firebase and other APIs
   if (
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('firebase') ||
-    url.hostname.includes('googleapis.com')
+    url.hostname.includes('identitytoolkit') ||
+    (url.hostname.includes('googleapis.com') && !url.hostname.includes('fonts'))
   ) {
-    return; // Let browser handle it normally
+    return;
   }
 
-  // Cache-first for shell assets
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
+  // Cache-first for truly immutable assets
+  if (isImmutable(url)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
-      return fetch(event.request).then((response) => {
-        // Cache successful GET responses for same-origin resources
-        if (
-          response.ok &&
-          event.request.method === 'GET' &&
-          url.origin === self.location.origin
-        ) {
+  // Network-first for all app files (HTML, JS, CSS, images)
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request)) // offline fallback
   );
 });

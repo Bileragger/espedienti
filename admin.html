@@ -59,6 +59,7 @@
         // Gestione logout
         window.adminLogout = async () => {
             await signOut(auth);
+            location.reload();
         };
 
         // Osserva stato autenticazione
@@ -615,6 +616,29 @@
             overflow: hidden;
             text-overflow: ellipsis;
             margin-right: 12px;
+            min-width: 0;
+        }
+
+        .item-cats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-right: 12px;
+        }
+
+        .item-cat-chip {
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: rgba(180, 140, 0, 0.15);
+            color: var(--accent-secondary);
+            border: 1px solid var(--border-subtle);
+            white-space: nowrap;
+        }
+
+        .item-cat-chip.primary {
+            background: rgba(180, 140, 0, 0.3);
+            font-weight: 600;
         }
 
         .opening-hours-grid {
@@ -957,6 +981,113 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Category manager styles */
+        .cat-add-form {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+        }
+
+        .cat-add-form h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .cat-add-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cat-key-input {
+            width: 160px;
+            flex-shrink: 0;
+        }
+
+        .cat-name-input-new {
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .cat-icon-input {
+            width: 80px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .cat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cat-color-picker {
+            width: 36px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 2px;
+            cursor: pointer;
+            flex-shrink: 0;
+            background: transparent;
+        }
+
+        .cat-key {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            font-family: monospace;
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .cat-name-input {
+            flex: 1;
+            min-width: 140px;
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .cat-item .cat-icon-input {
+            width: 52px;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 3px 6px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 700px) {
+            .cat-add-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cat-key-input, .cat-name-input-new, .cat-icon-input {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1002,6 +1133,7 @@
                 <button type="button" class="tab-btn active" onclick="switchTab('events')">🎭 Eventi</button>
                 <button type="button" class="tab-btn places-tab" onclick="switchTab('places')">🏛️ Luoghi</button>
                 <button type="button" class="tab-btn" onclick="switchTab('newsletter')">📬 Newsletter</button>
+                <button type="button" class="tab-btn" onclick="switchTab('categories')">🏷️ Categorie</button>
             </div>
 
             <!-- TAB EVENTI -->
@@ -1297,6 +1429,65 @@
                     </ul>
                 </div>
             </div><!-- Fine TAB NEWSLETTER -->
+
+            <!-- TAB CATEGORIE -->
+            <div id="categoriesTab" class="tab-content">
+
+                <!-- Categorie Eventi -->
+                <div class="section">
+                    <h2>🎭 Categorie Eventi</h2>
+
+                    <!-- Aggiungi categoria evento -->
+                    <div class="cat-add-form">
+                        <h3>Aggiungi categoria</h3>
+                        <div class="cat-add-row">
+                            <input type="text" id="newEventCatKey" placeholder="chiave (es. live-music)" class="form-control cat-key-input">
+                            <input type="text" id="newEventCatName" placeholder="Nome visualizzato" class="form-control cat-name-input-new">
+                            <input type="text" id="newEventCatIcon" placeholder="Emoji icona" class="form-control cat-icon-input">
+                            <input type="color" id="newEventCatColor" value="#94a3b8" class="cat-color-picker" title="Colore legenda">
+                            <button type="button" class="btn" onclick="addCategory('event')">Aggiungi</button>
+                        </div>
+                    </div>
+
+                    <!-- Ricerca -->
+                    <div class="list-search">
+                        <input type="text" id="eventCatSearch" placeholder="🔍 Cerca categoria…" class="form-control">
+                    </div>
+
+                    <!-- Lista categorie eventi -->
+                    <ul class="events-list cat-list" id="eventCatList">
+                        <li class="list-empty">Caricamento...</li>
+                    </ul>
+                </div>
+
+                <!-- Categorie Luoghi -->
+                <div class="section">
+                    <h2>🏛️ Categorie Luoghi</h2>
+
+                    <!-- Aggiungi categoria luogo -->
+                    <div class="cat-add-form">
+                        <h3>Aggiungi categoria</h3>
+                        <div class="cat-add-row">
+                            <input type="text" id="newPlaceCatKey" placeholder="chiave (es. museo)" class="form-control cat-key-input">
+                            <input type="text" id="newPlaceCatName" placeholder="Nome visualizzato" class="form-control cat-name-input-new">
+                            <input type="text" id="newPlaceCatIcon" placeholder="Emoji icona" class="form-control cat-icon-input">
+                            <input type="color" id="newPlaceCatColor" value="#64748b" class="cat-color-picker" title="Colore legenda">
+                            <button type="button" class="btn" onclick="addCategory('place')">Aggiungi</button>
+                        </div>
+                    </div>
+
+                    <!-- Ricerca -->
+                    <div class="list-search">
+                        <input type="text" id="placeCatSearch" placeholder="🔍 Cerca categoria…" class="form-control">
+                    </div>
+
+                    <!-- Lista categorie luoghi -->
+                    <ul class="events-list cat-list" id="placeCatList">
+                        <li class="list-empty">Caricamento...</li>
+                    </ul>
+                </div>
+
+            </div><!-- Fine TAB CATEGORIE -->
 
         </div>
     </div>

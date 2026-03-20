@@ -301,7 +301,9 @@ export const API_ENDPOINTS = {
 export const FIREBASE_COLLECTIONS = {
   events: 'events',
   places: 'places',
-  categories: 'categories'
+  categories: 'categories',
+  eventCategories: 'event_categories',
+  placeCategories: 'place_categories'
 };
 
 // ============================================================================

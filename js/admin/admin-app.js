@@ -16,6 +16,7 @@ import { tabManager } from './tab-manager.js';
 import { geocodingService } from './geocoding-service.js';
 import { imageUploadService } from './image-upload-service.js';
 import { miniMapService } from './mini-map-service.js';
+import { categoryManager } from './category-manager.js';
 import { eventFormManager } from './event-form-manager.js';
 import { placeFormManager } from './place-form-manager.js';
 import { newsletterManager } from './newsletter-manager.js';
@@ -28,6 +29,9 @@ async function initializeModules() {
 
   // Initialize tab manager
   tabManager.initialize();
+
+  // Initialize category manager first (populates form selects used by form managers)
+  await categoryManager.initialize();
 
   // Initialize form managers
   await eventFormManager.initialize();
@@ -77,14 +81,19 @@ function setupWindowHandlers() {
   console.log('✅ Window handlers set up');
 }
 
+let appInitialized = false;
+
 /**
- * Main initialization function
+ * Main initialization function — called once Firebase auth confirms the user
  */
 async function initializeAdminApp() {
+  if (appInitialized) return;
+  appInitialized = true;
+
   console.log('🎨 Espedienti Admin - Inizializzazione...');
 
   try {
-    // Initialize Firebase
+    // Firebase is already ready (firebaseReady event was fired before this call)
     await firebaseService.initialize();
 
     // Initialize all modules
@@ -96,13 +105,9 @@ async function initializeAdminApp() {
     console.log('✅ Espedienti Admin initialized successfully!');
   } catch (error) {
     console.error('❌ Admin initialization error:', error);
+    appInitialized = false;
   }
 }
 
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeAdminApp);
-} else {
-  // DOM already loaded
-  initializeAdminApp();
-}
+// Initialize only after Firebase auth confirms the user is logged in
+window.addEventListener('firebaseReady', initializeAdminApp);
