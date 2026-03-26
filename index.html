@@ -133,6 +133,18 @@
             box-shadow: var(--shadow-glow);
         }
 
+        .nav-links a.active,
+        .mobile-menu a.active {
+            background: rgba(180, 140, 0, 0.22);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .logo a {
+            color: inherit;
+            text-decoration: none;
+        }
+
         .hero {
             background: var(--bg-secondary);
             color: var(--text-primary);
@@ -917,6 +929,22 @@
             color: var(--text-primary);
         }
 
+        .lang-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .lang-toggle-btn:hover {
+            background: rgba(180, 140, 0, 0.18);
+            border-color: var(--accent-primary);
+        }
+
         .mobile-menu {
             display: none;
         }
@@ -1255,32 +1283,34 @@
     <header>
         <div class="header-content">
             <div class="logo">
-                <span>Espedienti a Napoli</span>
+                <a href="index.html">Espedienti a Napoli</a>
             </div>
             <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
             <nav class="nav-links">
-                <a href="about.html">Il Progetto</a>
-                <a href="about.html#contatti">Contatti</a>
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" id="langToggleBtn" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
             </nav>
             <nav class="mobile-menu" id="mobileMenu">
-                <a href="about.html">Il Progetto</a>
-                <a href="about.html#contatti">Contatti</a>
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
             </nav>
         </div>
     </header>
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Cosa facciamo oggi a Napoli?</h1>
-            <p id="heroSubtitle">Events, luoghi e persone</p>
+            <h1 data-i18n="hero.title">Cosa facciamo oggi a Napoli?</h1>
+            <p id="heroSubtitle" data-i18n="hero.subtitle.default">Events, luoghi e persone</p>
             <div class="hero-buttons">
-                <button class="btn btn-white" onclick="document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                <button class="btn btn-white" onclick="document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.map">
                     🗺️ Esplora la mappa
                 </button>
-                <button class="btn btn-white" onclick="document.getElementById('calendar').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                <button class="btn btn-white" onclick="document.getElementById('calendar').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.calendar">
                     📅 Vedi calendario
                 </button>
-                <button class="btn btn-outline" onclick="document.getElementById('community').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                <button class="btn btn-outline" onclick="document.getElementById('community').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.community">
                     💬 Community
                 </button>
             </div>
@@ -1288,7 +1318,7 @@
     </section>
 
     <div class="container" id="events">
-        <h2 class="section-title">Esplora gli eventi ed i luoghi di Napoli</h2>
+        <h2 class="section-title" data-i18n="section.explore">Esplora gli eventi ed i luoghi di Napoli</h2>
         
         <div id="localWarning" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ffeaa7;">
             <strong>⚠️ Modalità Locale Rilevata</strong>
@@ -1298,38 +1328,39 @@
             </p>
         </div>
         
-        <input 
-            type="text" 
-            class="search-bar" 
+        <input
+            type="text"
+            class="search-bar"
             id="searchBar"
+            data-i18n-placeholder="search.placeholder"
             placeholder="🔍 Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag"
         >
 
         <!-- Tab bar visibile solo su mobile -->
         <div class="mobile-view-tabs" id="mobileViewTabs">
-            <button type="button" class="mobile-view-tab active" onclick="switchMobileTab('calendar')">📅 Calendario</button>
-            <button type="button" class="mobile-view-tab" onclick="switchMobileTab('map')">🗺️ Mappa</button>
+            <button type="button" class="mobile-view-tab active" onclick="switchMobileTab('calendar')" data-i18n="tabs.calendar">📅 Calendario</button>
+            <button type="button" class="mobile-view-tab" onclick="switchMobileTab('map')" data-i18n="tabs.map">🗺️ Mappa</button>
         </div>
 
         <div class="grid">
             <div class="grid-col" id="calendarCol">
                 <!-- Filtri categorie eventi -->
                 <div class="category-filters show" id="eventCategoryFilters">
-                    <div class="filters-title">Che tipo di eventi cerchi?</div>
-                    <div class="filter-checkbox checked" onclick="toggleEventCategory('all')">Tutti</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('live-music')">🎵 Live Music</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('open-mic')">🎤 Open Mic</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('concerto')">🎸 Concerti</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('spettacolo-teatrale')">🎭 Teatro</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('mostra')">🖼️ Mostre</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('workshop')">🛠️ Workshop</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('fiera')">🎪 Fiere</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('altro')">Altro</div>
+                    <div class="filters-title" data-i18n="filters.events.title">Che tipo di eventi cerchi?</div>
+                    <div class="filter-checkbox checked" onclick="toggleEventCategory('all')" data-i18n="filters.all">Tutti</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('live-music')" data-i18n="filters.live-music">🎵 Live Music</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('open-mic')" data-i18n="filters.open-mic">🎤 Open Mic</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('concerto')" data-i18n="filters.concerto">🎸 Concerti</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('spettacolo-teatrale')" data-i18n="filters.spettacolo-teatrale">🎭 Teatro</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('mostra')" data-i18n="filters.mostra">🖼️ Mostre</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('workshop')" data-i18n="filters.workshop">🛠️ Workshop</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('fiera')" data-i18n="filters.fiera">🎪 Fiere</div>
+                    <div class="filter-checkbox" onclick="toggleEventCategory('altro')" data-i18n="filters.altro">Altro</div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2>📅 Calendario Eventi</h2>
+                        <h2 data-i18n="calendar.title">📅 Calendario Eventi</h2>
                         <div class="calendar-nav">
                             <button type="button" onclick="changeMonth(-1)">←</button>
                             <span id="monthYear"></span>
@@ -1341,41 +1372,45 @@
                     </div>
                 </div>
 
+                <div class="search-info-text" data-i18n="quickfilter.hint">
+                    💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
+                </div>
+
             </div>
 
             <div class="grid-col" id="mapCol">
                 <!-- Filtri categorie luoghi -->
                 <div class="category-filters places-filters show" id="placeCategoryFilters">
-                    <div class="filters-title">Che tipo di location cerchi?</div>
-                    <div class="filter-checkbox places-filter checked" onclick="togglePlaceCategory('all')">Tutti</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('museo')">🏛️ Musei</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('galleria')">🖼️ Gallerie</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('parco')">🌳 Parchi</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('biblioteca')">📚 Biblioteche</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('teatro')">🎭 Teatri</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('coworking')">💼 Coworking</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('ristorante')">🍽️ Ristoranti</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('centro-sociale')">🤝 Centri Sociali</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('fondazione')">🏢 Fondazioni</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('altro')">Altro</div>
+                    <div class="filters-title" data-i18n="filters.places.title">Che tipo di location cerchi?</div>
+                    <div class="filter-checkbox places-filter checked" onclick="togglePlaceCategory('all')" data-i18n="filters.all">Tutti</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('museo')" data-i18n="filters.museo">🏛️ Musei</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('galleria')" data-i18n="filters.galleria">🖼️ Gallerie</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('parco')" data-i18n="filters.parco">🌳 Parchi</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('biblioteca')" data-i18n="filters.biblioteca">📚 Biblioteche</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('teatro')" data-i18n="filters.teatro">🎭 Teatri</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('coworking')" data-i18n="filters.coworking">💼 Coworking</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('ristorante')" data-i18n="filters.ristorante">🍽️ Ristoranti</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('centro-sociale')" data-i18n="filters.centro-sociale">🤝 Centri Sociali</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('fondazione')" data-i18n="filters.fondazione">🏢 Fondazioni</div>
+                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('altro')" data-i18n="filters.altro">Altro</div>
                 </div>
 
                 <div class="card">
                     <div class="card-header card-header--places">
-                        <h2>🗺️ Mappa luoghi ed eventi</h2>
+                        <h2 data-i18n="map.title">🗺️ Mappa luoghi ed eventi</h2>
                     </div>
                     <div class="card-content">
                         <div class="map-container">
                             <div id="map"></div>
                             <div id="mapLegend" class="map-legend"></div>
                             <div class="map-controls">
-                                <button type="button" class="map-control-btn wide" id="locateBtnNew" onclick="locateUser()" title="Trova la mia posizione">
-                                    📍 Dove sono
+                                <button type="button" class="map-control-btn wide" id="locateBtnNew" onclick="locateUser()" data-i18n-title="map.locate.title" title="Trova la mia posizione">
+                                    <span data-i18n="map.locate">📍 Dove sono</span>
                                 </button>
-                                <button type="button" class="map-control-btn wide" id="openNowBtn" onclick="filterOpenNow()" title="Mostra solo luoghi aperti ora">
-                                    🕐 Aperti ora
+                                <button type="button" class="map-control-btn wide" id="openNowBtn" onclick="filterOpenNow()" data-i18n-title="map.openNow.title" title="Mostra solo luoghi aperti ora">
+                                    <span data-i18n="map.openNow">🕐 Aperti ora</span>
                                 </button>
-                                <button type="button" class="map-control-btn" id="fullscreenMapBtn" onclick="toggleMapFullscreen()" title="Schermo intero">
+                                <button type="button" class="map-control-btn" id="fullscreenMapBtn" onclick="toggleMapFullscreen()" data-i18n-title="map.fullscreen.title" title="Schermo intero">
                                     ⛶
                                 </button>
                             </div>
@@ -1389,7 +1424,7 @@
         <!-- Lista unificata - larghezza piena, sempre visibile -->
         <div class="card" id="unifiedCard">
             <div class="card-header card-header--search">
-                <h2 id="unifiedTitle">La Tua Ricerca</h2>
+                <h2 id="unifiedTitle" data-i18n="list.title">La Tua Ricerca</h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="unifiedList"></div>
@@ -1397,14 +1432,8 @@
         </div>
 
         <div class="search-info" id="searchInfo">
-            <div class="search-info-text">
-                💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
-            </div>
             <div class="quick-filters">
-                <button class="quick-filter-btn" onclick="filterToday()" id="todayBtn">
-                    📅 Eventi di oggi
-                </button>
-                <button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
+<button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn" data-i18n="quickfilter.reset">
                     🔄 Reset filtri
                 </button>
             </div>
@@ -1413,18 +1442,18 @@
 
         <div class="card chat-section" id="community">
             <div class="card-header">
-                <h2>💬 Community per Interessi</h2>
+                <h2 data-i18n="community.title">💬 Community per Interessi</h2>
             </div>
             <div class="card-content">
-                <p class="chat-description">Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.</p>
+                <p class="chat-description" data-i18n="community.description">Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.</p>
 
                 <div id="categoryChats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
                     <!-- Categories will be loaded here -->
                 </div>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #fef3c7;">
-                    <p class="chat-description"><strong>Community Generale</strong> - Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi</p>
-                    <button class="btn" id="generalChatBtn">
+                    <p class="chat-description"><strong data-i18n="community.general.label">Community Generale</strong> - <span data-i18n="community.general.desc">Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi</span></p>
+                    <button class="btn" id="generalChatBtn" data-i18n="community.general.btn">
                         Unisciti alla Community Generale
                     </button>
                 </div>
@@ -1433,8 +1462,8 @@
             <!-- Work in Progress Overlay -->
             <div class="wip-overlay">
                 <div class="wip-icon">🚧</div>
-                <h3>Work in Progress</h3>
-                <p>Stiamo lavorando alla community! Presto potrai unirti alle chat di gruppo organizzate per interesse.</p>
+                <h3 data-i18n="community.wip.title">Work in Progress</h3>
+                <p data-i18n="community.wip.text">Stiamo lavorando alla community! Presto potrai unirti alle chat di gruppo organizzate per interesse.</p>
             </div>
         </div>
     </div>
@@ -1449,10 +1478,27 @@
     <footer>
         <div class="footer-content">
             <p><strong>Espedienti a Napoli</strong></p>
-            <p>Una piattaforma per scoprire eventi e conoscere persone nuove</p>
-            <p style="margin-top: 20px; opacity: 0.7;">© 2026 - Fatto con ❤️ per la community</p>
+            <p data-i18n="footer.tagline">Una piattaforma per scoprire eventi e conoscere persone nuove</p>
+            <p style="margin-top: 20px; opacity: 0.7;" data-i18n="footer.copy">© 2026 - Fatto con ❤️ per la community</p>
         </div>
     </footer>
+
+    <script>
+        // Mark active nav link based on current page
+        (function() {
+            const path = window.location.pathname;
+            const active = path.endsWith('contatti.html') ? 'contacts' : path.endsWith('about.html') ? 'project' : null;
+            if (active) {
+                document.querySelectorAll('[data-nav="' + active + '"]').forEach(el => el.classList.add('active'));
+            }
+        })();
+    </script>
+
+    <!-- i18n: must load before app.js so window.t() is available -->
+    <script type="module">
+        import { i18n } from './js/i18n/i18n-service.js';
+        i18n.initialize();
+    </script>
 
     <!-- Inline script moved to modular JS files in /js/ directory -->
     <!-- See js/app.js for the new modular entry point -->
@@ -2698,22 +2744,30 @@
 
     <script>
         // Rotating hero subtitle — picks a random phrase on each load
-        const heroSubtitles = [
-            "Cosa c'è da fare stanotte?",
-            "Napoli non smette mai di sorprenderti.",
-            "Scegli come vivere la città.",
-            "Ogni angolo ha qualcosa da raccontare.",
-            "Dai un senso alla serata.",
-            "Un posto per ogni umore.",
-            "Lasciati trascinare dalla città.",
-            "C'è sempre qualcosa che non sapevi.",
-            "La città è tua — esplorala.",
-            "Partenope ti aspetta fuori.",
-        ];
-        const el = document.getElementById('heroSubtitle');
-        if (el) {
-            el.textContent = heroSubtitles[Math.floor(Math.random() * heroSubtitles.length)];
-        }
+        // Uses i18n if available, falls back to Italian
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('heroSubtitle');
+            if (!el) return;
+            const subtitles = window.t ? window.t('hero.subtitles') : [
+                "Cosa c'è da fare stanotte?",
+                'Napoli non smette mai di sorprenderti.',
+                'Scegli come vivere la città.',
+                'Ogni angolo ha qualcosa da raccontare.',
+                'Dai un senso alla serata.',
+                'Un posto per ogni umore.',
+                'Lasciati trascinare dalla città.',
+                "C'è sempre qualcosa che non sapevi.",
+                'La città è tua — esplorala.',
+                'Partenope ti aspetta fuori.',
+            ];
+            el.textContent = subtitles[Math.floor(Math.random() * subtitles.length)];
+
+            // Re-pick when language changes
+            window.addEventListener('languageChanged', () => {
+                const subs = window.t('hero.subtitles');
+                el.textContent = subs[Math.floor(Math.random() * subs.length)];
+            });
+        });
     </script>
 
 </body>

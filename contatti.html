@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contatti - Espedienti a Napoli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
+            authDomain: "espedienti-napoli.firebaseapp.com",
+            projectId: "espedienti-napoli",
+            storageBucket: "espedienti-napoli.firebasestorage.app",
+            messagingSenderId: "450345618879",
+            appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.firestoreModules = { collection, addDoc };
+        window.firebaseReady = true;
+        window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
+    <style>
+        :root {
+            --bg-primary: #fefdf5;
+            --bg-secondary: #f9f4e4;
+            --bg-tertiary: #ede7cf;
+            --text-primary: #1c1409;
+            --text-secondary: #4a3818;
+            --text-tertiary: #7a6025;
+            --accent-primary: #c9a200;
+            --accent-secondary: #a07800;
+            --accent-places: #92400e;
+            --border-subtle: rgba(180, 140, 0, 0.25);
+            --shadow-glow: 0 0 15px rgba(180, 140, 0, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        input, button, textarea, select { font-family: inherit; }
+
+        header {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 0 var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo a { color: inherit; text-decoration: none; }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: rgba(180, 140, 0, 0.18);
+            border-color: var(--border-subtle);
+            box-shadow: 0 0 20px rgba(180, 140, 0, 0.25);
+        }
+
+        .nav-links a.active,
+        .mobile-menu a.active {
+            background: rgba(180, 140, 0, 0.22);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .lang-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .lang-toggle-btn:hover {
+            background: rgba(180, 140, 0, 0.18);
+            border-color: var(--accent-primary);
+        }
+
+        .mobile-menu { display: none; }
+
+        .mobile-menu.open {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 8px 16px;
+            gap: 4px;
+            z-index: 999;
+        }
+
+        .mobile-menu a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .mobile-menu a:hover { background: rgba(180, 140, 0, 0.18); }
+
+        .hero {
+            background: var(--bg-secondary);
+            padding: 36px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .hero-content { max-width: 800px; margin: 0 auto; }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            line-height: 1.2;
+            color: var(--accent-primary);
+        }
+
+        .hero p {
+            font-size: 0.95rem;
+            font-weight: 300;
+            margin-bottom: 0;
+            color: var(--text-secondary);
+        }
+
+        .section { padding: 40px 20px; }
+        .section-alt { background: var(--bg-secondary); }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .about-content {
+            max-width: 700px;
+            margin: 0 auto 30px;
+            text-align: center;
+        }
+
+        .about-content h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .about-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .contact-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.85; }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .btn-inline {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .newsletter {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            padding: 36px 20px;
+            text-align: center;
+        }
+
+        .newsletter-content { max-width: 500px; margin: 0 auto; }
+
+        .newsletter h2 { font-size: 1.3rem; margin-bottom: 8px; }
+
+        .newsletter p {
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            opacity: 0.85;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 8px;
+            max-width: 460px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.9);
+            transition: background 0.2s;
+        }
+
+        .newsletter-form input:focus { outline: none; background: white; }
+
+        .newsletter-form button {
+            padding: 10px 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .newsletter-form button:hover { opacity: 0.85; }
+
+        .newsletter-error {
+            display: none;
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .newsletter-success {
+            display: none;
+            margin-top: 14px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        footer {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 24px 20px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.85rem;
+        }
+
+        .footer-content { max-width: 1200px; margin: 0 auto; text-align: center; }
+        .footer-content p { margin-bottom: 6px; }
+        .footer-content a { color: var(--accent-primary); text-decoration: none; }
+        .footer-content a:hover { color: var(--accent-secondary); }
+        .footer-links { margin-top: 20px; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.6rem; }
+            .nav-links { display: none; }
+            .hamburger { display: block; }
+            .newsletter-form { flex-direction: column; }
+            .newsletter-form input, .newsletter-form button { width: 100%; }
+            .section { padding: 28px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        (function() {
+            const path = window.location.pathname;
+            const active = path.endsWith('contatti.html') ? 'contacts' : path.endsWith('about.html') ? 'project' : null;
+            document.addEventListener('DOMContentLoaded', function() {
+                if (active) document.querySelectorAll('[data-nav="' + active + '"]').forEach(el => el.classList.add('active'));
+            });
+        })();
+    </script>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <a href="index.html">Espedienti a Napoli</a>
+            </div>
+            <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
+            <nav class="nav-links">
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" id="langToggleBtn" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
+            </nav>
+            <nav class="mobile-menu" id="mobileMenu">
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 data-i18n="about.contacts.title">Contatti</h1>
+            <p data-i18n="about.contacts.p1">Hai una segnalazione di bug, vuoi collaborare al progetto o proporre nuovi eventi?</p>
+        </div>
+    </section>
+
+    <section class="section section-alt">
+        <div class="container">
+            <div class="about-content">
+                <p data-i18n="about.contacts.p2">Scrivici direttamente via email!</p>
+                <div class="contact-buttons">
+                    <a href="mailto:s.esposito.1101@gmail.com?subject=Segnalazione%20Bug%20-%20Espedienti%20a%20Napoli" class="btn" data-i18n="about.contacts.bug">
+                        🐛 Segnala Bug
+                    </a>
+                    <a href="mailto:s.esposito.1101@gmail.com?subject=Collaborazione%20-%20Espedienti%20a%20Napoli" class="btn btn-outline btn-inline" data-i18n="about.contacts.collab">
+                        ✉️ Collabora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter" id="newsletter">
+        <div class="newsletter-content">
+            <h2 data-i18n="about.newsletter.title">📬 Resta aggiornato</h2>
+            <p data-i18n="about.newsletter.desc">Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
+            <form class="newsletter-form" id="newsletterForm">
+                <input
+                    type="email"
+                    name="email"
+                    data-i18n-placeholder="about.newsletter.placeholder"
+                    placeholder="Il tuo indirizzo email"
+                    required
+                    id="emailInput"
+                >
+                <button type="submit" data-i18n="about.newsletter.btn">Iscriviti</button>
+            </form>
+            <div class="newsletter-error" id="newsletterError" data-i18n="about.newsletter.error">
+                ⚠️ Inserisci un indirizzo email valido.
+            </div>
+            <div class="newsletter-success" id="newsletterSuccess" data-i18n="about.newsletter.success">
+                ✅ Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="about-content">
+                <h2 data-i18n="about.cta.title">Inizia Subito</h2>
+                <p data-i18n="about.cta.desc">Scopri cosa succede oggi a Napoli e trova nuovi compagni di avventure!</p>
+                <a href="index.html" class="btn" data-i18n="about.cta.btn">Esplora Gli Eventi</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Espedienti a Napoli</strong></p>
+            <p data-i18n="about.footer.tagline">Una piattaforma per scoprire eventi e incontrare persone</p>
+            <p class="footer-links">
+                <a href="index.html" data-i18n="nav.home">Home</a> •
+                <a href="about.html" data-i18n="about.footer.chiSiamo">Chi Siamo</a> •
+                <a href="admin.html">Admin</a>
+            </p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { i18n } from './js/i18n/i18n-service.js';
+        i18n.initialize();
+    </script>
+
+    <script type="module">
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        document.getElementById('newsletterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('emailInput').value.trim();
+            const errorEl = document.getElementById('newsletterError');
+            const successEl = document.getElementById('newsletterSuccess');
+
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            if (!emailRegex.test(email)) {
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = window.t ? window.t('about.newsletter.loading') : '⏳ Iscrizione...';
+
+            try {
+                const { collection, addDoc } = window.firestoreModules;
+                await addDoc(collection(window.db, 'newsletter'), {
+                    email,
+                    subscribedAt: new Date().toISOString()
+                });
+                successEl.style.display = 'block';
+                this.reset();
+            } catch (err) {
+                console.error('Newsletter error:', err);
+                alert(window.t ? window.t('about.newsletter.alertError') : "Errore durante l'iscrizione. Riprova più tardi.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = window.t ? window.t('about.newsletter.btn') : 'Iscriviti';
+            }
+        });
+    </script>
+</body>
+</html>

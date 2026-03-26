@@ -53,6 +53,7 @@ export class PlaceFormManager {
     this.setupFormSubmit();
     this.setupCategoryDropdown('placePrimaryCategory', 'placeCatExtra', 'placeCatDropdown');
     this.setupLocationSearch();
+    this.setupCoordinatesInput('placeCoordinates', 'placeMiniMap');
     this.setupImageUpload();
 
     // Load places from Firebase
@@ -169,6 +170,15 @@ export class PlaceFormManager {
       } catch (_) {}
     });
     container.classList.remove('show');
+  }
+
+  setupCoordinatesInput(fieldId, mapId) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    field.addEventListener('change', () => {
+      const coords = this.geocoding.parseCoordinateString(field.value.trim());
+      if (coords) this.miniMap.updateMarker(mapId, coords.lat, coords.lng);
+    });
   }
 
   setupImageUpload() {

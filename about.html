@@ -8,28 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
-            authDomain: "espedienti-napoli.firebaseapp.com",
-            projectId: "espedienti-napoli",
-            storageBucket: "espedienti-napoli.firebasestorage.app",
-            messagingSenderId: "450345618879",
-            appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.firestoreModules = { collection, addDoc };
-        window.firebaseReady = true;
-        window.dispatchEvent(new Event('firebaseReady'));
-    </script>
 
     <style>
         :root {
@@ -107,6 +85,18 @@
             background: rgba(180, 140, 0, 0.18);
             border-color: var(--border-subtle);
             box-shadow: 0 0 20px rgba(180, 140, 0, 0.25);
+        }
+
+        .nav-links a.active,
+        .mobile-menu a.active {
+            background: rgba(180, 140, 0, 0.22);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .logo a {
+            color: inherit;
+            text-decoration: none;
         }
 
         .hero {
@@ -377,6 +367,22 @@
             color: var(--text-primary);
         }
 
+        .lang-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .lang-toggle-btn:hover {
+            background: rgba(180, 140, 0, 0.18);
+            border-color: var(--accent-primary);
+        }
+
         .mobile-menu {
             display: none;
         }
@@ -443,109 +449,68 @@
     <header>
         <div class="header-content">
             <div class="logo">
-                <span>Espedienti a Napoli</span>
+                <a href="index.html">Espedienti a Napoli</a>
             </div>
             <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
             <nav class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="#features">Funzionalità</a>
-                <a href="#contatti">Contatti</a>
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" id="langToggleBtn" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
             </nav>
             <nav class="mobile-menu" id="mobileMenu">
-                <a href="index.html">Home</a>
-                <a href="#features">Funzionalità</a>
-                <a href="#contatti">Contatti</a>
+                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
+                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
+                <button type="button" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
             </nav>
         </div>
     </header>
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Chi Siamo</h1>
-            <p>Espedienti a Napoli nasce con l'obiettivo di abbattere le barriere culturali e tecnologiche, rendendo semplice scoprire cosa succede nella tua città e trovare compagni di avventure</p>
+            <h1 data-i18n="about.title">Chi Siamo</h1>
+            <p data-i18n="about.hero.desc">Espedienti a Napoli nasce con l'obiettivo di abbattere le barriere culturali e tecnologiche, rendendo semplice scoprire cosa succede nella tua città e trovare compagni di avventure</p>
         </div>
     </section>
 
     <section class="section">
         <div class="container">
             <div class="about-content">
-                <h2>La Nostra Mission</h2>
-                <p>In un'epoca dove la tecnologia può allontanare le persone, crediamo che possa anche avvicinarle. Espedienti è la piattaforma che trasforma la scoperta di eventi culturali in un'esperienza sociale.</p>
-                <p>Che tu sia appena arrivato in città o viva qui da sempre, vogliamo aiutarti a scoprire nuove esperienze e incontrare persone con interessi simili ai tuoi.</p>
+                <h2 data-i18n="about.mission.title">La Nostra Mission</h2>
+                <p data-i18n="about.mission.p1">In un'epoca dove la tecnologia può allontanare le persone, crediamo che possa anche avvicinarle. Espedienti è la piattaforma che trasforma la scoperta di eventi culturali in un'esperienza sociale.</p>
+                <p data-i18n="about.mission.p2">Che tu sia appena arrivato in città o viva qui da sempre, vogliamo aiutarti a scoprire nuove esperienze e incontrare persone con interessi simili ai tuoi.</p>
             </div>
 
-            <h2 class="section-title" id="features">Come Funziona</h2>
+            <h2 class="section-title" id="features" data-i18n="about.howItWorks">Come Funziona</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">📅</div>
-                    <h3>Calendario Condiviso</h3>
-                    <p>Visualizza tutti gli eventi della tua città in un unico calendario. Mai più occasioni perse!</p>
+                    <h3 data-i18n="about.feature1.title">Calendario Condiviso</h3>
+                    <p data-i18n="about.feature1.desc">Visualizza tutti gli eventi della tua città in un unico calendario. Mai più occasioni perse!</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🗺️</div>
-                    <h3>Mappa Interattiva</h3>
-                    <p>Scopri eventi vicino a te con la nostra mappa. Clicca sui marker per vedere i dettagli.</p>
+                    <h3 data-i18n="about.feature2.title">Mappa Interattiva</h3>
+                    <p data-i18n="about.feature2.desc">Scopri eventi vicino a te con la nostra mappa. Clicca sui marker per vedere i dettagli.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">👥</div>
-                    <h3>Trova Compagni</h3>
-                    <p>Usa le chat per organizzarti con altre persone e partecipare insieme agli eventi.</p>
+                    <h3 data-i18n="about.feature3.title">Trova Compagni</h3>
+                    <p data-i18n="about.feature3.desc">Usa le chat per organizzarti con altre persone e partecipare insieme agli eventi.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔔</div>
-                    <h3>Aggiungi al Tuo Calendario</h3>
-                    <p>Con un click aggiungi gli eventi che ti interessano al tuo Google Calendar personale.</p>
+                    <h3 data-i18n="about.feature4.title">Aggiungi al Tuo Calendario</h3>
+                    <p data-i18n="about.feature4.desc">Con un click aggiungi gli eventi che ti interessano al tuo Google Calendar personale.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💬</div>
-                    <h3>Chat per Interessi</h3>
-                    <p>Community organizzate per tema: musica, teatro, mostre e altro ancora.</p>
+                    <h3 data-i18n="about.feature5.title">Chat per Interessi</h3>
+                    <p data-i18n="about.feature5.desc">Community organizzate per tema: musica, teatro, mostre e altro ancora.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">✨</div>
-                    <h3>Sempre Aggiornato</h3>
-                    <p>Iscriviti alla newsletter per ricevere aggiornamenti su nuovi eventi e funzionalità.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="newsletter" id="newsletter">
-        <div class="newsletter-content">
-            <h2>📬 Resta aggiornato</h2>
-            <p>Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
-            <form class="newsletter-form" id="newsletterForm">
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Il tuo indirizzo email"
-                    required
-                    id="emailInput"
-                >
-                <button type="submit">Iscriviti</button>
-            </form>
-            <div class="newsletter-error" id="newsletterError">
-                ⚠️ Inserisci un indirizzo email valido.
-            </div>
-            <div class="newsletter-success" id="newsletterSuccess">
-                ✅ Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt" id="contatti">
-        <div class="container">
-            <div class="about-content">
-                <h2>Contatti</h2>
-                <p>Hai una segnalazione di bug, vuoi collaborare al progetto o proporre nuovi eventi?</p>
-                <p>Scrivici direttamente via email!</p>
-                <div class="contact-buttons">
-                    <a href="mailto:s.esposito.1101@gmail.com?subject=Segnalazione%20Bug%20-%20Espedienti%20a%20Napoli" class="btn">
-                        🐛 Segnala Bug
-                    </a>
-                    <a href="mailto:s.esposito.1101@gmail.com?subject=Collaborazione%20-%20Espedienti%20a%20Napoli" class="btn btn-outline btn-inline">
-                        ✉️ Collabora
-                    </a>
+                    <h3 data-i18n="about.feature6.title">Sempre Aggiornato</h3>
+                    <p data-i18n="about.feature6.desc">Iscriviti alla newsletter per ricevere aggiornamenti su nuovi eventi e funzionalità.</p>
                 </div>
             </div>
         </div>
@@ -554,9 +519,9 @@
     <section class="section">
         <div class="container">
             <div class="about-content">
-                <h2>Inizia Subito</h2>
-                <p>Scopri cosa succede oggi a Napoli e trova nuovi compagni di avventure!</p>
-                <a href="index.html" class="btn">Esplora Gli Eventi</a>
+                <h2 data-i18n="about.cta.title">Inizia Subito</h2>
+                <p data-i18n="about.cta.desc">Scopri cosa succede oggi a Napoli e trova nuovi compagni di avventure!</p>
+                <a href="index.html" class="btn" data-i18n="about.cta.btn">Esplora Gli Eventi</a>
             </div>
         </div>
     </section>
@@ -564,53 +529,30 @@
     <footer>
         <div class="footer-content">
             <p><strong>Espedienti a Napoli</strong></p>
-            <p>Una piattaforma per scoprire eventi e incontrare persone</p>
+            <p data-i18n="about.footer.tagline">Una piattaforma per scoprire eventi e incontrare persone</p>
             <p class="footer-links">
-                <a href="index.html">Home</a> •
-                <a href="about.html">Chi Siamo</a> •
+                <a href="index.html" data-i18n="nav.home">Home</a> •
+                <a href="about.html" data-i18n="about.footer.chiSiamo">Chi Siamo</a> •
                 <a href="admin.html">Admin</a>
             </p>
         </div>
     </footer>
 
-    <script type="module">
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        document.getElementById('newsletterForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const email = document.getElementById('emailInput').value.trim();
-            const errorEl = document.getElementById('newsletterError');
-            const successEl = document.getElementById('newsletterSuccess');
-
-            errorEl.style.display = 'none';
-            successEl.style.display = 'none';
-
-            if (!emailRegex.test(email)) {
-                errorEl.style.display = 'block';
-                return;
+    <script>
+        // Mark active nav link based on current page
+        (function() {
+            const path = window.location.pathname;
+            const active = path.endsWith('contatti.html') ? 'contacts' : path.endsWith('about.html') ? 'project' : null;
+            if (active) {
+                document.querySelectorAll('[data-nav="' + active + '"]').forEach(el => el.classList.add('active'));
             }
-
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ Iscrizione...';
-
-            try {
-                const { collection, addDoc } = window.firestoreModules;
-                await addDoc(collection(window.db, 'newsletter'), {
-                    email,
-                    subscribedAt: new Date().toISOString()
-                });
-                successEl.style.display = 'block';
-                this.reset();
-            } catch (err) {
-                console.error('Newsletter error:', err);
-                alert('Errore durante l\'iscrizione. Riprova più tardi.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Iscriviti';
-            }
-        });
+        })();
     </script>
+
+    <script type="module">
+        import { i18n } from './js/i18n/i18n-service.js';
+        i18n.initialize();
+    </script>
+
 </body>
 </html>

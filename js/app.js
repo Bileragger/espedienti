@@ -143,7 +143,7 @@ function setupFilterToday() {
       // Check if any events today
       const filteredEvents = state.get('filteredEvents');
       if (filteredEvents.length === 0) {
-        alert('Nessun evento in programma oggi 😔\nProva a guardare i prossimi giorni!');
+        alert(window.t ? window.t('alert.noEventsToday') : 'Nessun evento in programma oggi 😔\nProva a guardare i prossimi giorni!');
         todayBtn.classList.remove('active');
         dateFilter.clearDate();
       }
@@ -176,7 +176,7 @@ function setupFilterOpenNow() {
       // Check if any places open now
       const filteredPlaces = state.get('filteredPlaces');
       if (filteredPlaces.length === 0) {
-        alert('Nessun luogo aperto in questo momento.');
+        alert(window.t ? window.t('alert.noOpenPlaces') : 'Nessun luogo aperto in questo momento.');
         openNowBtn.classList.remove('active');
         openNowFilter.setActive(false);
       }
@@ -310,11 +310,11 @@ function setupMapFullscreen() {
 function setupSearchBar() {
   const searchBar = document.getElementById('searchBar');
   if (searchBar) {
-    // On Enter: scroll to the map/calendar section
+    // On Enter: scroll to the results list
     searchBar.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        const target = document.getElementById('events');
+        const target = document.getElementById('unifiedCard');
         if (target) {
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }

@@ -47,6 +47,7 @@ export class EventFormManager {
     this.setupFormSubmit();
     this.setupCategoryDropdown('eventPrimaryCategory', 'eventCatExtra', 'eventCatDropdown');
     this.setupLocationSearch();
+    this.setupCoordinatesInput('coordinates', 'miniMap');
     this.setupTagInput();
     this.setupImageUpload();
     this.setupExistingPlaceSelect();
@@ -203,6 +204,15 @@ export class EventFormManager {
   removeTag(tag) {
     this.currentTags = this.currentTags.filter(t => t !== tag);
     this.renderTags();
+  }
+
+  setupCoordinatesInput(fieldId, mapId) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    field.addEventListener('change', () => {
+      const coords = this.geocoding.parseCoordinateString(field.value.trim());
+      if (coords) this.miniMap.updateMarker(mapId, coords.lat, coords.lng);
+    });
   }
 
   setupImageUpload() {
