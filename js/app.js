@@ -31,6 +31,10 @@ import { modalManager } from './ui/modal-manager.js';
 // Utility modules
 import { geolocationService } from './utils/geolocation-service.js';
 
+// Dynamic categories (loads from Firestore, populates filter chips)
+import { mapCategoriesLoader } from './data/map-categories.js';
+import { filterChipRenderer } from './ui/filter-chip-renderer.js';
+
 /**
  * Initialize all modules
  */
@@ -48,6 +52,7 @@ async function initializeModules() {
   filterCoordinator.initialize();
 
   // Initialize UI renderers
+  filterChipRenderer.initialize();
   calendarRenderer.initialize();
   unifiedListRenderer.initialize();
   mapRenderer.initialize();
@@ -69,6 +74,9 @@ async function loadData() {
 
     // Load categories first
     await categoriesLoader.load();
+
+    // Load map categories (populates window.categoryColors + filter chips)
+    await mapCategoriesLoader.load();
 
     // Load events and places in parallel
     await Promise.all([
@@ -263,7 +271,11 @@ function setupSmoothScroll() {
 function setupMapFullscreen() {
   const updateBtn = (isFs) => {
     const btn = document.getElementById('fullscreenMapBtn');
-    if (btn) btn.textContent = isFs ? '✕' : '⛶';
+    if (!btn) return;
+    btn.innerHTML = isFs
+      ? '<i data-lucide="minimize-2"></i>'
+      : '<i data-lucide="maximize-2"></i>';
+    if (window.lucide) window.lucide.createIcons({ nodes: [btn] });
   };
 
   window.toggleMapFullscreen = () => {

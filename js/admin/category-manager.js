@@ -109,7 +109,13 @@ export class CategoryManager {
       return;
     }
 
-    list.innerHTML = filtered.map(cat => `
+    // "altro" always last
+    const sorted = [
+      ...filtered.filter(c => c.key !== 'altro'),
+      ...filtered.filter(c => c.key === 'altro'),
+    ];
+
+    list.innerHTML = sorted.map(cat => `
       <li class="cat-item" data-id="${cat.firebaseId}">
         <input type="color" class="cat-color-picker" value="${cat.color || '#94a3b8'}"
           id="color-${cat.firebaseId}"
@@ -122,7 +128,7 @@ export class CategoryManager {
           id="name-${cat.firebaseId}"
           placeholder="Nome categoria">
         <button type="button" class="btn btn-small" onclick="saveCategoryEdit('${type}', '${cat.firebaseId}')">Salva</button>
-        <button type="button" class="btn btn-danger btn-small" onclick="deleteCategory('${type}', '${cat.firebaseId}')">Elimina</button>
+        ${cat.key !== 'altro' ? `<button type="button" class="btn btn-danger btn-small" onclick="deleteCategory('${type}', '${cat.firebaseId}')">Elimina</button>` : ''}
       </li>
     `).join('');
   }
@@ -201,12 +207,22 @@ export class CategoryManager {
   }
 
   async deleteCategory(type, firebaseId) {
-    if (!confirm('Eliminare questa categoria?')) return;
+    const arr = type === 'event' ? this.eventCategories : this.placeCategories;
+    const cat = arr.find(c => c.firebaseId === firebaseId);
+    if (!cat || cat.key === 'altro') return;
 
-    const collection = type === 'event' ? COLLECTION_EVENT_CATS : COLLECTION_PLACE_CATS;
+    if (!confirm(`Eliminare la categoria "${cat.name}"?\nTutti gli elementi associati verranno spostati su "Altro".`)) return;
+
+    const catCollection = type === 'event' ? COLLECTION_EVENT_CATS : COLLECTION_PLACE_CATS;
+    const itemCollection = type === 'event' ? 'events' : 'places';
 
     try {
-      await this.firebase.delete(collection, firebaseId);
+      // Reassign all items using this category to "altro"
+      await this._reassignToAltro(itemCollection, cat.key);
+
+      // Delete the category document
+      await this.firebase.delete(catCollection, firebaseId);
+
       if (type === 'event') {
         this.eventCategories = this.eventCategories.filter(c => c.firebaseId !== firebaseId);
       } else {
@@ -218,6 +234,31 @@ export class CategoryManager {
     } catch (error) {
       alert('❌ Errore nell\'eliminazione.');
       console.error(error);
+    }
+  }
+
+  async _reassignToAltro(itemCollection, oldKey) {
+    const items = await this.firebase.getAll(itemCollection);
+    const toUpdate = items.filter(item => {
+      const primary = item.primaryCategory || item.category;
+      const cats = item.categories || (item.category ? [item.category] : []);
+      return primary === oldKey || cats.includes(oldKey);
+    });
+
+    await Promise.all(toUpdate.map(item => {
+      const newPrimary = (item.primaryCategory || item.category) === oldKey ? 'altro' : (item.primaryCategory || item.category);
+      const oldCats = item.categories || (item.category ? [item.category] : []);
+      const newCats = oldCats.map(c => c === oldKey ? 'altro' : c);
+      // Deduplicate in case "altro" was already present
+      const dedupedCats = [...new Set(newCats)];
+      return this.firebase.update(itemCollection, item.firebaseId, {
+        primaryCategory: newPrimary,
+        categories: dedupedCats,
+      });
+    }));
+
+    if (toUpdate.length > 0) {
+      console.log(`✅ Reassigned ${toUpdate.length} ${itemCollection} from "${oldKey}" to "altro"`);
     }
   }
 

@@ -77,6 +77,9 @@ class I18nService {
     // Update lang toggle button label
     const toggleBtn = document.getElementById('langToggleBtn');
     if (toggleBtn) toggleBtn.textContent = this.t('lang.toggle');
+
+    // Re-process Lucide icons injected via innerHTML (e.g. quickfilter.hint)
+    if (window.lucide) window.lucide.createIcons();
   }
 
   /**

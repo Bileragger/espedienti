@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling@1.3.0/dist/leaflet-gesture-handling.min.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-gesture-handling@1.3.0/dist/leaflet-gesture-handling.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -235,6 +236,8 @@
         .search-info-text {
             flex: 1;
             min-width: 160px;
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
         }
 
         .quick-filters {
@@ -357,6 +360,109 @@
             border-color: rgba(180, 140, 0, 0.35);
         }
 
+        /* Lucide flat icons */
+        .lucide {
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+            stroke-width: 1.75;
+        }
+
+        .card-header .lucide { width: 17px; height: 17px; stroke: white; }
+        .card-header--search .lucide { stroke: white; }
+
+        .hero-buttons .lucide { width: 17px; height: 17px; }
+        .btn-white .lucide   { stroke: var(--text-primary); }
+        .btn-outline .lucide { stroke: var(--accent-primary); }
+
+        .mobile-view-tab .lucide { width: 15px; height: 15px; }
+        .mobile-view-tab.active .lucide { stroke: var(--text-primary); }
+
+        .map-control-btn .lucide { width: 15px; height: 15px; stroke: var(--text-primary); }
+
+        .reset-filters .lucide { width: 13px; height: 13px; stroke: currentColor; }
+
+        /* Icon + text gap in buttons */
+        .btn .lucide, .mobile-view-tab .lucide, .map-control-btn .lucide {
+            margin-right: 5px;
+        }
+
+        /* Search wrapper */
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-wrapper .lucide {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            stroke: var(--text-tertiary);
+            stroke-width: 1.75;
+        }
+
+        .search-wrapper .search-bar {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .wip-icon .lucide { width: 36px; height: 36px; stroke: var(--accent-primary); }
+
+        /* Colored category dot (replaces category emoji) */
+        .cat-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 7px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+        }
+
+        /* Small inline icons inside list item detail rows */
+        .lucide-detail {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            stroke: var(--text-tertiary);
+            stroke-width: 1.75;
+            vertical-align: middle;
+            margin-right: 5px;
+            position: relative;
+            top: -1px;
+            flex-shrink: 0;
+        }
+
+        /* Icon inside poster-btn / inline action links */
+        .lucide-btn {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            stroke-width: 1.75;
+            vertical-align: middle;
+            margin-right: 4px;
+            position: relative;
+            top: -1px;
+        }
+
+        /* Hint / lightbulb icon in search-info-text */
+        .lucide-hint {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            stroke: var(--accent-primary);
+            stroke-width: 1.75;
+            vertical-align: middle;
+            margin-right: 4px;
+            position: relative;
+            top: -1px;
+        }
+
         .card-header {
             padding: 10px 14px;
             border-bottom: 1px solid var(--border-subtle);
@@ -375,6 +481,9 @@
             font-size: 0.95rem;
             font-weight: 600;
             color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-content {
@@ -705,6 +814,10 @@
             pointer-events: none;
             max-width: 160px;
             display: none;
+        }
+
+        .map-container {
+            isolation: isolate;
         }
 
         .map-controls {
@@ -1140,10 +1253,48 @@
             background: rgba(146, 64, 14, 0.04);
         }
 
+        /* Pallino colore categoria nei filtri */
+        .filter-checkbox::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--dot-color, transparent);
+            flex-shrink: 0;
+        }
+
+        /* "Tutti": nessun pallino */
+        .filter-checkbox[data-cat="all"]::before { display: none; }
+
+        /* Colori eventi */
+        .filter-checkbox[data-cat="live-music"]::before          { background: #ef4444; }
+        .filter-checkbox[data-cat="open-mic"]::before            { background: #f97316; }
+        .filter-checkbox[data-cat="concerto"]::before            { background: #eab308; }
+        .filter-checkbox[data-cat="spettacolo-teatrale"]::before { background: #a855f7; }
+        .filter-checkbox[data-cat="mostra"]::before              { background: #0ea5e9; }
+        .filter-checkbox[data-cat="workshop"]::before            { background: #10b981; }
+        .filter-checkbox[data-cat="fiera"]::before               { background: #ec4899; }
+
+        /* Colori luoghi */
+        .filter-checkbox[data-cat="museo"]::before          { background: #2563eb; }
+        .filter-checkbox[data-cat="galleria"]::before       { background: #d946ef; }
+        .filter-checkbox[data-cat="parco"]::before          { background: #16a34a; }
+        .filter-checkbox[data-cat="biblioteca"]::before     { background: #7c3aed; }
+        .filter-checkbox[data-cat="teatro"]::before         { background: #f43f5e; }
+        .filter-checkbox[data-cat="coworking"]::before      { background: #0891b2; }
+        .filter-checkbox[data-cat="ristorante"]::before     { background: #dc2626; }
+        .filter-checkbox[data-cat="centro-sociale"]::before { background: #d97706; }
+        .filter-checkbox[data-cat="fondazione"]::before     { background: #475569; }
+        .filter-checkbox[data-cat="altro"]::before          { background: #94a3b8; }
+
+        /* Legenda mappa rimossa */
+        #mapLegend { display: none !important; }
+
         .filter-checkbox {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             padding: 3px 9px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-subtle);
@@ -1304,14 +1455,14 @@
             <h1 data-i18n="hero.title">Cosa facciamo oggi a Napoli?</h1>
             <p id="heroSubtitle" data-i18n="hero.subtitle.default">Events, luoghi e persone</p>
             <div class="hero-buttons">
-                <button class="btn btn-white" onclick="document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.map">
-                    🗺️ Esplora la mappa
+                <button class="btn btn-white" onclick="document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    <i data-lucide="map"></i><span data-i18n="hero.btn.map">Esplora la mappa</span>
                 </button>
-                <button class="btn btn-white" onclick="document.getElementById('calendar').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.calendar">
-                    📅 Vedi calendario
+                <button class="btn btn-white" onclick="document.getElementById('calendar').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    <i data-lucide="calendar"></i><span data-i18n="hero.btn.calendar">Vedi calendario</span>
                 </button>
-                <button class="btn btn-outline" onclick="document.getElementById('community').scrollIntoView({ behavior: 'smooth', block: 'center' })" data-i18n="hero.btn.community">
-                    💬 Community
+                <button class="btn btn-outline" onclick="document.getElementById('community').scrollIntoView({ behavior: 'smooth', block: 'center' })">
+                    <i data-lucide="message-circle"></i><span data-i18n="hero.btn.community">Community</span>
                 </button>
             </div>
         </div>
@@ -1321,25 +1472,28 @@
         <h2 class="section-title" data-i18n="section.explore">Esplora gli eventi ed i luoghi di Napoli</h2>
         
         <div id="localWarning" style="display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ffeaa7;">
-            <strong>⚠️ Modalità Locale Rilevata</strong>
+            <strong><i data-lucide="alert-triangle" style="width:14px;height:14px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Modalità Locale Rilevata</strong>
             <p style="margin: 10px 0 0 0; font-size: 0.9rem;">
                 Stai visualizzando il sito dal file system. Gli eventi mostrati sono di esempio.
                 Per vedere i tuoi eventi, usa un server locale: <code>python -m http.server 8000</code>
             </p>
         </div>
         
-        <input
-            type="text"
-            class="search-bar"
-            id="searchBar"
-            data-i18n-placeholder="search.placeholder"
-            placeholder="🔍 Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag"
-        >
+        <div class="search-wrapper">
+            <i data-lucide="search"></i>
+            <input
+                type="text"
+                class="search-bar"
+                id="searchBar"
+                data-i18n-placeholder="search.placeholder"
+                placeholder="Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag"
+            >
+        </div>
 
         <!-- Tab bar visibile solo su mobile -->
         <div class="mobile-view-tabs" id="mobileViewTabs">
-            <button type="button" class="mobile-view-tab active" onclick="switchMobileTab('calendar')" data-i18n="tabs.calendar">📅 Calendario</button>
-            <button type="button" class="mobile-view-tab" onclick="switchMobileTab('map')" data-i18n="tabs.map">🗺️ Mappa</button>
+            <button type="button" class="mobile-view-tab active" onclick="switchMobileTab('calendar')"><i data-lucide="calendar"></i><span data-i18n="tabs.calendar">Calendario</span></button>
+            <button type="button" class="mobile-view-tab" onclick="switchMobileTab('map')"><i data-lucide="map"></i><span data-i18n="tabs.map">Mappa</span></button>
         </div>
 
         <div class="grid">
@@ -1347,20 +1501,12 @@
                 <!-- Filtri categorie eventi -->
                 <div class="category-filters show" id="eventCategoryFilters">
                     <div class="filters-title" data-i18n="filters.events.title">Che tipo di eventi cerchi?</div>
-                    <div class="filter-checkbox checked" onclick="toggleEventCategory('all')" data-i18n="filters.all">Tutti</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('live-music')" data-i18n="filters.live-music">🎵 Live Music</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('open-mic')" data-i18n="filters.open-mic">🎤 Open Mic</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('concerto')" data-i18n="filters.concerto">🎸 Concerti</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('spettacolo-teatrale')" data-i18n="filters.spettacolo-teatrale">🎭 Teatro</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('mostra')" data-i18n="filters.mostra">🖼️ Mostre</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('workshop')" data-i18n="filters.workshop">🛠️ Workshop</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('fiera')" data-i18n="filters.fiera">🎪 Fiere</div>
-                    <div class="filter-checkbox" onclick="toggleEventCategory('altro')" data-i18n="filters.altro">Altro</div>
+                    <!-- chips rendered dynamically by filter-chip-renderer.js -->
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2 data-i18n="calendar.title">📅 Calendario Eventi</h2>
+                        <h2><i data-lucide="calendar"></i><span data-i18n="calendar.title">Calendario Eventi</span></h2>
                         <div class="calendar-nav">
                             <button type="button" onclick="changeMonth(-1)">←</button>
                             <span id="monthYear"></span>
@@ -1373,7 +1519,7 @@
                 </div>
 
                 <div class="search-info-text" data-i18n="quickfilter.hint">
-                    💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
+                    <i data-lucide="lightbulb" class="lucide-hint"></i> <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.
                 </div>
 
             </div>
@@ -1382,22 +1528,12 @@
                 <!-- Filtri categorie luoghi -->
                 <div class="category-filters places-filters show" id="placeCategoryFilters">
                     <div class="filters-title" data-i18n="filters.places.title">Che tipo di location cerchi?</div>
-                    <div class="filter-checkbox places-filter checked" onclick="togglePlaceCategory('all')" data-i18n="filters.all">Tutti</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('museo')" data-i18n="filters.museo">🏛️ Musei</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('galleria')" data-i18n="filters.galleria">🖼️ Gallerie</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('parco')" data-i18n="filters.parco">🌳 Parchi</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('biblioteca')" data-i18n="filters.biblioteca">📚 Biblioteche</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('teatro')" data-i18n="filters.teatro">🎭 Teatri</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('coworking')" data-i18n="filters.coworking">💼 Coworking</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('ristorante')" data-i18n="filters.ristorante">🍽️ Ristoranti</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('centro-sociale')" data-i18n="filters.centro-sociale">🤝 Centri Sociali</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('fondazione')" data-i18n="filters.fondazione">🏢 Fondazioni</div>
-                    <div class="filter-checkbox places-filter" onclick="togglePlaceCategory('altro')" data-i18n="filters.altro">Altro</div>
+                    <!-- chips rendered dynamically by filter-chip-renderer.js -->
                 </div>
 
                 <div class="card">
                     <div class="card-header card-header--places">
-                        <h2 data-i18n="map.title">🗺️ Mappa luoghi ed eventi</h2>
+                        <h2><i data-lucide="map"></i><span data-i18n="map.title">Mappa Luoghi ed Eventi</span></h2>
                     </div>
                     <div class="card-content">
                         <div class="map-container">
@@ -1405,13 +1541,13 @@
                             <div id="mapLegend" class="map-legend"></div>
                             <div class="map-controls">
                                 <button type="button" class="map-control-btn wide" id="locateBtnNew" onclick="locateUser()" data-i18n-title="map.locate.title" title="Trova la mia posizione">
-                                    <span data-i18n="map.locate">📍 Dove sono</span>
+                                    <i data-lucide="navigation"></i><span data-i18n="map.locate">Dove sono</span>
                                 </button>
                                 <button type="button" class="map-control-btn wide" id="openNowBtn" onclick="filterOpenNow()" data-i18n-title="map.openNow.title" title="Mostra solo luoghi aperti ora">
-                                    <span data-i18n="map.openNow">🕐 Aperti ora</span>
+                                    <i data-lucide="clock"></i><span data-i18n="map.openNow">Aperti ora</span>
                                 </button>
                                 <button type="button" class="map-control-btn" id="fullscreenMapBtn" onclick="toggleMapFullscreen()" data-i18n-title="map.fullscreen.title" title="Schermo intero">
-                                    ⛶
+                                    <i data-lucide="maximize-2"></i>
                                 </button>
                             </div>
                         </div>
@@ -1424,7 +1560,7 @@
         <!-- Lista unificata - larghezza piena, sempre visibile -->
         <div class="card" id="unifiedCard">
             <div class="card-header card-header--search">
-                <h2 id="unifiedTitle" data-i18n="list.title">La Tua Ricerca</h2>
+                <h2 style="display:flex;align-items:center;gap:7px;"><i data-lucide="search"></i><span id="unifiedTitle" data-i18n="list.title">La Tua Ricerca</span></h2>
             </div>
             <div class="card-content">
                 <div class="event-list" id="unifiedList"></div>
@@ -1433,8 +1569,8 @@
 
         <div class="search-info" id="searchInfo">
             <div class="quick-filters">
-<button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn" data-i18n="quickfilter.reset">
-                    🔄 Reset filtri
+<button class="reset-filters" onclick="resetFilters()" style="display: none;" id="resetBtn">
+                    <i data-lucide="rotate-ccw"></i><span data-i18n="quickfilter.reset">Reset filtri</span>
                 </button>
             </div>
         </div>
@@ -1442,7 +1578,7 @@
 
         <div class="card chat-section" id="community">
             <div class="card-header">
-                <h2 data-i18n="community.title">💬 Community per Interessi</h2>
+                <h2><i data-lucide="message-circle"></i><span data-i18n="community.title">Community per Interessi</span></h2>
             </div>
             <div class="card-content">
                 <p class="chat-description" data-i18n="community.description">Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.</p>
@@ -1461,7 +1597,7 @@
 
             <!-- Work in Progress Overlay -->
             <div class="wip-overlay">
-                <div class="wip-icon">🚧</div>
+                <div class="wip-icon"><i data-lucide="construction"></i></div>
                 <h3 data-i18n="community.wip.title">Work in Progress</h3>
                 <p data-i18n="community.wip.text">Stiamo lavorando alla community! Presto potrai unirti alle chat di gruppo organizzate per interesse.</p>
             </div>
@@ -1479,7 +1615,7 @@
         <div class="footer-content">
             <p><strong>Espedienti a Napoli</strong></p>
             <p data-i18n="footer.tagline">Una piattaforma per scoprire eventi e conoscere persone nuove</p>
-            <p style="margin-top: 20px; opacity: 0.7;" data-i18n="footer.copy">© 2026 - Fatto con ❤️ per la community</p>
+            <p style="margin-top: 20px; opacity: 0.7;" data-i18n="footer.copy">© 2026 - Fatto per la community</p>
         </div>
     </footer>
 
@@ -1503,6 +1639,11 @@
     <!-- Inline script moved to modular JS files in /js/ directory -->
     <!-- See js/app.js for the new modular entry point -->
     <script type="module" src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
     <script>
         // Inizializza la tab mobile al caricamento
         document.addEventListener('DOMContentLoaded', () => switchMobileTab('calendar'));
@@ -1600,14 +1741,14 @@
 
         const fallbackCategories = {
             categories: [
-                { id: 'live-music', name: 'Live Music', icon: '🎵', whatsappLink: 'https://chat.whatsapp.com/live-music-group' },
-                { id: 'open-mic', name: 'Open Mic', icon: '🎤', whatsappLink: 'https://chat.whatsapp.com/open-mic-group' },
-                { id: 'concerto', name: 'Concerto', icon: '🎸', whatsappLink: 'https://chat.whatsapp.com/concerto-group' },
-                { id: 'spettacolo-teatrale', name: 'Spettacolo Teatrale', icon: '🎭', whatsappLink: 'https://chat.whatsapp.com/teatro-group' },
-                { id: 'mostra', name: 'Mostra', icon: '🖼️', whatsappLink: 'https://chat.whatsapp.com/mostra-group' },
-                { id: 'workshop', name: 'Workshop', icon: '🛠️', whatsappLink: 'https://chat.whatsapp.com/workshop-group' },
-                { id: 'fiera', name: 'Fiera', icon: '🎪', whatsappLink: 'https://chat.whatsapp.com/fiera-group' },
-                { id: 'altro', name: 'Altro', icon: '📍', whatsappLink: 'https://chat.whatsapp.com/altro-group' }
+                { id: 'live-music', name: 'Live Music', icon: '', whatsappLink: 'https://chat.whatsapp.com/live-music-group' },
+                { id: 'open-mic', name: 'Open Mic', icon: '', whatsappLink: 'https://chat.whatsapp.com/open-mic-group' },
+                { id: 'concerto', name: 'Concerto', icon: '', whatsappLink: 'https://chat.whatsapp.com/concerto-group' },
+                { id: 'spettacolo-teatrale', name: 'Spettacolo Teatrale', icon: '', whatsappLink: 'https://chat.whatsapp.com/teatro-group' },
+                { id: 'mostra', name: 'Mostra', icon: '', whatsappLink: 'https://chat.whatsapp.com/mostra-group' },
+                { id: 'workshop', name: 'Workshop', icon: '', whatsappLink: 'https://chat.whatsapp.com/workshop-group' },
+                { id: 'fiera', name: 'Fiera', icon: '', whatsappLink: 'https://chat.whatsapp.com/fiera-group' },
+                { id: 'altro', name: 'Altro', icon: '', whatsappLink: 'https://chat.whatsapp.com/altro-group' }
             ],
             generalChat: 'https://chat.whatsapp.com/generalgroup'
         };
@@ -1627,7 +1768,7 @@
 
         function getCategoryInfo(categoryId) {
             const category = categories.categories.find(c => c.id === categoryId);
-            return category || { id: 'altro', name: 'Altro', icon: '✨', whatsappLink: '' };
+            return category || { id: 'altro', name: 'Altro', icon: '', whatsappLink: '' };
         }
 
         function formatEventDate(event) {
@@ -1985,7 +2126,7 @@
                     });
                     
                     userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
-                    userMarker.bindPopup('<strong>📍 Sei qui</strong>').openPopup();
+                    userMarker.bindPopup('<strong>Sei qui</strong>').openPopup();
                     
                     locateBtn.classList.remove('loading');
                 },
@@ -2519,7 +2660,7 @@
             // Icona per i luoghi
             const placeIcon = L.divIcon({
                 className: 'custom-marker',
-                html: '<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏛️</div>',
+                html: '<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><div style="width:12px;height:12px;background:white;border-radius:50%;"></div></div>',
                 iconSize: [28, 28],
                 iconAnchor: [14, 28]
             });
@@ -2537,18 +2678,18 @@
                     const tagsHtml = event.tags.map(tag => `<span style="background: #fef3c7; color: #78350f; padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; margin-right: 3px;">${tag}</span>`).join('');
 
                     const posterBtn = event.poster ?
-                        `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1c1409; border: none; border-radius: 6px; cursor: pointer;">🖼️ Locandina</button>` : '';
+                        `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1c1409; border: none; border-radius: 6px; cursor: pointer;">Locandina</button>` : '';
 
                     const popupContent = `
                         <div style="min-width: 200px;">
-                            <h4 style="margin-bottom: 8px;">${categoryInfo.icon} ${event.title}</h4>
-                            <p style="font-size: 0.875rem; margin-bottom: 5px;">📅 ${formatEventDate(event)}</p>
-                            <p style="font-size: 0.875rem; margin-bottom: 8px;">📍 ${event.location}</p>
+                            <h4 style="margin-bottom: 8px;">${event.title}</h4>
+                            <p style="font-size: 0.875rem; margin-bottom: 5px;">${formatEventDate(event)}</p>
+                            <p style="font-size: 0.875rem; margin-bottom: 8px;">${event.location}</p>
                             <div style="margin-bottom: 8px;">${tagsHtml}</div>
                             ${posterBtn}
-                            <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1c1409; border: none; border-radius: 6px; cursor: pointer;">➕ Aggiungi</button>
-                            <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">🧭 Indicazioni</button>
-                            <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #c9a200; border: 2px solid #c9a200; border-radius: 6px; cursor: pointer;">${categoryInfo.icon} Chat</button>
+                            <button onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})' style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1c1409; border: none; border-radius: 6px; cursor: pointer;">Aggiungi al calendario</button>
+                            <button onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}') " style="width: 100%; padding: 8px; margin-top: 5px; background: #34a853; color: white; border: none; border-radius: 6px; cursor: pointer;">Indicazioni</button>
+                            <button onclick="window.open('${categoryInfo.whatsappLink}', '_blank')" style="width: 100%; padding: 8px; margin-top: 5px; background: white; color: #c9a200; border: 2px solid #c9a200; border-radius: 6px; cursor: pointer;">Chat</button>
                         </div>
                     `;
 
@@ -2584,25 +2725,10 @@
 
             // Aggiungi marker luoghi (se attivi)
             if (showPlaces && filteredPlaces.length > 0) {
-                const categoryIcons = {
-                    'museo': '🏛️',
-                    'galleria': '🖼️',
-                    'parco': '🌳',
-                    'biblioteca': '📚',
-                    'teatro': '🎭',
-                    'coworking': '💼',
-                    'ristorante': '🍽️',
-                    'centro-sociale': '🤝',
-                    'fondazione': '🏢',
-                    'altro': '📍'
-                };
-
                 filteredPlaces.forEach(place => {
-                    const icon = categoryIcons[place.category] || '🏛️';
-
                     const placeMarkerIcon = L.divIcon({
                         className: 'custom-marker',
-                        html: `<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">${icon}</div>`,
+                        html: '<div style="background: #92400e; width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><div style="width:12px;height:12px;background:white;border-radius:50%;"></div></div>',
                         iconSize: [28, 28],
                         iconAnchor: [14, 28]
                     });

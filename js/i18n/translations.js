@@ -13,9 +13,9 @@ export const translations = {
     // Hero
     'hero.title': 'Cosa facciamo oggi a Napoli?',
     'hero.subtitle.default': 'Events, luoghi e persone',
-    'hero.btn.map': '🗺️ Esplora la mappa',
-    'hero.btn.calendar': '📅 Vedi calendario',
-    'hero.btn.community': '💬 Community',
+    'hero.btn.map': 'Esplora la mappa',
+    'hero.btn.calendar': 'Vedi calendario',
+    'hero.btn.community': 'Community',
     'hero.subtitles': [
       "Cosa c'è da fare stanotte?",
       'Napoli non smette mai di sorprenderti.',
@@ -33,48 +33,48 @@ export const translations = {
     'section.explore': 'Esplora gli eventi ed i luoghi di Napoli',
 
     // Local warning
-    'warning.local.title': '⚠️ Modalità Locale Rilevata',
+    'warning.local.title': 'Modalità Locale Rilevata',
     'warning.local.body': 'Stai visualizzando il sito dal file system. Gli eventi mostrati sono di esempio.',
     'warning.local.hint': 'Per vedere i tuoi eventi, usa un server locale:',
 
     // Search
-    'search.placeholder': '🔍 Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag',
+    'search.placeholder': 'Cerca per nome evento, data (YYYY-MM-DD), nome luogo o #tag',
 
     // Mobile tabs
-    'tabs.calendar': '📅 Calendario',
-    'tabs.map': '🗺️ Mappa',
+    'tabs.calendar': 'Calendario',
+    'tabs.map': 'Mappa',
 
     // Event filters
     'filters.events.title': 'Che tipo di eventi cerchi?',
-    'filters.all': 'Tutti',
-    'filters.live-music': '🎵 Live Music',
-    'filters.open-mic': '🎤 Open Mic',
-    'filters.concerto': '🎸 Concerti',
-    'filters.spettacolo-teatrale': '🎭 Teatro',
-    'filters.mostra': '🖼️ Mostre',
-    'filters.workshop': '🛠️ Workshop',
-    'filters.fiera': '🎪 Fiere',
+    'filters.all': 'Qualsiasi',
+    'filters.live-music': 'Live Music',
+    'filters.open-mic': 'Open Mic',
+    'filters.concerto': 'Concerti',
+    'filters.spettacolo-teatrale': 'Teatro',
+    'filters.mostra': 'Mostre',
+    'filters.workshop': 'Workshop',
+    'filters.fiera': 'Fiere',
     'filters.altro': 'Altro',
 
     // Place filters
     'filters.places.title': 'Che tipo di location cerchi?',
-    'filters.museo': '🏛️ Musei',
-    'filters.galleria': '🖼️ Gallerie',
-    'filters.parco': '🌳 Parchi',
-    'filters.biblioteca': '📚 Biblioteche',
-    'filters.teatro': '🎭 Teatri',
-    'filters.coworking': '💼 Coworking',
-    'filters.ristorante': '🍽️ Ristoranti',
-    'filters.centro-sociale': '🤝 Centri Sociali',
-    'filters.fondazione': '🏢 Fondazioni',
+    'filters.museo': 'Musei',
+    'filters.galleria': 'Gallerie',
+    'filters.parco': 'Parchi',
+    'filters.biblioteca': 'Biblioteche',
+    'filters.teatro': 'Teatri',
+    'filters.coworking': 'Coworking',
+    'filters.ristorante': 'Ristoranti',
+    'filters.centro-sociale': 'Centri Sociali',
+    'filters.fondazione': 'Fondazioni',
 
     // Calendar card
-    'calendar.title': '📅 Calendario Eventi',
+    'calendar.title': 'Calendario Eventi',
 
     // Map card
-    'map.title': '🗺️ Mappa luoghi ed eventi',
-    'map.locate': '📍 Dove sono',
-    'map.openNow': '🕐 Aperti ora',
+    'map.title': 'Mappa Luoghi ed Eventi',
+    'map.locate': 'Dove sono',
+    'map.openNow': 'Aperti ora',
     'map.locate.title': 'Trova la mia posizione',
     'map.openNow.title': 'Mostra solo luoghi aperti ora',
     'map.fullscreen.title': 'Schermo intero',
@@ -82,33 +82,33 @@ export const translations = {
     // Unified list
     'list.title': 'La Tua Ricerca',
     'list.title.full': (events, places) => `La Tua Ricerca (${events} eventi, ${places} luoghi)`,
-    'list.section.events': '📅 Eventi',
-    'list.section.places': '🏛️ Luoghi',
+    'list.section.events': 'Eventi',
+    'list.section.places': 'Luoghi',
     'list.empty': 'Nessun risultato trovato.',
     'list.pagination.prev': '← Prec',
     'list.pagination.next': 'Succ →',
     'list.pagination.info': (current, total) => `Pagina ${current} di ${total}`,
 
     // List item buttons
-    'item.poster': '🖼️ Vedi locandina',
-    'item.details': '📄 Maggiori dettagli',
-    'item.placeDetails': '📄 Dettagli',
-    'item.directions': '🧭 Indicazioni',
-    'item.website': '🌐 Sito Web',
-    'item.addCalendar': '➕ Aggiungi',
-    'item.chat': '💬 Chat',
-    'item.hours': '🕐 Orari',
-    'item.image': '🖼️ Immagine',
-    'item.showOnMap': '🗺️ Mostra su mappa',
+    'item.poster': '<i data-lucide="image" class="lucide-btn"></i> Vedi locandina',
+    'item.details': '<i data-lucide="file-text" class="lucide-btn"></i> Maggiori dettagli',
+    'item.placeDetails': '<i data-lucide="file-text" class="lucide-btn"></i> Dettagli',
+    'item.directions': '<i data-lucide="navigation" class="lucide-btn"></i> Indicazioni',
+    'item.website': '<i data-lucide="globe" class="lucide-btn"></i> Sito Web',
+    'item.addCalendar': '<i data-lucide="plus" class="lucide-btn"></i> Aggiungi',
+    'item.chat': '<i data-lucide="message-circle" class="lucide-btn"></i> Chat',
+    'item.hours': '<i data-lucide="clock" class="lucide-btn"></i> Orari',
+    'item.image': '<i data-lucide="image" class="lucide-btn"></i> Immagine',
+    'item.showOnMap': '<i data-lucide="map" class="lucide-btn"></i> Mostra su mappa',
     'item.openingHours': 'Orari di apertura',
 
     // Quick filters / search info
-    'quickfilter.today': '📅 Eventi di oggi',
-    'quickfilter.reset': '🔄 Reset filtri',
-    'quickfilter.hint': '💡 <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.',
+    'quickfilter.today': 'Eventi di oggi',
+    'quickfilter.reset': 'Reset filtri',
+    'quickfilter.hint': '<i data-lucide="lightbulb" class="lucide-hint"></i> <strong>Suggerimento:</strong> Clicca su un giorno del calendario o su un marker nella mappa per filtrare gli eventi.',
 
     // Community section
-    'community.title': '💬 Community per Interessi',
+    'community.title': 'Community per Interessi',
     'community.description': 'Unisciti alle chat WhatsApp organizzate per interesse! Trova persone con le tue stesse passioni e organizzatevi per partecipare insieme agli eventi.',
     'community.general.label': 'Community Generale',
     'community.general.desc': 'Per chi vuole conoscere persone nuove e scoprire tutti i tipi di eventi',
@@ -118,10 +118,10 @@ export const translations = {
 
     // Footer
     'footer.tagline': 'Una piattaforma per scoprire eventi e conoscere persone nuove',
-    'footer.copy': '© 2026 - Fatto con ❤️ per la community',
+    'footer.copy': '© 2026 - Fatto per la community',
 
     // Alerts
-    'alert.noEventsToday': "Nessun evento in programma oggi 😔\nProva a guardare i prossimi giorni!",
+    'alert.noEventsToday': "Nessun evento in programma oggi.\nProva a guardare i prossimi giorni!",
     'alert.noOpenPlaces': 'Nessun luogo aperto in questo momento.',
 
     // About page
@@ -180,9 +180,9 @@ export const translations = {
     // Hero
     'hero.title': "What are we doing today in Naples?",
     'hero.subtitle.default': 'Events, places and people',
-    'hero.btn.map': '🗺️ Explore the map',
-    'hero.btn.calendar': '📅 View calendar',
-    'hero.btn.community': '💬 Community',
+    'hero.btn.map': 'Explore the map',
+    'hero.btn.calendar': 'View calendar',
+    'hero.btn.community': 'Community',
     'hero.subtitles': [
       "What's there to do tonight?",
       'Naples never stops surprising you.',
@@ -200,48 +200,48 @@ export const translations = {
     'section.explore': 'Explore events and places in Naples',
 
     // Local warning
-    'warning.local.title': '⚠️ Local Mode Detected',
+    'warning.local.title': 'Local Mode Detected',
     'warning.local.body': 'You are viewing the site from the file system. The events shown are examples.',
     'warning.local.hint': 'To see your events, use a local server:',
 
     // Search
-    'search.placeholder': '🔍 Search by event name, date (YYYY-MM-DD), place name or #tag',
+    'search.placeholder': 'Search by event name, date (YYYY-MM-DD), place name or #tag',
 
     // Mobile tabs
-    'tabs.calendar': '📅 Calendar',
-    'tabs.map': '🗺️ Map',
+    'tabs.calendar': 'Calendar',
+    'tabs.map': 'Map',
 
     // Event filters
     'filters.events.title': 'What kind of events are you looking for?',
-    'filters.all': 'All',
-    'filters.live-music': '🎵 Live Music',
-    'filters.open-mic': '🎤 Open Mic',
-    'filters.concerto': '🎸 Concerts',
-    'filters.spettacolo-teatrale': '🎭 Theatre',
-    'filters.mostra': '🖼️ Exhibitions',
-    'filters.workshop': '🛠️ Workshop',
-    'filters.fiera': '🎪 Fairs',
+    'filters.all': 'Any',
+    'filters.live-music': 'Live Music',
+    'filters.open-mic': 'Open Mic',
+    'filters.concerto': 'Concerts',
+    'filters.spettacolo-teatrale': 'Theatre',
+    'filters.mostra': 'Exhibitions',
+    'filters.workshop': 'Workshop',
+    'filters.fiera': 'Fairs',
     'filters.altro': 'Other',
 
     // Place filters
     'filters.places.title': 'What kind of venue are you looking for?',
-    'filters.museo': '🏛️ Museums',
-    'filters.galleria': '🖼️ Galleries',
-    'filters.parco': '🌳 Parks',
-    'filters.biblioteca': '📚 Libraries',
-    'filters.teatro': '🎭 Theatres',
-    'filters.coworking': '💼 Coworking',
-    'filters.ristorante': '🍽️ Restaurants',
-    'filters.centro-sociale': '🤝 Social Centres',
-    'filters.fondazione': '🏢 Foundations',
+    'filters.museo': 'Museums',
+    'filters.galleria': 'Galleries',
+    'filters.parco': 'Parks',
+    'filters.biblioteca': 'Libraries',
+    'filters.teatro': 'Theatres',
+    'filters.coworking': 'Coworking',
+    'filters.ristorante': 'Restaurants',
+    'filters.centro-sociale': 'Social Centres',
+    'filters.fondazione': 'Foundations',
 
     // Calendar card
-    'calendar.title': '📅 Events Calendar',
+    'calendar.title': 'Events Calendar',
 
     // Map card
-    'map.title': '🗺️ Map of places and events',
-    'map.locate': '📍 Where am I',
-    'map.openNow': '🕐 Open now',
+    'map.title': 'Map of places and events',
+    'map.locate': 'Where am I',
+    'map.openNow': 'Open now',
     'map.locate.title': 'Find my location',
     'map.openNow.title': 'Show only places open now',
     'map.fullscreen.title': 'Full screen',
@@ -249,33 +249,33 @@ export const translations = {
     // Unified list
     'list.title': 'Your Search',
     'list.title.full': (events, places) => `Your Search (${events} events, ${places} places)`,
-    'list.section.events': '📅 Events',
-    'list.section.places': '🏛️ Places',
+    'list.section.events': 'Events',
+    'list.section.places': 'Places',
     'list.empty': 'No results found.',
     'list.pagination.prev': '← Prev',
     'list.pagination.next': 'Next →',
     'list.pagination.info': (current, total) => `Page ${current} of ${total}`,
 
     // List item buttons
-    'item.poster': '🖼️ View poster',
-    'item.details': '📄 More details',
-    'item.placeDetails': '📄 Details',
-    'item.directions': '🧭 Directions',
-    'item.website': '🌐 Website',
-    'item.addCalendar': '➕ Add',
-    'item.chat': '💬 Chat',
-    'item.hours': '🕐 Hours',
-    'item.image': '🖼️ Image',
-    'item.showOnMap': '🗺️ Show on map',
+    'item.poster': '<i data-lucide="image" class="lucide-btn"></i> View poster',
+    'item.details': '<i data-lucide="file-text" class="lucide-btn"></i> More details',
+    'item.placeDetails': '<i data-lucide="file-text" class="lucide-btn"></i> Details',
+    'item.directions': '<i data-lucide="navigation" class="lucide-btn"></i> Directions',
+    'item.website': '<i data-lucide="globe" class="lucide-btn"></i> Website',
+    'item.addCalendar': '<i data-lucide="plus" class="lucide-btn"></i> Add',
+    'item.chat': '<i data-lucide="message-circle" class="lucide-btn"></i> Chat',
+    'item.hours': '<i data-lucide="clock" class="lucide-btn"></i> Hours',
+    'item.image': '<i data-lucide="image" class="lucide-btn"></i> Image',
+    'item.showOnMap': '<i data-lucide="map" class="lucide-btn"></i> Show on map',
     'item.openingHours': 'Opening hours',
 
     // Quick filters / search info
-    'quickfilter.today': "📅 Today's events",
-    'quickfilter.reset': '🔄 Reset filters',
-    'quickfilter.hint': '💡 <strong>Tip:</strong> Click a day on the calendar or a marker on the map to filter events.',
+    'quickfilter.today': "Today's events",
+    'quickfilter.reset': 'Reset filters',
+    'quickfilter.hint': '<i data-lucide="lightbulb" class="lucide-hint"></i> <strong>Tip:</strong> Click a day on the calendar or a marker on the map to filter events.',
 
     // Community section
-    'community.title': '💬 Interest Communities',
+    'community.title': 'Interest Communities',
     'community.description': 'Join WhatsApp chats organised by interest! Find people who share your passions and plan to attend events together.',
     'community.general.label': 'General Community',
     'community.general.desc': 'For those who want to meet new people and discover all kinds of events',
@@ -285,10 +285,10 @@ export const translations = {
 
     // Footer
     'footer.tagline': 'A platform to discover events and meet new people',
-    'footer.copy': '© 2026 - Made with ❤️ for the community',
+    'footer.copy': '© 2026 - Made for the community',
 
     // Alerts
-    'alert.noEventsToday': "No events scheduled today 😔\nTry looking at the next few days!",
+    'alert.noEventsToday': "No events scheduled today.\nTry looking at the next few days!",
     'alert.noOpenPlaces': 'No places open at the moment.',
 
     // About page

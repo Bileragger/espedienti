@@ -52,9 +52,13 @@ export class UnifiedListRenderer {
     console.log('✅ UnifiedListRenderer initialized');
   }
 
+  _createIcons() {
+    if (window.lucide) window.lucide.createIcons();
+  }
+
   render() {
     const container = document.getElementById('unifiedList');
-    const title = document.getElementById('unifiedTitle');
+    const title = document.getElementById('unifiedTitle') || document.querySelector('[id="unifiedTitle"]');
     if (!container) return;
 
     const filteredEvents = this.state.get('filteredEvents') || [];
@@ -103,7 +107,7 @@ export class UnifiedListRenderer {
         header.className = 'unified-section-header';
         header.textContent = window.t
           ? window.t(item._type === 'event' ? 'list.section.events' : 'list.section.places')
-          : (item._type === 'event' ? '📅 Eventi' : '🏛️ Luoghi');
+          : (item._type === 'event' ? 'Eventi' : 'Luoghi');
         container.appendChild(header);
         lastType = item._type;
       }
@@ -115,6 +119,7 @@ export class UnifiedListRenderer {
     });
 
     this._renderPagination(container, totalPages);
+    this._createIcons();
   }
 
   _createEventElement(event, selectedLocation, selectedTag) {
@@ -139,11 +144,13 @@ export class UnifiedListRenderer {
 
     const dirHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat},${event.coordinates.lng},'${event.location.replace(/'/g, "\\'")}','${event.location.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`;
 
+    const catColor = (window.categoryColors?.eventColors?.[event.category]) || '#c9a200';
+    const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
     el.innerHTML = `
       <div class="event-info">
-        <div class="event-title">${categoryInfo.icon} ${event.title}</div>
-        <div class="event-detail">📅 ${this.dateFormatter.formatEventDate(event)}</div>
-        <div class="event-detail">📍 ${event.location}</div>
+        <div class="event-title">${catDot}${event.title}</div>
+        <div class="event-detail"><i data-lucide="calendar" class="lucide-detail"></i>${this.dateFormatter.formatEventDate(event)}</div>
+        <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${event.location}</div>
         <div class="event-tags">${tagsHtml}</div>
         <div style="margin-top:8px;">${posterHtml}${descHtml}${dirHtml}</div>
       </div>
@@ -160,8 +167,9 @@ export class UnifiedListRenderer {
     el.className = 'event-item place-item';
     el.id = `place-${place.id}`;
 
-    const icon = this.categoryIcons[place.primaryCategory || place.category] || '📍';
     const catName = this.categoryNames[place.primaryCategory || place.category] || 'Altro';
+    const catColor = (window.categoryColors?.placeColors?.[place.primaryCategory || place.category]) || '#92400e';
+    const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
 
     const t = window.t || (k => k);
 
@@ -194,9 +202,9 @@ export class UnifiedListRenderer {
 
     el.innerHTML = `
       <div class="event-info">
-        <div class="event-title">${icon} ${place.name}${statusBadge}</div>
+        <div class="event-title">${catDot}${place.name}${statusBadge}</div>
         <div class="event-detail"><span class="place-category">${catName}</span></div>
-        <div class="event-detail">📍 ${place.address}</div>
+        <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${place.address}</div>
         <div style="margin-top:8px;">${descHtml}${hoursHtml}${websiteHtml}${imageHtml}${dirHtml}</div>
       </div>
       <div class="event-actions">
