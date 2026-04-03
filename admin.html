@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Gestione Eventi e Luoghi</title>
+    <title>Admin — Espedienti a Napoli</title>
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +15,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         const firebaseConfig = {
@@ -31,58 +33,59 @@
         const auth = getAuth(app);
 
         // Rendi disponibili globalmente
+        window.firebaseApp = app;
         window.db = db;
         window.auth = auth;
         window.firestoreModules = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
 
-        // Gestione login form
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value;
-            const errorEl = document.getElementById('loginError');
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-
-            errorEl.style.display = 'none';
-            submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ Accesso...';
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                errorEl.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Accedi';
+        // Assicura che esista un profilo Firestore per l'utente loggato
+        async function ensureUserProfile(user) {
+            const ref  = doc(db, 'users', user.uid);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                await setDoc(ref, {
+                    uid:         user.uid,
+                    email:       user.email || '',
+                    displayName: user.displayName || user.email?.split('@')[0] || '',
+                    role:        'user',
+                    createdAt:   new Date().toISOString(),
+                });
             }
-        });
-
-        // Gestione logout
-        window.adminLogout = async () => {
-            await signOut(auth);
-            location.reload();
-        };
+            return snap.exists() ? snap.data().role : 'user';
+        }
 
         // Osserva stato autenticazione
-        onAuthStateChanged(auth, (user) => {
-            const overlay = document.getElementById('loginOverlay');
-            if (user) {
-                overlay.classList.add('hidden');
-                // Segnala che Firebase è pronto solo dopo auth
+        onAuthStateChanged(auth, async (user) => {
+            const accessDenied = document.getElementById('accessDenied');
+            const adminContent = document.getElementById('adminContent');
+
+            if (!user) {
+                // Non loggato → torna alla home (si aprirà il modale di login)
+                window.location.href = 'index.html';
+                return;
+            }
+
+            ensureUserProfile(user).then(role => {
+                if (role !== 'admin') {
+                    // Loggato ma non admin
+                    accessDenied.style.display = 'block';
+                    adminContent.style.display  = 'none';
+                    return;
+                }
+                accessDenied.style.display = 'none';
+                adminContent.style.display  = 'block';
+
                 if (!window.firebaseReady) {
                     window.firebaseReady = true;
                     window.dispatchEvent(new Event('firebaseReady'));
                 }
-            } else {
-                overlay.classList.remove('hidden');
-                document.getElementById('loginUser').value = '';
-                document.getElementById('loginPass').value = '';
-                document.getElementById('loginError').style.display = 'none';
-                const submitBtn = document.querySelector('#loginForm button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Accedi';
+            }).catch(() => {
+                // Errore lettura profilo → tratta come non admin
+                if (!window.firebaseReady) {
+                    window.firebaseReady = true;
+                    window.dispatchEvent(new Event('firebaseReady'));
                 }
-            }
+            });
         });
     </script>
 
@@ -115,7 +118,6 @@
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             background: var(--bg-primary);
             min-height: 100vh;
-            padding: 12px;
             color: var(--text-primary);
         }
 
@@ -123,31 +125,97 @@
             font-family: inherit;
         }
 
+        /* ── Portal navbar ───────────────────────────────────────── */
+        header {
+            background: var(--bg-tertiary);
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 0 var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-size: 1.1rem; font-weight: bold; }
+        .logo a { color: inherit; text-decoration: none; }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover { background: rgba(180,140,0,0.18); border-color: var(--border-subtle); }
+
+        .nav-links a.active {
+            background: rgba(180,140,0,0.22);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent-primary) !important;
+            border-color: var(--accent-primary) !important;
+        }
+
+        .admin-nav-link .lucide { width: 13px; height: 13px; stroke: var(--accent-primary); }
+
+        /* ── Admin page layout ───────────────────────────────────── */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            overflow: hidden;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .header {
-            background: var(--accent-primary);
-            color: #1c1409;
-            padding: 14px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
+            padding: 24px 16px;
         }
 
         .content {
-            padding: 16px;
+            margin-top: 16px;
         }
+
+        /* ── Access denied ───────────────────────────────────────── */
+        .access-denied {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .access-denied h2 { color: var(--accent-primary); margin-bottom: 12px; }
+
+        /* ── Footer ──────────────────────────────────────────────── */
+        footer {
+            background: var(--text-primary);
+            color: #fff;
+            text-align: center;
+            padding: 24px 16px;
+            margin-top: 40px;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .footer-content p { margin: 4px 0; }
+        .footer-links a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .footer-links a:hover { color: #fff; }
 
         .section {
             margin-bottom: 24px;
@@ -791,78 +859,11 @@
             flex: 1;
         }
 
-        /* Login overlay */
-        #loginOverlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        #loginOverlay.hidden {
-            display: none;
-        }
-
-        .login-box {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 36px 32px;
-            width: 100%;
-            max-width: 360px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            text-align: center;
-        }
-
-        .login-box h2 {
-            font-size: 1.1rem;
-            color: var(--accent-primary);
-            margin-bottom: 6px;
-        }
-
-        .login-box p {
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            margin-bottom: 24px;
-        }
-
-        .login-box .form-group {
-            text-align: left;
-        }
-
         .login-error {
             color: #dc3545;
             font-size: 0.8rem;
             margin-top: 10px;
             display: none;
-        }
-
-        .login-box .btn {
-            width: 100%;
-            margin-top: 16px;
-            padding: 10px;
-        }
-
-        .logout-btn {
-            float: right;
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .logout-btn:hover {
-            background: var(--bg-primary);
-        }
-
-        .login-form-group-pass {
-            margin-top: 10px;
         }
 
         .alert--hidden {
@@ -1111,52 +1112,183 @@
                 width: 100%;
             }
         }
+
+        /* ── Invite tab ───────────────────────────────────────────── */
+        .invite-hint {
+            color: #64748b;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        .invite-email-input { flex: 2; }
+        .invite-role-select { flex: 1; }
+
+        .invite-error {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            color: #dc2626;
+            min-height: 1.2em;
+        }
+
+        .invite-list {
+            margin-top: 20px;
+        }
+
+        .invite-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .invite-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .invite-email { font-weight: 500; font-size: 0.9rem; }
+
+        .invite-role-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .invite-role-admin   { background: #dc2626; }
+        .invite-role-manager { background: #7c3aed; }
+        .invite-role-artist  { background: #0284c7; }
+
+        .invite-status {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .invite-active { background: #dcfce7; color: #16a34a; }
+        .invite-used   { background: #f1f5f9; color: #94a3b8; }
+
+        .invite-date { font-size: 0.78rem; color: #94a3b8; }
+
+        .invite-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* ── User tab ─────────────────────────────────────────────── */
+        .user-search-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            margin-bottom: 16px;
+            margin-top: 8px;
+        }
+
+        .user-list { margin-top: 0; }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .user-item--disabled { opacity: 0.5; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .user-name  { font-weight: 600; font-size: 0.9rem; }
+        .user-email { font-size: 0.8rem; color: #64748b; }
+
+        .user-disabled-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .user-role-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .user-role-select {
+            padding: 5px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.82rem;
+        }
     </style>
 </head>
 <body>
 
     <!-- Login overlay -->
-    <div id="loginOverlay">
-        <div class="login-box">
-            <h2>🔐 Accesso Admin</h2>
-            <p>Espedienti a Napoli — area riservata</p>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginUser">Nome utente</label>
-                    <input type="text" id="loginUser" autocomplete="username" placeholder="admin">
-                </div>
-                <div class="form-group login-form-group-pass">
-                    <label for="loginPass">Password</label>
-                    <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••">
-                </div>
-                <div class="login-error" id="loginError">⚠️ Credenziali non valide.</div>
-                <button type="submit" class="btn">Accedi</button>
-            </form>
+    <!-- Portal header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <a href="index.html">Espedienti a Napoli</a>
+            </div>
+            <nav class="nav-links">
+                <a href="about.html">Il Progetto</a>
+                <a href="contatti.html">Contatti</a>
+                <a href="admin.html" class="admin-nav-link active">
+                    <i data-lucide="settings"></i>Admin
+                </a>
+            </nav>
         </div>
-    </div>
+    </header>
 
     <div class="container">
-        <div class="header">
-            <h1>🎭 Pannello Admin Avanzato</h1>
-            <p>Gestione Eventi e Luoghi - Espedienti a Napoli</p>
-            <button type="button" class="logout-btn" onclick="adminLogout()">Esci</button>
+
+        <!-- Access denied -->
+        <div id="accessDenied" class="access-denied" style="display:none;">
+            <h2>Accesso negato</h2>
+            <p>Non hai i permessi per visualizzare questa pagina.</p>
+            <a href="index.html" style="color:var(--accent-primary);text-decoration:none;font-weight:600;">← Torna alla home</a>
         </div>
 
+        <!-- Admin content (shown only to admins) -->
+        <div id="adminContent" style="display:none;">
         <div class="content">
-            <div class="alert alert-success">
-                ✅ <strong>Connesso a Firebase:</strong> Tutti i cambiamenti vengono salvati automaticamente e la pagina index.html si aggiorna in tempo reale.
-            </div>
-
-            <div class="alert alert-warning alert--hidden" id="firebaseWarning">
-                ⚠️ <strong>Attenzione:</strong> Firebase non è ancora configurato. Modifica le credenziali nel codice HTML (cerca "firebaseConfig").
-            </div>
 
             <!-- Tabs -->
             <div class="tabs">
-                <button type="button" class="tab-btn active" onclick="switchTab('events')">🎭 Eventi</button>
-                <button type="button" class="tab-btn places-tab" onclick="switchTab('places')">🏛️ Luoghi</button>
-                <button type="button" class="tab-btn" onclick="switchTab('newsletter')">📬 Newsletter</button>
-                <button type="button" class="tab-btn" onclick="switchTab('categories')">🏷️ Categorie</button>
+                <button type="button" class="tab-btn active" onclick="switchTab('events')">Eventi</button>
+                <button type="button" class="tab-btn places-tab" onclick="switchTab('places')">Luoghi</button>
+                <button type="button" class="tab-btn" onclick="switchTab('newsletter')">Newsletter</button>
+                <button type="button" class="tab-btn" onclick="switchTab('categories')">Categorie</button>
+                <button type="button" class="tab-btn" onclick="switchTab('invites')">Inviti</button>
+                <button type="button" class="tab-btn" onclick="switchTab('users')">Utenti</button>
             </div>
 
             <!-- TAB EVENTI -->
@@ -1476,15 +1608,13 @@
 
                 <!-- Categorie Eventi -->
                 <div class="section">
-                    <h2>🎭 Categorie Eventi</h2>
+                    <h2>Categorie Eventi</h2>
 
                     <!-- Aggiungi categoria evento -->
                     <div class="cat-add-form">
                         <h3>Aggiungi categoria</h3>
                         <div class="cat-add-row">
-                            <input type="text" id="newEventCatKey" placeholder="chiave (es. live-music)" class="form-control cat-key-input">
-                            <input type="text" id="newEventCatName" placeholder="Nome visualizzato" class="form-control cat-name-input-new">
-                            <input type="text" id="newEventCatIcon" placeholder="Emoji icona" class="form-control cat-icon-input">
+                            <input type="text" id="newEventCatName" placeholder="Nome (es. Live Music)" class="form-control cat-name-input-new">
                             <input type="color" id="newEventCatColor" value="#94a3b8" class="cat-color-picker" title="Colore legenda">
                             <button type="button" class="btn" onclick="addCategory('event')">Aggiungi</button>
                         </div>
@@ -1492,7 +1622,7 @@
 
                     <!-- Ricerca -->
                     <div class="list-search">
-                        <input type="text" id="eventCatSearch" placeholder="🔍 Cerca categoria…" class="form-control">
+                        <input type="text" id="eventCatSearch" placeholder="Cerca categoria…" class="form-control">
                     </div>
 
                     <!-- Lista categorie eventi -->
@@ -1503,15 +1633,13 @@
 
                 <!-- Categorie Luoghi -->
                 <div class="section">
-                    <h2>🏛️ Categorie Luoghi</h2>
+                    <h2>Categorie Luoghi</h2>
 
                     <!-- Aggiungi categoria luogo -->
                     <div class="cat-add-form">
                         <h3>Aggiungi categoria</h3>
                         <div class="cat-add-row">
-                            <input type="text" id="newPlaceCatKey" placeholder="chiave (es. museo)" class="form-control cat-key-input">
-                            <input type="text" id="newPlaceCatName" placeholder="Nome visualizzato" class="form-control cat-name-input-new">
-                            <input type="text" id="newPlaceCatIcon" placeholder="Emoji icona" class="form-control cat-icon-input">
+                            <input type="text" id="newPlaceCatName" placeholder="Nome (es. Museo)" class="form-control cat-name-input-new">
                             <input type="color" id="newPlaceCatColor" value="#64748b" class="cat-color-picker" title="Colore legenda">
                             <button type="button" class="btn" onclick="addCategory('place')">Aggiungi</button>
                         </div>
@@ -1519,7 +1647,7 @@
 
                     <!-- Ricerca -->
                     <div class="list-search">
-                        <input type="text" id="placeCatSearch" placeholder="🔍 Cerca categoria…" class="form-control">
+                        <input type="text" id="placeCatSearch" placeholder="Cerca categoria…" class="form-control">
                     </div>
 
                     <!-- Lista categorie luoghi -->
@@ -1530,8 +1658,66 @@
 
             </div><!-- Fine TAB CATEGORIE -->
 
+            <!-- TAB INVITI -->
+            <div id="invitesTab" class="tab-content">
+                <div class="section">
+                    <h2>✉️ Gestione Inviti</h2>
+                    <p class="invite-hint">
+                        Crea un invito per consentire la registrazione come Manager, Artista o Admin.
+                        Verrà generato un link univoco da inviare via email all'utente.
+                    </p>
+
+                    <div class="cat-add-form">
+                        <h3>Nuovo Invito</h3>
+                        <div class="cat-add-row">
+                            <input type="email" id="inviteEmail" class="invite-email-input" placeholder="Email destinatario">
+                            <select id="inviteRole" class="invite-role-select">
+                                <option value="manager">Manager</option>
+                                <option value="artist">Artista</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <button type="button" id="inviteCreateBtn" class="btn" onclick="createInvite()">Crea &amp; Invia</button>
+                        </div>
+                        <div class="invite-error" id="inviteError"></div>
+                    </div>
+
+                    <ul class="events-list invite-list" id="inviteList">
+                        <li class="list-empty">Caricamento...</li>
+                    </ul>
+                </div>
+            </div><!-- Fine TAB INVITI -->
+
+            <!-- TAB UTENTI -->
+            <div id="usersTab" class="tab-content">
+                <div class="section">
+                    <h2>Utenti (<span id="userCount">0</span>)</h2>
+                    <p class="invite-hint">Gestisci i profili degli utenti registrati. Il ruolo viene aggiornato immediatamente su Firestore.</p>
+
+                    <input type="text" id="userSearch" class="user-search-input"
+                        placeholder="Cerca per nome, email o ruolo…">
+
+                    <ul class="events-list user-list" id="userList">
+                        <li class="list-empty">Caricamento...</li>
+                    </ul>
+                </div>
+            </div><!-- Fine TAB UTENTI -->
+
+        </div><!-- Fine .content -->
+        </div><!-- Fine #adminContent -->
+
+    </div><!-- Fine .container -->
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Espedienti a Napoli</strong></p>
+            <p>Una piattaforma per scoprire eventi e incontrare persone</p>
+            <p class="footer-links">
+                <a href="index.html">Home</a> •
+                <a href="about.html">Il Progetto</a> •
+                <a href="contatti.html">Contatti</a>
+            </p>
         </div>
-    </div>
+    </footer>
 
     <!-- Inline script moved to modular JS files in /js/admin/ directory -->
     <!-- See js/admin/admin-app.js for the new modular entry point -->

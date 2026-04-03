@@ -120,9 +120,6 @@ export class CategoryManager {
         <input type="color" class="cat-color-picker" value="${cat.color || '#94a3b8'}"
           id="color-${cat.firebaseId}"
           title="Colore legenda">
-        <input type="text" class="cat-icon-input" value="${cat.icon || ''}"
-          id="icon-${cat.firebaseId}"
-          placeholder="Emoji">
         <span class="cat-key">${cat.key}</span>
         <input type="text" class="cat-name-input" value="${cat.name}"
           id="name-${cat.firebaseId}"
@@ -134,18 +131,15 @@ export class CategoryManager {
   }
 
   async addCategory(type) {
-    const keyInput = document.getElementById(type === 'event' ? 'newEventCatKey' : 'newPlaceCatKey');
-    const nameInput = document.getElementById(type === 'event' ? 'newEventCatName' : 'newPlaceCatName');
+    const nameInput  = document.getElementById(type === 'event' ? 'newEventCatName' : 'newPlaceCatName');
     const colorInput = document.getElementById(type === 'event' ? 'newEventCatColor' : 'newPlaceCatColor');
-    const iconInput = document.getElementById(type === 'event' ? 'newEventCatIcon' : 'newPlaceCatIcon');
 
-    const key = keyInput?.value.trim().toLowerCase().replace(/\s+/g, '-');
-    const name = nameInput?.value.trim();
+    const name  = nameInput?.value.trim();
     const color = colorInput?.value || '#94a3b8';
-    const icon = iconInput?.value.trim() || '📍';
+    const key   = this._nameToKey(name);
 
-    if (!key || !name) {
-      alert('⚠️ Inserisci chiave e nome della categoria.');
+    if (!name) {
+      alert('⚠️ Inserisci il nome della categoria.');
       return;
     }
 
@@ -158,12 +152,10 @@ export class CategoryManager {
     }
 
     try {
-      const data = { key, name, color, icon };
+      const data = { key, name, color, icon: '' };
       const added = await this.firebase.add(collection, data);
       arr.push(added);
-      if (keyInput) keyInput.value = '';
       if (nameInput) nameInput.value = '';
-      if (iconInput) iconInput.value = '';
       this.render();
       this.populateFormSelects();
       this.publishColors();
@@ -173,15 +165,21 @@ export class CategoryManager {
     }
   }
 
+  _nameToKey(name) {
+    return (name || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
   async saveCategory(type, firebaseId) {
-    const nameInput = document.getElementById(`name-${firebaseId}`);
+    const nameInput  = document.getElementById(`name-${firebaseId}`);
     const colorInput = document.getElementById(`color-${firebaseId}`);
-    const iconInput = document.getElementById(`icon-${firebaseId}`);
     if (!nameInput || !colorInput) return;
 
-    const name = nameInput.value.trim();
+    const name  = nameInput.value.trim();
     const color = colorInput.value;
-    const icon = iconInput?.value.trim() || '';
 
     if (!name) {
       alert('⚠️ Il nome non può essere vuoto.');
@@ -194,10 +192,9 @@ export class CategoryManager {
     if (!cat) return;
 
     try {
-      await this.firebase.update(collection, firebaseId, { name, color, icon });
+      await this.firebase.update(collection, firebaseId, { name, color });
       cat.name = name;
       cat.color = color;
-      cat.icon = icon;
       this.populateFormSelects();
       this.publishColors();
     } catch (error) {

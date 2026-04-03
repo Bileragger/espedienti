@@ -28,6 +28,10 @@ import { mapRenderer } from './ui/map-renderer.js';
 import { communityRenderer } from './ui/community-renderer.js';
 import { modalManager } from './ui/modal-manager.js';
 
+// Auth modules
+import { authService } from './auth/auth-service.js';
+import { authRenderer } from './ui/auth-renderer.js';
+
 // Utility modules
 import { geolocationService } from './utils/geolocation-service.js';
 
@@ -58,6 +62,10 @@ async function initializeModules() {
   mapRenderer.initialize();
   communityRenderer.initialize();
   modalManager.initialize();
+
+  // Initialize auth
+  await authService.initialize();
+  authRenderer.initialize();
 
   console.log('✅ All modules initialized');
 }

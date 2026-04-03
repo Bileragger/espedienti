@@ -20,6 +20,8 @@ import { categoryManager } from './category-manager.js';
 import { eventFormManager } from './event-form-manager.js';
 import { placeFormManager } from './place-form-manager.js';
 import { newsletterManager } from './newsletter-manager.js';
+import { inviteManager } from './invite-manager.js';
+import { userManager } from './user-manager.js';
 
 /**
  * Initialize all admin modules
@@ -37,6 +39,8 @@ async function initializeModules() {
   await eventFormManager.initialize();
   await placeFormManager.initialize();
   newsletterManager.initialize();
+  await inviteManager.initialize();
+  await userManager.initialize();
 
   console.log('✅ All admin modules initialized');
 }

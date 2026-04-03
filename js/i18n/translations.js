@@ -9,6 +9,7 @@ export const translations = {
     'nav.contacts': 'Contatti',
     'nav.home': 'Home',
     'nav.features': 'Funzionalità',
+    'nav.admin': 'Admin',
 
     // Hero
     'hero.title': 'Cosa facciamo oggi a Napoli?',
@@ -30,7 +31,7 @@ export const translations = {
     ],
 
     // Main section
-    'section.explore': 'Esplora gli eventi ed i luoghi di Napoli',
+    'section.explore': 'Dove Andiamo? Cosa Facciamo?',
 
     // Local warning
     'warning.local.title': 'Modalità Locale Rilevata',
@@ -166,6 +167,31 @@ export const translations = {
     'status.open': 'aperto',
     'status.closed': 'chiuso',
 
+    // Auth
+    'auth.title': 'Accedi',
+    'auth.tab.login': 'Accedi',
+    'auth.tab.register': 'Registrati',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.confirmPassword': 'Conferma Password',
+    'auth.displayName': 'Nome',
+    'auth.role': 'Tipo di account',
+    'auth.role.user': 'Utente',
+    'auth.role.artist': 'Artista',
+    'auth.role.manager': 'Manager',
+    'auth.role.admin': 'Admin',
+    'auth.inviteCode': 'Codice Invito',
+    'auth.inviteHint': 'Questa tipologia di account richiede un codice invito.',
+    'auth.login.btn': 'Accedi',
+    'auth.register.btn': 'Registrati',
+    'auth.logout.btn': 'Esci',
+    'auth.error.passwordMismatch': 'Le password non coincidono.',
+    'auth.error.invalidInvite': 'Codice invito non valido o già utilizzato.',
+    'auth.error.emailInUse': 'Email già in uso.',
+    'auth.error.invalidCredential': 'Email o password non validi.',
+    'auth.error.weakPassword': 'La password deve essere di almeno 6 caratteri.',
+    'auth.error.generic': 'Si è verificato un errore. Riprova.',
+
     // Language toggle
     'lang.toggle': 'EN',
   },
@@ -176,6 +202,7 @@ export const translations = {
     'nav.contacts': 'Contacts',
     'nav.home': 'Home',
     'nav.features': 'Features',
+    'nav.admin': 'Admin',
 
     // Hero
     'hero.title': "What are we doing today in Naples?",
@@ -197,7 +224,7 @@ export const translations = {
     ],
 
     // Main section
-    'section.explore': 'Explore events and places in Naples',
+    'section.explore': 'Where Are We Going? What Are We Doing?',
 
     // Local warning
     'warning.local.title': 'Local Mode Detected',
@@ -332,6 +359,31 @@ export const translations = {
     // Open/closed status
     'status.open': 'open',
     'status.closed': 'closed',
+
+    // Auth
+    'auth.title': 'Sign In',
+    'auth.tab.login': 'Sign In',
+    'auth.tab.register': 'Register',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.confirmPassword': 'Confirm Password',
+    'auth.displayName': 'Name',
+    'auth.role': 'Account type',
+    'auth.role.user': 'User',
+    'auth.role.artist': 'Artist',
+    'auth.role.manager': 'Manager',
+    'auth.role.admin': 'Admin',
+    'auth.inviteCode': 'Invite Code',
+    'auth.inviteHint': 'This account type requires an invite code.',
+    'auth.login.btn': 'Sign In',
+    'auth.register.btn': 'Register',
+    'auth.logout.btn': 'Sign Out',
+    'auth.error.passwordMismatch': 'Passwords do not match.',
+    'auth.error.invalidInvite': 'Invite code is invalid or already used.',
+    'auth.error.emailInUse': 'Email already in use.',
+    'auth.error.invalidCredential': 'Invalid email or password.',
+    'auth.error.weakPassword': 'Password must be at least 6 characters.',
+    'auth.error.generic': 'An error occurred. Please try again.',
 
     // Language toggle
     'lang.toggle': 'IT',

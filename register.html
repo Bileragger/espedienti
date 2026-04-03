@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione – Espedienti a Napoli</title>
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, query, where, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
+            authDomain: "espedienti-napoli.firebaseapp.com",
+            projectId: "espedienti-napoli",
+            storageBucket: "espedienti-napoli.firebasestorage.app",
+            messagingSenderId: "450345618879",
+            appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a",
+        };
+
+        const app  = initializeApp(firebaseConfig);
+        const db   = getFirestore(app);
+        const auth = getAuth(app);
+
+        const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', artist: 'Artista', user: 'Utente' };
+        const ROLE_COLORS = { admin: '#dc2626', manager: '#7c3aed', artist: '#0284c7', user: '#16a34a' };
+
+        let inviteDoc   = null;
+        let inviteToken = null;
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            inviteToken  = params.get('token');
+
+            if (!inviteToken) {
+                showState('invalid');
+                return;
+            }
+
+            showState('loading');
+
+            try {
+                const q    = query(collection(db, 'invites'), where('token', '==', inviteToken));
+                const snap = await getDocs(q);
+
+                if (snap.empty) { showState('invalid'); return; }
+
+                inviteDoc = snap.docs[0];
+                const data = inviteDoc.data();
+
+                if (data.used) { showState('used'); return; }
+
+                buildForm(data.role, data.email);
+                showState('form');
+            } catch (err) {
+                console.error(err);
+                showState('error');
+            }
+        }
+
+        function buildForm(role, email) {
+            document.getElementById('roleLabel').textContent = ROLE_LABELS[role] || role;
+            document.getElementById('roleLabel').style.background = ROLE_COLORS[role] || '#16a34a';
+            document.getElementById('regEmail').value = email || '';
+
+            // For user role (shouldn't arrive here, but just in case) show name field
+            // For all invite roles: email + password only for now
+            // Name field shown for all
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const name     = document.getElementById('regName').value.trim();
+            const email    = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm  = document.getElementById('regConfirm').value;
+            const errEl    = document.getElementById('regError');
+            const btn      = document.getElementById('regSubmitBtn');
+
+            errEl.textContent = '';
+
+            if (password !== confirm) {
+                errEl.textContent = 'Le password non coincidono.';
+                return;
+            }
+            if (password.length < 6) {
+                errEl.textContent = 'La password deve essere di almeno 6 caratteri.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Registrazione in corso…';
+
+            try {
+                const role = inviteDoc.data().role;
+
+                // Create Firebase Auth user
+                const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+                // Save profile to Firestore
+                await setDoc(doc(db, 'users', credential.user.uid), {
+                    uid: credential.user.uid,
+                    email,
+                    displayName: name,
+                    role,
+                    createdAt: new Date().toISOString(),
+                });
+
+                // Mark invite as used
+                await updateDoc(inviteDoc.ref, {
+                    used: true,
+                    usedAt: new Date().toISOString(),
+                    registeredUid: credential.user.uid,
+                });
+
+                showState('success');
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Completa la registrazione';
+                errEl.textContent = mapError(err);
+            }
+        }
+
+        function mapError(err) {
+            const code = err?.code || '';
+            if (code.includes('email-already-in-use')) return 'Email già in uso.';
+            if (code.includes('weak-password'))        return 'Password troppo debole (min. 6 caratteri).';
+            return 'Si è verificato un errore. Riprova.';
+        }
+
+        function showState(state) {
+            ['loading', 'invalid', 'used', 'error', 'form', 'success'].forEach(s => {
+                document.getElementById('state-' + s).style.display = s === state ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            init();
+            document.getElementById('regForm').addEventListener('submit', handleSubmit);
+        });
+    </script>
+
+    <style>
+        :root {
+            --bg-primary:    #fefdf5;
+            --bg-secondary:  #f9f4e4;
+            --bg-tertiary:   #ede7cf;
+            --text-primary:  #1c1409;
+            --text-secondary:#4a3818;
+            --text-tertiary: #7a6025;
+            --accent-primary:#c9a200;
+            --border-subtle: rgba(180,140,0,0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .register-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: #1c1409;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .register-header .lucide { width: 18px; height: 18px; stroke: white; }
+
+        .register-header h1 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .register-header a {
+            margin-left: auto;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        .register-header a:hover { color: white; }
+
+        .register-body { padding: 24px 22px; }
+
+        /* States */
+        .state-block { text-align: center; padding: 16px 0; }
+        .state-block .lucide { width: 40px; height: 40px; margin-bottom: 12px; }
+        .state-block h2 { font-size: 1.1rem; margin-bottom: 8px; }
+        .state-block p  { font-size: 0.88rem; color: var(--text-tertiary); line-height: 1.6; }
+        .state-block a  { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+
+        /* Role badge */
+        .role-invite-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .role-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Form */
+        .reg-form { display: flex; flex-direction: column; gap: 14px; }
+
+        .reg-field { display: flex; flex-direction: column; gap: 4px; }
+
+        .reg-field label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .reg-field input {
+            padding: 9px 12px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+
+        .reg-field input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(201,162,0,0.15);
+        }
+
+        .reg-error {
+            font-size: 0.82rem;
+            color: #dc2626;
+            min-height: 1.2em;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 11px;
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-register:hover { background: #a07800; color: white; }
+        .btn-register:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .success-icon { stroke: #16a34a; }
+        .error-icon   { stroke: #dc2626; }
+        .warning-icon { stroke: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <div class="register-header">
+            <i data-lucide="user-plus"></i>
+            <h1>Registrazione – Espedienti</h1>
+            <a href="index.html">← Home</a>
+        </div>
+
+        <div class="register-body">
+
+            <!-- Loading -->
+            <div id="state-loading" class="state-block">
+                <i data-lucide="loader" class="lucide"></i>
+                <h2>Verifica in corso…</h2>
+            </div>
+
+            <!-- Invalid token -->
+            <div id="state-invalid" class="state-block" style="display:none;">
+                <i data-lucide="x-circle" class="lucide error-icon"></i>
+                <h2>Link non valido</h2>
+                <p>Il link di invito non è valido o è scaduto.<br>Contatta chi ti ha inviato l'invito.</p>
+            </div>
+
+            <!-- Already used -->
+            <div id="state-used" class="state-block" style="display:none;">
+                <i data-lucide="alert-circle" class="lucide warning-icon"></i>
+                <h2>Invito già utilizzato</h2>
+                <p>Questo link di invito è già stato usato.<br>Hai già un account? <a href="index.html">Accedi dalla home.</a></p>
+            </div>
+
+            <!-- Generic error -->
+            <div id="state-error" class="state-block" style="display:none;">
+                <i data-lucide="alert-triangle" class="lucide error-icon"></i>
+                <h2>Errore</h2>
+                <p>Si è verificato un errore. Riprova più tardi.</p>
+            </div>
+
+            <!-- Success -->
+            <div id="state-success" class="state-block" style="display:none;">
+                <i data-lucide="check-circle" class="lucide success-icon"></i>
+                <h2>Registrazione completata!</h2>
+                <p>Benvenuto su Espedienti.<br><a href="index.html">Torna alla home e accedi.</a></p>
+            </div>
+
+            <!-- Form -->
+            <div id="state-form" style="display:none;">
+                <div class="role-invite-row">
+                    <i data-lucide="mail"></i>
+                    Sei stato invitato come
+                    <span class="role-badge" id="roleLabel">–</span>
+                </div>
+
+                <form id="regForm" class="reg-form">
+                    <div class="reg-field">
+                        <label>Nome</label>
+                        <input type="text" id="regName" autocomplete="name" required placeholder="Il tuo nome">
+                    </div>
+                    <div class="reg-field">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" autocomplete="email" required placeholder="email@esempio.it">
+                    </div>
+                    <div class="reg-field">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" autocomplete="new-password" required placeholder="Min. 6 caratteri">
+                    </div>
+                    <div class="reg-field">
+                        <label>Conferma Password</label>
+                        <input type="password" id="regConfirm" autocomplete="new-password" required placeholder="Ripeti la password">
+                    </div>
+                    <div class="reg-error" id="regError"></div>
+                    <button type="submit" class="btn-register" id="regSubmitBtn">
+                        Completa la registrazione
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
