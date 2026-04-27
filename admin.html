@@ -110,10 +110,6 @@
             box-sizing: border-box;
         }
 
-        html {
-            font-size: 13px;
-        }
-
         body {
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             background: var(--bg-primary);
@@ -176,11 +172,85 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            color: var(--accent-primary) !important;
-            border-color: var(--accent-primary) !important;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            text-decoration: none;
+            border: 1px solid var(--accent-primary);
+            transition: background 0.2s;
         }
+        .admin-nav-link:hover { background: rgba(201,162,0,0.12); }
+        .admin-nav-link .lucide { width: 14px; height: 14px; stroke: var(--accent-primary); }
 
-        .admin-nav-link .lucide { width: 13px; height: 13px; stroke: var(--accent-primary); }
+        .auth-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .auth-nav-btn:hover { background: rgba(180,140,0,0.18); border-color: var(--accent-primary); }
+        .auth-nav-btn .lucide { width: 14px; height: 14px; stroke: var(--text-primary); }
+        .auth-nav-btn.logged-in { border-color: var(--accent-primary); color: var(--accent-primary); }
+        .auth-nav-btn.logged-in .lucide { stroke: var(--accent-primary); }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .lang-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .lang-toggle-btn:hover { background: rgba(180,140,0,0.18); border-color: var(--accent-primary); }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open {
+            display: flex; flex-direction: column;
+            position: absolute; top: 100%; right: 0; left: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 8px 16px; gap: 4px; z-index: 999;
+        }
+        .mobile-menu a { color: var(--text-primary); text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
+        .mobile-menu a:hover { background: rgba(180,140,0,0.18); }
+
+        .nav-auth-popover {
+            position: absolute; top: calc(100% + 6px); right: 0;
+            background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+            border-radius: 8px; padding: 10px; min-width: 160px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 2000;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .nav-auth-popover .pop-name { font-size: 0.78rem; color: var(--text-secondary); padding: 0 4px 6px; border-bottom: 1px solid var(--border-subtle); }
+        .nav-auth-popover .pop-btn { background: none; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; font-family: inherit; cursor: pointer; color: var(--text-primary); text-align: left; }
+        .nav-auth-popover .pop-btn:hover { background: rgba(180,140,0,0.15); border-color: var(--accent-primary); }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger { display: block; }
+        }
 
         /* ── Admin page layout ───────────────────────────────────── */
         .container {
@@ -1253,20 +1323,7 @@
 
     <!-- Login overlay -->
     <!-- Portal header -->
-    <header>
-        <div class="header-content">
-            <div class="logo">
-                <a href="index.html">Espedienti a Napoli</a>
-            </div>
-            <nav class="nav-links">
-                <a href="about.html">Il Progetto</a>
-                <a href="contatti.html">Contatti</a>
-                <a href="admin.html" class="admin-nav-link active">
-                    <i data-lucide="settings"></i>Admin
-                </a>
-            </nav>
-        </div>
-    </header>
+    <script src="js/ui/navbar-inline.js"></script>
 
     <div class="container">
 

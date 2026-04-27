@@ -22,6 +22,7 @@ import { openNowFilter } from './filters/open-now-filter.js';
 import { filterCoordinator } from './filters/filter-coordinator.js';
 
 // UI modules
+import './ui/navbar.js';
 import { calendarRenderer } from './ui/calendar-renderer.js';
 import { unifiedListRenderer } from './ui/unified-list-renderer.js';
 import { mapRenderer } from './ui/map-renderer.js';

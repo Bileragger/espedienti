@@ -1664,36 +1664,7 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div class="logo">
-                <a href="index.html">Espedienti a Napoli</a>
-            </div>
-            <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
-            <nav class="nav-links">
-                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
-                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
-                <a href="admin.html" id="adminNavLink" class="admin-nav-link" style="display:none;">
-                    <i data-lucide="settings"></i><span data-i18n="nav.admin">Admin</span>
-                </a>
-                <button type="button" id="authNavBtn" class="auth-nav-btn" onclick="openAuthModal()">
-                    <i data-lucide="user"></i><span id="authNavLabel" data-i18n="auth.tab.login">Accedi</span>
-                </button>
-                <button type="button" id="langToggleBtn" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
-            </nav>
-            <nav class="mobile-menu" id="mobileMenu">
-                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
-                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
-                <a href="admin.html" id="adminNavLinkMobile" class="admin-nav-link" style="display:none;">
-                    <i data-lucide="settings"></i><span data-i18n="nav.admin">Admin</span>
-                </a>
-                <button type="button" class="auth-nav-btn" onclick="openAuthModal()">
-                    <i data-lucide="user"></i><span data-i18n="auth.tab.login">Accedi</span>
-                </button>
-                <button type="button" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
-            </nav>
-        </div>
-    </header>
+    <script src="js/ui/navbar-inline.js"></script>
 
     <section class="hero">
         <div class="hero-content">

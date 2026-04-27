@@ -12,3 +12,5 @@ Thumbs.db
 *.backup
 *.bak
 events.json.backup
+# Added by code-review-graph
+.code-review-graph/

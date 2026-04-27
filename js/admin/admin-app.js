@@ -4,6 +4,9 @@
  * Initializes all admin modules in the correct order.
  */
 
+// Shared navbar
+import '../ui/navbar.js';
+
 // Core modules
 import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <style>
         :root {
@@ -39,7 +39,7 @@
         }
 
         header {
-            background: var(--bg-secondary);
+            background: var(--bg-tertiary);
             color: var(--text-primary);
             padding: 0.5rem 0;
             box-shadow: 0 2px 0 var(--border-subtle);
@@ -384,6 +384,76 @@
             border-color: var(--accent-primary);
         }
 
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            text-decoration: none;
+            border: 1px solid var(--accent-primary);
+            transition: background 0.2s;
+        }
+        .admin-nav-link:hover { background: rgba(201, 162, 0, 0.12); }
+        .admin-nav-link .lucide { width: 14px; height: 14px; stroke: var(--accent-primary); }
+
+        .auth-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .auth-nav-btn:hover { background: rgba(180, 140, 0, 0.18); border-color: var(--accent-primary); }
+        .auth-nav-btn .lucide { width: 14px; height: 14px; stroke: var(--text-primary); }
+        .auth-nav-btn.logged-in { border-color: var(--accent-primary); color: var(--accent-primary); }
+        .auth-nav-btn.logged-in .lucide { stroke: var(--accent-primary); }
+
+        /* mini logout popover */
+        .nav-auth-popover {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px;
+            min-width: 160px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .nav-auth-popover .pop-name {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            padding: 0 4px 6px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .nav-auth-popover .pop-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            cursor: pointer;
+            color: var(--text-primary);
+            text-align: left;
+        }
+        .nav-auth-popover .pop-btn:hover { background: rgba(180,140,0,0.15); border-color: var(--accent-primary); }
+
         .mobile-menu {
             display: none;
         }
@@ -447,24 +517,7 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div class="logo">
-                <a href="index.html">Espedienti a Napoli</a>
-            </div>
-            <button type="button" class="hamburger" id="hamburgerBtn" onclick="document.getElementById('mobileMenu').classList.toggle('open')" aria-label="Menu">☰</button>
-            <nav class="nav-links">
-                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
-                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
-                <button type="button" id="langToggleBtn" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
-            </nav>
-            <nav class="mobile-menu" id="mobileMenu">
-                <a href="about.html" data-i18n="nav.project" data-nav="project">Il Progetto</a>
-                <a href="contatti.html" data-i18n="nav.contacts" data-nav="contacts">Contatti</a>
-                <button type="button" class="lang-toggle-btn" onclick="window.i18n && window.i18n.toggle()">EN</button>
-            </nav>
-        </div>
-    </header>
+    <script src="js/ui/navbar-inline.js"></script>
 
     <section class="hero">
         <div class="hero-content">
@@ -539,18 +592,8 @@
         </div>
     </footer>
 
-    <script>
-        // Mark active nav link based on current page
-        (function() {
-            const path = window.location.pathname;
-            const active = path.endsWith('contatti.html') ? 'contacts' : path.endsWith('about.html') ? 'project' : null;
-            if (active) {
-                document.querySelectorAll('[data-nav="' + active + '"]').forEach(el => el.classList.add('active'));
-            }
-        })();
-    </script>
-
     <script type="module">
+        import './js/ui/navbar.js';
         import { i18n } from './js/i18n/i18n-service.js';
         i18n.initialize();
     </script>
