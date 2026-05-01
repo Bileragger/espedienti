@@ -25,6 +25,7 @@ import { placeFormManager } from './place-form-manager.js';
 import { newsletterManager } from './newsletter-manager.js';
 import { inviteManager } from './invite-manager.js';
 import { userManager } from './user-manager.js';
+import { validationManager } from './validation-manager.js';
 
 /**
  * Initialize all admin modules
@@ -44,6 +45,7 @@ async function initializeModules() {
   newsletterManager.initialize();
   await inviteManager.initialize();
   await userManager.initialize();
+  await validationManager.initialize();
 
   console.log('✅ All admin modules initialized');
 }
@@ -63,9 +65,8 @@ function setupWindowHandlers() {
     tabEl.querySelectorAll('.subtab-btn').forEach(btn => btn.classList.remove('active'));
     tabEl.querySelectorAll('.subtab-content').forEach(el => el.classList.remove('active'));
     const subTabId = `${prefix}${subTab.charAt(0).toUpperCase() + subTab.slice(1)}SubTab`;
-    document.getElementById(subTabId).classList.add('active');
-    const btnIndex = subTab === 'form' ? 0 : 1;
-    tabEl.querySelectorAll('.subtab-btn')[btnIndex].classList.add('active');
+    document.getElementById(subTabId)?.classList.add('active');
+    tabEl.querySelector(`.subtab-btn[onclick*="'${subTab}'"]`)?.classList.add('active');
   };
 
   // Expose showPoster for modals
@@ -116,5 +117,11 @@ async function initializeAdminApp() {
   }
 }
 
-// Initialize only after Firebase auth confirms the user is logged in
-window.addEventListener('firebaseReady', initializeAdminApp);
+// Initialize only after Firebase auth confirms the user is logged in.
+// navbar-auth.js fires firebaseReady synchronously during module evaluation,
+// which can happen before this listener is registered — so also check immediately.
+if (window.firebaseReady) {
+  initializeAdminApp();
+} else {
+  window.addEventListener('firebaseReady', initializeAdminApp);
+}

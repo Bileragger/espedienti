@@ -212,6 +212,7 @@ export class MapRenderer {
     const selectedLocation = this.state.get('selectedLocation');
 
     events.forEach(event => {
+      if (!event.coordinates) return;
       const isSelected = selectedLocation === event.location;
       const icon = this._createEventIcon(event.primaryCategory || event.category, isSelected);
 
@@ -243,6 +244,7 @@ export class MapRenderer {
     const placeMarkers = [];
 
     places.forEach(place => {
+      if (!place.coordinates) return;
       const icon = this._createPlaceIcon(place);
 
       const marker = L.marker(

@@ -14,17 +14,9 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { FIREBASE_CONFIG } from './js/config/firebase-config.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDAaxhfc0ch2mZDEElHmbDHNYdYV1oxlY4",
-            authDomain: "espedienti-napoli.firebaseapp.com",
-            projectId: "espedienti-napoli",
-            storageBucket: "espedienti-napoli.firebasestorage.app",
-            messagingSenderId: "450345618879",
-            appId: "1:450345618879:web:010b8a6138e9b2f4a4a50a"
-        };
-
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp(FIREBASE_CONFIG);
         const db = getFirestore(app);
 
         window.db = db;
@@ -180,40 +172,6 @@
         .auth-nav-btn.logged-in { border-color: var(--accent-primary); color: var(--accent-primary); }
         .auth-nav-btn.logged-in .lucide { stroke: var(--accent-primary); }
 
-        /* mini logout popover */
-        .nav-auth-popover {
-            position: absolute;
-            top: calc(100% + 6px);
-            right: 0;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            padding: 10px;
-            min-width: 160px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .nav-auth-popover .pop-name {
-            font-size: 0.78rem;
-            color: var(--text-secondary);
-            padding: 0 4px 6px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-        .nav-auth-popover .pop-btn {
-            background: none;
-            border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            font-family: inherit;
-            cursor: pointer;
-            color: var(--text-primary);
-            text-align: left;
-        }
-        .nav-auth-popover .pop-btn:hover { background: rgba(180,140,0,0.15); border-color: var(--accent-primary); }
 
         .mobile-menu { display: none; }
 

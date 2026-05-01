@@ -284,24 +284,21 @@ export class PlaceFormManager {
     this.renderPlaces();
   }
 
-  async updatePlace(localId, placeData) {
-    const place = this.places.find(p => p.id === localId);
-    if (place && place.firebaseId) {
-      await this.firebase.updatePlace(place.firebaseId, placeData);
+  async updatePlace(firebaseId, placeData) {
+    const place = this.places.find(p => p.firebaseId === firebaseId);
+    if (place) {
+      await this.firebase.updatePlace(firebaseId, placeData);
       Object.assign(place, placeData);
       this.renderPlaces();
     }
   }
 
-  async deletePlace(id) {
+  async deletePlace(firebaseId) {
     if (!confirm('Sei sicuro di voler eliminare questo luogo?')) return;
 
     try {
-      const place = this.places.find(p => p.id === id);
-      if (place && place.firebaseId) {
-        await this.firebase.deletePlace(place.firebaseId);
-      }
-      this.places = this.places.filter(p => p.id !== id);
+      await this.firebase.deletePlace(firebaseId);
+      this.places = this.places.filter(p => p.firebaseId !== firebaseId);
       this.renderPlaces();
     } catch (error) {
       console.error('Errore eliminazione luogo:', error);
@@ -309,11 +306,11 @@ export class PlaceFormManager {
     }
   }
 
-  editPlace(id) {
-    const place = this.places.find(p => p.id === id);
+  editPlace(firebaseId) {
+    const place = this.places.find(p => p.firebaseId === firebaseId);
     if (!place) return;
 
-    this.editingPlaceId = id;
+    this.editingPlaceId = firebaseId;
 
     document.getElementById('placeName').value = place.name;
     const primary = place.primaryCategory || place.category || '';
@@ -325,7 +322,8 @@ export class PlaceFormManager {
       cb.checked = placeCats.includes(cb.value) && cb.value !== primary;
     });
     document.getElementById('placeAddress').value = place.address;
-    document.getElementById('placeCoordinates').value = `${place.coordinates.lat}, ${place.coordinates.lng}`;
+    const pc = place.coordinates;
+    document.getElementById('placeCoordinates').value = pc ? `${pc.lat}, ${pc.lng}` : '';
     document.getElementById('placeDescription').value = place.description || '';
     document.getElementById('placeWebsite').value = place.website || '';
     document.getElementById('placeImage').value = place.image || '';
@@ -341,7 +339,7 @@ export class PlaceFormManager {
       });
     }
 
-    this.miniMap.updateMarker('placeMiniMap', place.coordinates.lat, place.coordinates.lng);
+    if (pc) this.miniMap.updateMarker('placeMiniMap', pc.lat, pc.lng);
 
     const submitBtn = document.querySelector('#placeForm button[type="submit"]');
     submitBtn.textContent = '💾 Aggiorna Luogo';
@@ -414,8 +412,8 @@ export class PlaceFormManager {
           <span class="place-item-name">${place.name}</span>
           <div class="item-cats">${chips}</div>
           <div class="place-item-actions">
-            <button type="button" class="btn btn-small" onclick="editPlace(${place.id})">Modifica</button>
-            <button type="button" class="btn btn-danger btn-small" onclick="deletePlace(${place.id})">Elimina</button>
+            <button type="button" class="btn btn-small" onclick="editPlace('${place.firebaseId}')">Modifica</button>
+            <button type="button" class="btn btn-danger btn-small" onclick="deletePlace('${place.firebaseId}')">Elimina</button>
           </div>
         </li>
       `;

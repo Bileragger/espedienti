@@ -128,7 +128,10 @@ export class PlaceListRenderer {
       : '';
 
     // Build directions link
-    const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${place.coordinates.lat}, ${place.coordinates.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+    const _pc = place.coordinates;
+    const directionsHtml = _pc
+      ? `<a href="#" class="directions-btn" onclick="openDirections(${_pc.lat}, ${_pc.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`
+      : '';
 
     // Build inner HTML
     placeItem.innerHTML = `
@@ -145,7 +148,7 @@ export class PlaceListRenderer {
         </div>
       </div>
       <div class="event-actions">
-        <button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${place.coordinates.lat}, ${place.coordinates.lng})">🗺️ Mostra su mappa</button>
+        ${_pc ? `<button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${_pc.lat}, ${_pc.lng})">🗺️ Mostra su mappa</button>` : ''}
       </div>
     `;
 

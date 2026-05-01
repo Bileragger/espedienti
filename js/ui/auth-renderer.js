@@ -27,6 +27,9 @@ export class AuthRenderer {
   }
 
   initialize() {
+    if (this._initialized) return;
+    this._initialized = true;
+
     authService.onAuthStateChange((user, role) => {
       this._render(user, role);
       this._updateNavBtn(user, role);

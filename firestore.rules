@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the caller is an authenticated admin
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper: check if the caller is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Public collections — anyone can read, only admins can write
+    match /events/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /places/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /event_categories/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /place_categories/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User profiles — users can read their own, admins can read/write all
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Invite codes — admins only
+    match /invites/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Newsletter subscribers — admins only
+    match /newsletter_subscribers/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Raw events from Cloud Function — admins only
+    // (Cloud Function uses Admin SDK and bypasses these rules)
+    match /eventi_raw/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Error logs from Cloud Function — admins can read, no client writes
+    match /eventi_errors/{doc} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+  }
+}

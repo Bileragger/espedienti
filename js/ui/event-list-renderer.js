@@ -132,7 +132,10 @@ export class EventListRenderer {
       : '';
 
     // Build directions link
-    const directionsHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat}, ${event.coordinates.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`;
+    const _ec = event.coordinates;
+    const directionsHtml = _ec
+      ? `<a href="#" class="directions-btn" onclick="openDirections(${_ec.lat}, ${_ec.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`
+      : '';
 
     // Build inner HTML
     eventItem.innerHTML = `

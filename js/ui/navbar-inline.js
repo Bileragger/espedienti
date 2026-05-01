@@ -1,4 +1,12 @@
 (function () {
+  // Inject shared auth-modal CSS (once)
+  if (!document.getElementById('authModalCss')) {
+    var link = document.createElement('link');
+    link.id   = 'authModalCss';
+    link.rel  = 'stylesheet';
+    link.href = 'js/ui/auth-modal.css';
+    document.head.appendChild(link);
+  }
   var path = window.location.pathname;
   var activeNav =
     path.endsWith('about.html')    ? 'project'  :
@@ -87,4 +95,21 @@
 
   // Lucide is loaded as a regular <script> in <head>, so window.lucide is ready
   if (window.lucide) window.lucide.createIcons({ nodes: [header] });
+
+  // Inject auth modal (once — authRenderer will fill #authContent)
+  if (!document.getElementById('authModal')) {
+    var modal = document.createElement('div');
+    modal.id        = 'authModal';
+    modal.className = 'modal auth-modal';
+    modal.setAttribute('onclick', 'window.closeAuthModal && window.closeAuthModal()');
+    modal.innerHTML =
+      '<div class="auth-modal-content" onclick="event.stopPropagation()">' +
+        '<div class="auth-modal-header">' +
+          '<h2><i data-lucide="user"></i><span id="authModalTitle" data-i18n="auth.title">Accedi</span></h2>' +
+          '<button type="button" class="auth-modal-close" onclick="window.closeAuthModal && window.closeAuthModal()">&times;</button>' +
+        '</div>' +
+        '<div class="auth-modal-body" id="authContent"></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+  }
 })();

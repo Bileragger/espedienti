@@ -142,7 +142,10 @@ export class UnifiedListRenderer {
       ? `<span class="poster-btn" onclick="toggleDescription(${event.id})">${t('item.details')}</span>
          <div id="desc-${event.id}" style="display:none;margin-top:10px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:0.9rem;line-height:1.6;">${event.description}</div>` : '';
 
-    const dirHtml = `<a href="#" class="directions-btn" onclick="openDirections(${event.coordinates.lat},${event.coordinates.lng},'${event.location.replace(/'/g, "\\'")}','${event.location.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`;
+    const coords = event.coordinates;
+    const dirHtml = coords
+      ? `<a href="#" class="directions-btn" onclick="openDirections(${coords.lat},${coords.lng},'${event.location.replace(/'/g, "\\'")}','${event.location.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`
+      : '';
 
     const catColor = (window.categoryColors?.eventColors?.[event.category]) || '#c9a200';
     const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
@@ -198,7 +201,10 @@ export class UnifiedListRenderer {
     const imageHtml = place.image
       ? `<span class="poster-btn" onclick="showPoster('${place.image}')">${t('item.image')}</span>` : '';
 
-    const dirHtml = `<a href="#" class="directions-btn" onclick="openDirections(${place.coordinates.lat},${place.coordinates.lng},'${place.name.replace(/'/g, "\\'")}','${place.address.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`;
+    const placeCoords = place.coordinates;
+    const dirHtml = placeCoords
+      ? `<a href="#" class="directions-btn" onclick="openDirections(${placeCoords.lat},${placeCoords.lng},'${place.name.replace(/'/g, "\\'")}','${place.address.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`
+      : '';
 
     el.innerHTML = `
       <div class="event-info">
@@ -208,7 +214,7 @@ export class UnifiedListRenderer {
         <div style="margin-top:8px;">${descHtml}${hoursHtml}${websiteHtml}${imageHtml}${dirHtml}</div>
       </div>
       <div class="event-actions">
-        <button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${place.coordinates.lat},${place.coordinates.lng})">${t('item.showOnMap')}</button>
+        ${placeCoords ? `<button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${placeCoords.lat},${placeCoords.lng})">${t('item.showOnMap')}</button>` : ''}
       </div>
     `;
     return el;

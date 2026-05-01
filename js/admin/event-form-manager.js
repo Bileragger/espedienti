@@ -295,24 +295,21 @@ export class EventFormManager {
     this.renderEvents();
   }
 
-  async updateEvent(localId, eventData) {
-    const event = this.events.find(e => e.id === localId);
-    if (event && event.firebaseId) {
-      await this.firebase.updateEvent(event.firebaseId, eventData);
+  async updateEvent(firebaseId, eventData) {
+    const event = this.events.find(e => e.firebaseId === firebaseId);
+    if (event) {
+      await this.firebase.updateEvent(firebaseId, eventData);
       Object.assign(event, eventData);
       this.renderEvents();
     }
   }
 
-  async deleteEvent(id) {
+  async deleteEvent(firebaseId) {
     if (!confirm('Sei sicuro di voler eliminare questo evento?')) return;
 
     try {
-      const event = this.events.find(e => e.id === id);
-      if (event && event.firebaseId) {
-        await this.firebase.deleteEvent(event.firebaseId);
-      }
-      this.events = this.events.filter(e => e.id !== id);
+      await this.firebase.deleteEvent(firebaseId);
+      this.events = this.events.filter(e => e.firebaseId !== firebaseId);
       this.renderEvents();
     } catch (error) {
       console.error('Errore eliminazione evento:', error);
@@ -320,16 +317,15 @@ export class EventFormManager {
     }
   }
 
-  editEvent(id) {
-    const event = this.events.find(e => e.id === id);
+  editEvent(firebaseId) {
+    const event = this.events.find(e => e.firebaseId === firebaseId);
     if (!event) return;
 
-    this.editingEventId = id;
+    this.editingEventId = firebaseId;
 
     document.getElementById('title').value = event.title;
     const primary = event.primaryCategory || event.category || '';
     document.getElementById('eventPrimaryCategory').value = primary;
-    // Trigger dropdown update
     document.getElementById('eventPrimaryCategory').dispatchEvent(new Event('change'));
     const eventCats = event.categories || (event.category ? [event.category] : []);
     document.querySelectorAll('input[name="eventCatExtra"]').forEach(cb => {
@@ -338,19 +334,19 @@ export class EventFormManager {
     document.getElementById('date').value = event.date;
     document.getElementById('whatsapp').value = event.whatsappLink || '';
     document.getElementById('location').value = event.location;
-    document.getElementById('coordinates').value = `${event.coordinates.lat}, ${event.coordinates.lng}`;
+    const c = event.coordinates;
+    document.getElementById('coordinates').value = c ? `${c.lat}, ${c.lng}` : '';
     document.getElementById('poster').value = event.poster || '';
 
     this.currentTags = event.tags || [];
     this.renderTags();
 
-    this.miniMap.updateMarker('miniMap', event.coordinates.lat, event.coordinates.lng);
+    if (c) this.miniMap.updateMarker('miniMap', c.lat, c.lng);
 
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.textContent = '💾 Aggiorna Evento';
+    document.getElementById('submitBtn').textContent = '💾 Aggiorna Evento';
 
-    window.switchSubTab('events', 'form');
-    document.getElementById('eventForm').scrollIntoView({ behavior: 'smooth' });
+    window.switchSubTab?.('events', 'form');
+    document.getElementById('eventForm')?.scrollIntoView({ behavior: 'smooth' });
   }
 
   resetForm() {
@@ -416,8 +412,8 @@ export class EventFormManager {
           <span class="place-item-name">${event.title}</span>
           <div class="item-cats">${chips}</div>
           <div class="place-item-actions">
-            <button type="button" class="btn btn-small" onclick="editEvent(${event.id})">Modifica</button>
-            <button type="button" class="btn btn-danger btn-small" onclick="deleteEvent(${event.id})">Elimina</button>
+            <button type="button" class="btn btn-small" onclick="editEvent('${event.firebaseId}')">Modifica</button>
+            <button type="button" class="btn btn-danger btn-small" onclick="deleteEvent('${event.firebaseId}')">Elimina</button>
           </div>
         </li>
       `;

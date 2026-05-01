@@ -1,0 +1,161 @@
+/* Shared auth modal — loaded on every page via navbar-inline.js */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    align-items: center;
+    justify-content: center;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+.modal.show { display: flex; }
+
+#authModal.modal {
+    align-items: flex-start;
+    padding-top: 60px;
+    background-color: rgba(0,0,0,0.45);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+.auth-modal-content {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    overflow: hidden;
+}
+
+.auth-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--text-primary);
+    color: white;
+}
+.auth-modal-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+.auth-modal-header .lucide { width: 16px; height: 16px; stroke: white; }
+
+.auth-modal-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+}
+.auth-modal-close:hover { color: white; }
+
+.auth-modal-body { padding: 20px 18px; }
+
+/* Tabs */
+.auth-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-subtle);
+    margin-bottom: 20px;
+}
+.auth-tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.auth-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+
+/* Form */
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-field { display: flex; flex-direction: column; gap: 4px; }
+.auth-field label { font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; }
+.auth-field input,
+.auth-field select {
+    padding: 9px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+.auth-field input:focus,
+.auth-field select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(201,162,0,0.15);
+}
+
+.auth-invite-wrap {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    gap: 8px;
+    display: none;
+}
+.auth-invite-wrap.visible { display: flex; }
+.auth-invite-hint { font-size: 0.75rem; color: var(--text-tertiary); }
+
+.auth-error { font-size: 0.82rem; color: #dc2626; min-height: 1.2em; }
+.auth-submit-btn { margin-top: 4px; width: 100%; justify-content: center; }
+
+/* Logged-in profile */
+.auth-profile { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.auth-avatar .lucide { width: 40px; height: 40px; stroke: var(--text-tertiary); flex-shrink: 0; }
+.auth-profile-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.auth-profile-name { font-weight: 600; font-size: 0.95rem; }
+.auth-profile-email { font-size: 0.8rem; color: var(--text-tertiary); }
+.auth-role-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+    width: fit-content;
+}
+.auth-logout-btn { margin-left: auto; }
+
+/* btn used inside auth-renderer (pages without global .btn need this) */
+.auth-modal-body .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-primary);
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.auth-modal-body .btn:hover { opacity: 0.85; }
+.auth-modal-body .btn:disabled { opacity: 0.6; cursor: not-allowed; }
