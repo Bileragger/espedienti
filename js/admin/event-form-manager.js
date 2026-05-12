@@ -12,6 +12,7 @@ import { geocodingService } from './geocoding-service.js';
 import { imageUploadService } from './image-upload-service.js';
 import { miniMapService } from './mini-map-service.js';
 import { EVENT_CATEGORY_ICONS, EVENT_CATEGORY_COLORS } from '../config/constants.js';
+import { placeFormManager } from './place-form-manager.js';
 
 export class EventFormManager {
   constructor(eventBusInstance, firebase, geocoding, imageUpload, miniMap) {
@@ -227,12 +228,56 @@ export class EventFormManager {
   }
 
   setupExistingPlaceSelect() {
-    const select = document.getElementById('existingPlace');
-    if (select) {
-      select.addEventListener('change', (e) => {
-        // This would load from places repository in full implementation
+    const input = document.getElementById('placeSearch');
+    const results = document.getElementById('placeSearchResults');
+    if (!input || !results) return;
+
+    input.addEventListener('input', () => {
+      const q = input.value.toLowerCase().trim();
+      const places = placeFormManager.places || [];
+      const filtered = q
+        ? places.filter(p => (p.name || '').toLowerCase().includes(q) || (p.address || '').toLowerCase().includes(q))
+        : places;
+      this._renderPlaceResults(filtered, input, results);
+    });
+
+    input.addEventListener('focus', () => {
+      if (!input.value) this._renderPlaceResults(placeFormManager.places || [], input, results);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !results.contains(e.target)) {
+        results.classList.remove('show');
+      }
+    });
+  }
+
+  _renderPlaceResults(places, input, results) {
+    if (!places.length) { results.classList.remove('show'); return; }
+    const sorted = [...places].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
+    results.innerHTML = sorted.map((p, i) =>
+      `<div class="search-result-item" data-idx="${i}" data-name="${p.name || ''}">${p.name}${p.address ? `<br><small style="opacity:0.7">${p.address}</small>` : ''}</div>`
+    ).join('');
+    results.classList.add('show');
+
+    results.querySelectorAll('.search-result-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const place = sorted[parseInt(item.dataset.idx, 10)];
+        if (!place) return;
+        input.value = place.name || '';
+        results.classList.remove('show');
+        if (place.address) document.getElementById('location').value = place.address;
+        if (place.coordinates?.lat != null) {
+          const { lat, lng } = place.coordinates;
+          document.getElementById('coordinates').value = `${lat}, ${lng}`;
+          this.miniMap.updateMarker('miniMap', lat, lng);
+        }
       });
-    }
+    });
+  }
+
+  populatePlaceSelect() {
+    // Input is ready from HTML; no pre-population needed for search-as-you-type
   }
 
   async handleSubmit(e) {
@@ -351,6 +396,9 @@ export class EventFormManager {
 
   resetForm() {
     document.getElementById('eventForm').reset();
+    const placeSearch = document.getElementById('placeSearch');
+    if (placeSearch) placeSearch.value = '';
+    document.getElementById('placeSearchResults')?.classList.remove('show');
     this.currentTags = [];
     this.renderTags();
     this.imageUpload.clearSelectedImage();

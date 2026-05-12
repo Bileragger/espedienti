@@ -12,6 +12,7 @@
  */
 
 import { firebaseService } from '../data/firebase-service.js';
+import { esc } from '../utils/string-utils.js';
 
 const COLLECTION = 'users';
 
@@ -93,8 +94,8 @@ export class UserManager {
       return `
         <li class="user-item ${user.disabled ? 'user-item--disabled' : ''}">
           <div class="user-info">
-            <div class="user-name">${this._esc(user.displayName || '—')}</div>
-            <div class="user-email">${this._esc(user.email || '—')}</div>
+            <div class="user-name">${esc(user.displayName || '—')}</div>
+            <div class="user-email">${esc(user.email || '—')}</div>
             <span class="invite-role-badge ${roleClass}">${roleLabel}</span>
             ${disabled}
             <span class="invite-date">${date}</span>
@@ -142,13 +143,6 @@ export class UserManager {
     }
   }
 
-  _esc(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
 }
 
 export const userManager = new UserManager(firebaseService);

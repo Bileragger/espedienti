@@ -275,19 +275,18 @@ export class MapRenderer {
    * @returns {L.DivIcon} Leaflet icon
    */
   _createEventIcon(category, isSelected) {
-    const size = isSelected ? 16 : 12;
+    const size = isSelected ? 20 : 14;
     const color = (window.categoryColors?.eventColors?.[category]) || EVENT_CATEGORY_COLORS[category] || EVENT_CATEGORY_COLORS['altro'];
-    const border = isSelected ? '2px solid white' : '2px solid white';
-    const shadow = isSelected ? '0 0 0 2px ' + color + ', 0 3px 10px rgba(0,0,0,0.4)' : '0 1px 5px rgba(0,0,0,0.45)';
+    const shadow = isSelected
+      ? `drop-shadow(0 0 3px ${color}) drop-shadow(0 0 1px rgba(0,0,0,0.6))`
+      : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))';
 
-    const html = `<div style="
-      background: ${color};
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      border: ${border};
-      box-shadow: ${shadow};
-    "></div>`;
+    const html = `<svg width="${size}" height="${size}" viewBox="0 0 24 24"
+      style="filter:${shadow};display:block;"
+      xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+        fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
 
     return L.divIcon({
       className: 'custom-marker',

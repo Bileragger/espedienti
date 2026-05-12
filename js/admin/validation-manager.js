@@ -6,9 +6,10 @@
  */
 
 import { firebaseService } from '../data/firebase-service.js';
-import { geocodingService } from './geocoding-service.js';
 import { placeFormManager } from './place-form-manager.js';
+import { geocodingService } from './geocoding-service.js';
 import { EVENT_CATEGORIES } from '../config/constants.js';
+import { esc } from '../utils/string-utils.js';
 
 const MESI_IT = {
   gennaio: '01', febbraio: '02', marzo: '03', aprile: '04',
@@ -36,13 +37,6 @@ function parseOra(str) {
   return `${m[1].padStart(2, '0')}:${(m[2] || '00')}`;
 }
 
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -56,10 +50,7 @@ export class ValidationManager {
     this._items = [];       // eventi_raw pending
     this._editing = null;   // firebaseId in editing
     this._geoResults = [];
-  }
-
-  get _places() {
-    return placeFormManager.places || [];
+    this._places = [];      // luoghi registrati, caricati all'apertura del form
   }
 
   async initialize() {
@@ -80,7 +71,6 @@ export class ValidationManager {
     window.validazioneGeoSearch   = ()   => this._geoSearch();
     window.validazioneSelectGeo   = (i)  => this._selectGeo(i);
     window.validazioneAddTag      = ()   => this._addTagFromInput();
-    window.validazioneSelectPlace = (i)  => this._selectPlace(i);
 
     console.log('✅ ValidationManager initialized');
   }
@@ -181,6 +171,8 @@ export class ValidationManager {
     this._editing = id;
     this._geoResults = [];
 
+    this._places = placeFormManager.places || [];
+
     if (window.switchSubTab) window.switchSubTab('events', 'validazione');
 
     const dateVal = parseDataItaliana(raw.data);
@@ -205,15 +197,6 @@ export class ValidationManager {
     const submittedInfo = submittedRaw
       ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:18px;">📨 Ricevuto: ${esc(formatDate(submittedRaw))}</p>`
       : '';
-
-    // Places select options
-    const placesOptions = this._places.length
-      ? `<option value="">— Nessun luogo registrato selezionato —</option>` +
-        [...this._places]
-          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'))
-          .map((p, i) => `<option value="${i}">${esc(p.name)}${p.address ? ` — ${esc(p.address)}` : ''}</option>`)
-          .join('')
-      : `<option value="">Nessun luogo registrato disponibile</option>`;
 
     const formPanel = document.getElementById('validazioneFormPanel');
     if (!formPanel) return;
@@ -255,11 +238,10 @@ export class ValidationManager {
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group location-group">
           <label class="form-label">Seleziona da luoghi registrati <span style="font-weight:400;color:var(--text-tertiary);">(opzionale)</span></label>
-          <select id="valPlaceSelect" class="form-select" onchange="validazioneSelectPlace(this.value)">
-            ${placesOptions}
-          </select>
+          <input type="text" id="valPlaceSearch" class="form-input" placeholder="Cerca tra i luoghi registrati..." autocomplete="off">
+          <div class="search-results" id="valPlaceResults"></div>
         </div>
 
         <div class="form-group">
@@ -316,6 +298,7 @@ export class ValidationManager {
       </div>`;
 
     this._showSubTab('form');
+    this._setupPlaceSearch('valPlaceSearch', 'valPlaceResults');
   }
 
   _tagChipHTML(tag) {
@@ -330,24 +313,48 @@ export class ValidationManager {
     if (listView) listView.style.display = '';
   }
 
-  // ── Place selection ───────────────────────────────────────────────────────
+  // ── Place search ──────────────────────────────────────────────────────────
 
-  _selectPlace(indexStr) {
-    const index = parseInt(indexStr, 10);
-    if (isNaN(index) || index < 0) return;
+  _setupPlaceSearch(inputId, resultsId) {
+    const input = document.getElementById(inputId);
+    const results = document.getElementById(resultsId);
+    if (!input || !results) return;
 
-    // Rebuild sorted list the same way as in _openForm
-    const sorted = [...this._places].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
-    const place = sorted[index];
-    if (!place) return;
+    const render = (places) => {
+      if (!places.length) { results.classList.remove('show'); return; }
+      const sorted = [...places].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
+      results.innerHTML = sorted.map((p, i) =>
+        `<div class="search-result-item" data-idx="${i}">${esc(p.name)}${p.address ? `<br><small style="opacity:0.7">${esc(p.address)}</small>` : ''}</div>`
+      ).join('');
+      results.classList.add('show');
+      results.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const place = sorted[parseInt(item.dataset.idx, 10)];
+          if (!place) return;
+          input.value = place.name || '';
+          results.classList.remove('show');
+          document.getElementById('valLocation').value = place.address || place.name || '';
+          if (place.coordinates?.lat != null && place.coordinates?.lng != null) {
+            document.getElementById('valLat').value = place.coordinates.lat;
+            document.getElementById('valLng').value = place.coordinates.lng;
+            document.getElementById('valCoordsError')?.style && (document.getElementById('valCoordsError').style.display = 'none');
+          }
+        });
+      });
+    };
 
-    document.getElementById('valLocation').value = place.address || place.name || '';
-    if (place.coordinates?.lat != null && place.coordinates?.lng != null) {
-      document.getElementById('valLat').value = place.coordinates.lat;
-      document.getElementById('valLng').value = place.coordinates.lng;
-      const err = document.getElementById('valCoordsError');
-      if (err) err.style.display = 'none';
-    }
+    input.addEventListener('input', () => {
+      const q = input.value.toLowerCase().trim();
+      const filtered = q
+        ? this._places.filter(p => (p.name || '').toLowerCase().includes(q) || (p.address || '').toLowerCase().includes(q))
+        : this._places;
+      render(filtered);
+    });
+
+    input.addEventListener('focus', () => { if (!input.value) render(this._places); });
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !results.contains(e.target)) results.classList.remove('show');
+    }, { once: false });
   }
 
   // ── Geocoding ─────────────────────────────────────────────────────────────

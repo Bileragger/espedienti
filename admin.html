@@ -13,21 +13,30 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Firebase SDK -->
+    <script>
+        // Admin page never needs the service worker — unregister to avoid stale JS caching
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+        }
+    </script>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         import { FIREBASE_CONFIG } from './js/config/firebase-config.js';
 
         const app = initializeApp(FIREBASE_CONFIG);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const storage = getStorage(app);
 
         // Rendi disponibili globalmente
         window.firebaseApp = app;
         window.db = db;
         window.auth = auth;
         window.firestoreModules = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
+        window.storageModules = { storage, ref, uploadBytes, getDownloadURL };
 
         // Assicura che esista un profilo Firestore per l'utente loggato
         async function ensureUserProfile(user) {
@@ -1346,6 +1355,48 @@
             font-family: inherit;
             font-size: 0.82rem;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            position: relative;
+            background: var(--bg-secondary, #1e1e2e);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--text-secondary, #aaa);
+            line-height: 1;
+        }
+        .modal-close:hover { color: var(--text-primary, #fff); }
+        .modal-content--poster {
+            background: #111;
+            padding: 12px;
+            max-width: 92vw;
+            max-height: 92vh;
+        }
+        .modal-content--poster img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 6px;
+            display: block;
+            margin: auto;
+        }
     </style>
 </head>
 <body>
@@ -1366,7 +1417,6 @@
         <!-- Admin content (shown only to admins) -->
         <div id="adminContent" style="display:none;">
         <div class="content">
-
             <!-- Tabs -->
             <div class="tabs">
                 <button type="button" class="tab-btn active" onclick="switchTab('events')">Eventi</button>
@@ -1389,13 +1439,6 @@
 
             <div id="eventsFormSubTab" class="subtab-content active">
 
-            <!-- API Configuration -->
-            <div class="api-config" id="apiConfig">
-                <strong>⚙️ Configurazione API (Opzionale)</strong>
-                <p class="api-config-note">Per caricare immagini automaticamente, ottieni una API key gratuita da <a href="https://imgbb.com/api" target="_blank" rel="noopener noreferrer">ImgBB</a></p>
-                <input type="text" id="imgbbApiKey" placeholder="Incolla qui la tua API key ImgBB (opzionale)">
-                <small>La key verrà salvata solo nel tuo browser</small>
-            </div>
 
             <!-- Form per nuovo evento -->
             <div class="section">
@@ -1450,15 +1493,13 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="existingPlace">📍 Seleziona da Luoghi Esistenti</label>
-                        <select id="existingPlace" onchange="selectExistingPlace()">
-                            <option value="">-- Oppure cerca un nuovo indirizzo --</option>
-                        </select>
-                    </div>
-
                     <div class="address-layout">
                         <div class="address-fields">
+                            <div class="form-group location-group">
+                                <label for="placeSearch">📍 Seleziona da luoghi registrati <span style="font-weight:400;opacity:0.7;">(opzionale)</span></label>
+                                <input type="text" id="placeSearch" class="form-input" placeholder="Cerca tra i luoghi registrati..." autocomplete="off">
+                                <div class="search-results" id="placeSearchResults"></div>
+                            </div>
                             <div class="form-group location-group">
                                 <label for="locationSearch">🔍 Cerca indirizzo</label>
                                 <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli">
@@ -1596,7 +1637,7 @@
                             <div class="form-group location-group">
                                 <label for="placeLocationSearch">🔍 Cerca indirizzo</label>
                                 <input type="text" id="placeLocationSearch" placeholder="es. Piazza Museo, Napoli">
-                                <div class="search-results" id="placeSearchResults"></div>
+                                <div class="search-results" id="placeLocationResults"></div>
                             </div>
                             <div class="form-group">
                                 <label for="placeAddress">Indirizzo *</label>
@@ -1824,6 +1865,14 @@
     <!-- Inline script moved to modular JS files in /js/admin/ directory -->
     <!-- See js/admin/admin-app.js for the new modular entry point -->
     <script type="module" src="js/admin/admin-app.js"></script>
+
+    <!-- Poster / image preview modal -->
+    <div id="posterModal" class="modal" onclick="closePosterModal()">
+      <div class="modal-content modal-content--poster" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closePosterModal()">×</span>
+        <img id="modalPoster" src="" alt="Poster">
+      </div>
+    </div>
 
 </body>
 </html>

@@ -42,6 +42,7 @@ async function initializeModules() {
   // Initialize form managers
   await eventFormManager.initialize();
   await placeFormManager.initialize();
+  eventFormManager.populatePlaceSelect();
   newsletterManager.initialize();
   await inviteManager.initialize();
   await userManager.initialize();

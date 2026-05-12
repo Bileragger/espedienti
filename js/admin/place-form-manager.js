@@ -116,7 +116,7 @@ export class PlaceFormManager {
       searchInput.addEventListener('input', async (e) => {
         const query = e.target.value.trim();
         if (query.length < 3) {
-          document.getElementById('placeSearchResults').classList.remove('show');
+          document.getElementById('placeLocationResults').classList.remove('show');
           return;
         }
         try {
@@ -130,7 +130,7 @@ export class PlaceFormManager {
   }
 
   displaySearchResults(results) {
-    const container = document.getElementById('placeSearchResults');
+    const container = document.getElementById('placeLocationResults');
     if (!container) return;
 
     if (results.length === 0) {
@@ -150,7 +150,7 @@ export class PlaceFormManager {
   }
 
   selectPlaceLocation(resultIndex) {
-    const container = document.getElementById('placeSearchResults');
+    const container = document.getElementById('placeLocationResults');
     const result = container.searchResults[resultIndex];
 
     const address = this.geocoding.formatAddress(result);

@@ -1,4 +1,5 @@
 const {onObjectFinalized} = require("firebase-functions/v2/storage");
+const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {getFirestore} = require("firebase-admin/firestore");
 const {getStorage} = require("firebase-admin/storage");
 const {initializeApp} = require("firebase-admin/app");
@@ -18,6 +19,7 @@ const openAiApiKey = defineSecret("OPENAI_API_KEY");
  * Funzione per l'analisi automatica della locandina caricata.
  */
 exports.analizzaLocandina = onObjectFinalized({
+  // Assicurati che sia il tuo bucket corretto
   bucket: "espedienti-napoli.firebasestorage.app",
   region: "us-east1",
   cpu: 1,
@@ -42,7 +44,6 @@ exports.analizzaLocandina = onObjectFinalized({
     const downloadToken = crypto.randomUUID();
 
     // 2. Impostiamo il token nei metadati del file
-    // Questo permette l'accesso tramite il dominio firebasestorage
     await file.setMetadata({
       metadata: {
         firebaseStorageDownloadTokens: downloadToken,
@@ -50,8 +51,10 @@ exports.analizzaLocandina = onObjectFinalized({
     });
 
     // 3. Costruiamo l'URL di download pubblico "stile Firebase"
-    // Questo URL è leggibile da qualsiasi browser/app React
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${fileBucket}/o/${encodeURIComponent(filePath)}?alt=media&token=${downloadToken}`;
+    const baseUrl = "https://firebasestorage.googleapis.com/v0/b";
+    const encPath = encodeURIComponent(filePath);
+    const publicUrl = `${baseUrl}/${fileBucket}/o/${encPath}` +
+      `?alt=media&token=${downloadToken}`;
 
     // Scarichiamo il file in memoria per l'analisi AI (Base64)
     const [fileBuffer] = await file.download();
@@ -107,11 +110,95 @@ exports.analizzaLocandina = onObjectFinalized({
     });
 
     await Promise.all(promiseSalvataggi);
-    console.log(`Salvati ${listaEventi.length} eventi con URL pubblico.`);
+    console.log(
+        `Salvati ${listaEventi.length} eventi dalla locandina ` +
+        `con URL pubblico.`,
+    );
   } catch (error) {
-    console.error("Errore durante l'elaborazione:", error);
+    console.error("Errore durante l'elaborazione dell'immagine:", error);
     await db.collection("eventi_errors").add({
       filePath,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * Nuova funzione per l'analisi automatica del testo grezzo.
+ */
+exports.analizzaTesto = onDocumentCreated({
+  document: "eventi_raw/{docId}",
+  // Usiamo la stessa region per consistenza
+  region: "us-east1",
+  secrets: [openAiApiKey],
+}, async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const data = snapshot.data();
+
+  // Filtriamo: ci interessano SOLO i testi inseriti dall'app come raw share.
+  // Ignoriamo i documenti creati dall'AI stessa o da altre fonti.
+  if (data.source !== "app_text_share" || !data.testo_condiviso) {
+    return;
+  }
+
+  try {
+    const openai = new OpenAI({
+      apiKey: openAiApiKey.value(),
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "Sei un estrattore di eventi. Se il testo descrive più " +
+                   "date o più eventi, crea un oggetto separato per " +
+                   "ciascuno. Rispondi in JSON con la chiave 'eventi'.",
+        },
+        {
+          role: "user",
+          content: "Estrai tutti gli eventi presenti nel seguente " +
+                   "testo. Per ogni data o evento diverso, crea " +
+                   "un oggetto con: {titolo, data, ora, luogo, " +
+                   "prezzo, descrizione_breve}.\n\n" +
+                   "Testo originale dell'evento:\n" +
+                   data.testo_condiviso,
+        },
+      ],
+      response_format: {type: "json_object"},
+    });
+
+    const rawResult = JSON.parse(response.choices[0].message.content);
+    const listaEventi = rawResult.eventi || [];
+
+    // Trasformiamo i risultati in documenti standard
+    const promiseSalvataggi = listaEventi.map((infoEvento) => {
+      const docData = {
+        ...infoEvento,
+        // Manteniamo il testo per confronto in dashboard
+        testoOriginale: data.testo_condiviso,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        // Nuova source per non innescare di nuovo questa funzione
+        source: "ai_text_extraction",
+      };
+      return db.collection("eventi_raw").add(docData);
+    });
+
+    await Promise.all(promiseSalvataggi);
+    console.log(`Salvati ${listaEventi.length} eventi estratti dal testo.`);
+
+    // Eliminiamo il documento "raw" originale in modo da non sporcare
+    // la dashboard
+    await snapshot.ref.delete();
+  } catch (error) {
+    console.error("Errore durante l'elaborazione del testo:", error);
+    await db.collection("eventi_errors").add({
+      docId: event.params.docId,
+      testoOriginale: data.testo_condiviso,
       error: error.message,
       timestamp: new Date().toISOString(),
     });

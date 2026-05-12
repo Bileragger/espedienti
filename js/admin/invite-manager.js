@@ -10,6 +10,7 @@
  */
 
 import { firebaseService } from '../data/firebase-service.js';
+import { esc } from '../utils/string-utils.js';
 
 const COLLECTION = 'invites';
 
@@ -148,13 +149,13 @@ export class InviteManager {
 
       const actionsHtml = !inv.used
         ? `<button class="btn btn-small" onclick="copyInviteLink('${inv.token}')">Copia link</button>
-           <button class="btn btn-small" onclick="sendInviteMail('${inv.token}','${this._esc(inv.email)}','${inv.role}')">Invia mail</button>`
+           <button class="btn btn-small" onclick="sendInviteMail('${inv.token}','${esc(inv.email)}','${inv.role}')">Invia mail</button>`
         : '';
 
       return `
         <li class="invite-item">
           <div class="invite-info">
-            <span class="invite-email">${this._esc(inv.email)}</span>
+            <span class="invite-email">${esc(inv.email)}</span>
             <span class="invite-role-badge invite-role-${inv.role}">${roleLabel}</span>
             <span class="invite-status ${statusClass}">${statusText}</span>
             <span class="invite-date">${date}</span>
@@ -167,13 +168,6 @@ export class InviteManager {
     }).join('');
   }
 
-  _esc(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
 }
 
 export const inviteManager = new InviteManager(firebaseService);
