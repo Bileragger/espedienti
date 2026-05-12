@@ -1,0 +1,1 @@
+import"./firebase-config-wsne_POC.js";import"./navbar-Cn0pkJKe.js";import{i}from"./i18n-service-Cze2XKZx.js";import"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";import"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";import"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";i.initialize();
