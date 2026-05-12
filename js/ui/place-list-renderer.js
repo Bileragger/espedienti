@@ -10,6 +10,9 @@ import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';
 import { openingHoursParser } from '../utils/opening-hours-parser.js';
 import { PLACE_CATEGORY_ICONS, PLACE_CATEGORY_NAMES } from '../config/constants.js';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { PlaceCard } from '../../src/components/PlaceCard.jsx';
 
 export class PlaceListRenderer {
   constructor(eventBusInstance, stateManager, hoursParser) {
@@ -93,66 +96,16 @@ export class PlaceListRenderer {
    * @returns {HTMLElement} Place element
    */
   _createPlaceElement(place) {
-    const placeItem = document.createElement('div');
-    placeItem.className = 'event-item place-item';
-    placeItem.id = `place-${place.id}`;
-
-    const icon = this.categoryIcons[place.category] || '📍';
-    const catName = this.categoryNames[place.category] || 'Altro';
-
-    // Build description toggle
-    const descriptionHtml = place.description
-      ? `<span class="poster-btn" onclick="togglePlaceDescription(${place.id})">📄 Dettagli</span>
-         <div id="place-desc-${place.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${place.description}</div>`
-      : '';
-
-    // Build opening hours toggle
-    const openingHoursHtml = place.openingHours
-      ? `<span class="poster-btn" onclick="togglePlaceHours(${place.id})">🕐 Orari</span>
-         <div id="place-hours-${place.id}" style="display: none;" class="opening-hours">
-           <div class="opening-hours-title">Orari di apertura</div>
-           <div class="hours-grid">
-             ${this.openingHoursParser.formatForDisplay(place.openingHours)}
-           </div>
-         </div>`
-      : '';
-
-    // Build website link
-    const websiteHtml = place.website
-      ? `<a href="${place.website}" target="_blank" rel="noopener noreferrer" class="directions-btn" style="background: var(--accent-primary); text-decoration: none;">🌐 Sito Web</a>`
-      : '';
-
-    // Build image button
-    const imageHtml = place.image
-      ? `<span class="poster-btn" onclick="showPoster('${place.image}')">🖼️ Immagine</span>`
-      : '';
-
-    // Build directions link
-    const _pc = place.coordinates;
-    const directionsHtml = _pc
-      ? `<a href="#" class="directions-btn" onclick="openDirections(${_pc.lat}, ${_pc.lng}, '${place.name.replace(/'/g, "\\'")}', '${place.address.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`
-      : '';
-
-    // Build inner HTML
-    placeItem.innerHTML = `
-      <div class="event-info">
-        <div class="event-title">${icon} ${place.name}</div>
-        <div class="event-detail"><span class="place-category">${catName}</span></div>
-        <div class="event-detail">📍 ${place.address}</div>
-        <div style="margin-top: 8px;">
-          ${descriptionHtml}
-          ${openingHoursHtml}
-          ${websiteHtml}
-          ${imageHtml}
-          ${directionsHtml}
-        </div>
-      </div>
-      <div class="event-actions">
-        ${_pc ? `<button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${_pc.lat}, ${_pc.lng})">🗺️ Mostra su mappa</button>` : ''}
-      </div>
-    `;
-
-    return placeItem;
+    const wrapper = document.createElement('div');
+    createRoot(wrapper).render(
+      createElement(PlaceCard, {
+        place,
+        categoryIcons: this.categoryIcons,
+        categoryNames: this.categoryNames,
+        formatOpeningHours: (hours) => this.openingHoursParser.formatForDisplay(hours),
+      })
+    );
+    return wrapper;
   }
 
   /**

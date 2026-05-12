@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione – Espedienti a Napoli</title>
+    <link rel="icon" href="/assets/icon-192-BJeAX0d6.svg" type="image/svg+xml">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+
+    <style>
+        :root {
+            --bg-primary:    #fefdf5;
+            --bg-secondary:  #f9f4e4;
+            --bg-tertiary:   #ede7cf;
+            --text-primary:  #1c1409;
+            --text-secondary:#4a3818;
+            --text-tertiary: #7a6025;
+            --accent-primary:#c9a200;
+            --border-subtle: rgba(180,140,0,0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .register-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: #1c1409;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .register-header .lucide { width: 18px; height: 18px; stroke: white; }
+
+        .register-header h1 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .register-header a {
+            margin-left: auto;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        .register-header a:hover { color: white; }
+
+        .register-body { padding: 24px 22px; }
+
+        /* States */
+        .state-block { text-align: center; padding: 16px 0; }
+        .state-block .lucide { width: 40px; height: 40px; margin-bottom: 12px; }
+        .state-block h2 { font-size: 1.1rem; margin-bottom: 8px; }
+        .state-block p  { font-size: 0.88rem; color: var(--text-tertiary); line-height: 1.6; }
+        .state-block a  { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+
+        /* Role badge */
+        .role-invite-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .role-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Form */
+        .reg-form { display: flex; flex-direction: column; gap: 14px; }
+
+        .reg-field { display: flex; flex-direction: column; gap: 4px; }
+
+        .reg-field label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .reg-field input {
+            padding: 9px 12px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+
+        .reg-field input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(201,162,0,0.15);
+        }
+
+        .reg-error {
+            font-size: 0.82rem;
+            color: #dc2626;
+            min-height: 1.2em;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 11px;
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-register:hover { background: #a07800; color: white; }
+        .btn-register:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .success-icon { stroke: #16a34a; }
+        .error-icon   { stroke: #dc2626; }
+        .warning-icon { stroke: #f59e0b; }
+    </style>
+  <script type="module" crossorigin src="/assets/register-DPI6mMdZ.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/firebase-config-wsne_POC.js">
+</head>
+<body>
+    <div class="register-card">
+        <div class="register-header">
+            <i data-lucide="user-plus"></i>
+            <h1>Registrazione – Espedienti</h1>
+            <a href="index.html">← Home</a>
+        </div>
+
+        <div class="register-body">
+
+            <!-- Loading -->
+            <div id="state-loading" class="state-block">
+                <i data-lucide="loader" class="lucide"></i>
+                <h2>Verifica in corso…</h2>
+            </div>
+
+            <!-- Invalid token -->
+            <div id="state-invalid" class="state-block" style="display:none;">
+                <i data-lucide="x-circle" class="lucide error-icon"></i>
+                <h2>Link non valido</h2>
+                <p>Il link di invito non è valido o è scaduto.<br>Contatta chi ti ha inviato l'invito.</p>
+            </div>
+
+            <!-- Already used -->
+            <div id="state-used" class="state-block" style="display:none;">
+                <i data-lucide="alert-circle" class="lucide warning-icon"></i>
+                <h2>Invito già utilizzato</h2>
+                <p>Questo link di invito è già stato usato.<br>Hai già un account? <a href="index.html">Accedi dalla home.</a></p>
+            </div>
+
+            <!-- Generic error -->
+            <div id="state-error" class="state-block" style="display:none;">
+                <i data-lucide="alert-triangle" class="lucide error-icon"></i>
+                <h2>Errore</h2>
+                <p>Si è verificato un errore. Riprova più tardi.</p>
+            </div>
+
+            <!-- Success -->
+            <div id="state-success" class="state-block" style="display:none;">
+                <i data-lucide="check-circle" class="lucide success-icon"></i>
+                <h2>Registrazione completata!</h2>
+                <p>Benvenuto su Espedienti.<br><a href="index.html">Torna alla home e accedi.</a></p>
+            </div>
+
+            <!-- Form -->
+            <div id="state-form" style="display:none;">
+                <div class="role-invite-row">
+                    <i data-lucide="mail"></i>
+                    Sei stato invitato come
+                    <span class="role-badge" id="roleLabel">–</span>
+                </div>
+
+                <form id="regForm" class="reg-form">
+                    <div class="reg-field">
+                        <label>Nome</label>
+                        <input type="text" id="regName" autocomplete="name" required placeholder="Il tuo nome">
+                    </div>
+                    <div class="reg-field">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" autocomplete="email" required placeholder="email@esempio.it">
+                    </div>
+                    <div class="reg-field">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" autocomplete="new-password" required placeholder="Min. 6 caratteri">
+                    </div>
+                    <div class="reg-field">
+                        <label>Conferma Password</label>
+                        <input type="password" id="regConfirm" autocomplete="new-password" required placeholder="Ripeti la password">
+                    </div>
+                    <div class="reg-error" id="regError"></div>
+                    <button type="submit" class="btn-register" id="regSubmitBtn">
+                        Completa la registrazione
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
