@@ -379,7 +379,8 @@
     </style>
 </head>
 <body>
-    <script src="js/ui/navbar-inline.js"></script>
+    <div id="navbar-root"></div>
+    <script type="module" src="/src/navbar-mount.jsx"></script>
 
     <section class="hero">
         <div class="hero-content">
@@ -451,7 +452,6 @@
     </footer>
 
     <script type="module">
-        import './js/ui/navbar.js';
         import { i18n } from './js/i18n/i18n-service.js';
         i18n.initialize();
     </script>
