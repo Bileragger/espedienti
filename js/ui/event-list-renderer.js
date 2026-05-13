@@ -11,6 +11,9 @@ import { state } from '../core/state-manager.js';
 import { dateFormatter } from '../utils/date-formatter.js';
 import { categoriesLoader } from '../data/categories-loader.js';
 import { dateFilter } from '../filters/date-filter.js';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { EventCard } from '../../src/components/EventCard.jsx';
 
 export class EventListRenderer {
   constructor(eventBusInstance, stateManager, formatter, categories, dateFilterInstance) {
@@ -33,15 +36,10 @@ export class EventListRenderer {
       this.render();
     });
 
-    // Expose functions to window for onclick handlers
+    // Expose functions to window for onclick handlers still used outside React cards
     window.filterByTag = (tag) => this.filterByTag(tag);
-    window.toggleDescription = (eventId) => this.toggleDescription(eventId);
-    window.addToCalendar = (event) => this.addToCalendar(event);
     window.showPoster = (posterUrl) => {
       this.eventBus.emit('modal:showPoster', { url: posterUrl });
-    };
-    window.openDirections = (lat, lng, locationName, fullAddress) => {
-      this.openDirections(lat, lng, locationName, fullAddress);
     };
     window.changeEventPage = (page) => this.changePage(page);
 
@@ -102,61 +100,21 @@ export class EventListRenderer {
    * @returns {HTMLElement} Event element
    */
   _createEventElement(event, selectedLocation, selectedTag) {
-    const eventItem = document.createElement('div');
-    eventItem.className = 'event-item';
-    eventItem.id = `event-${event.id}`;
+    const categoryInfo  = this.categoriesLoader.getCategoryInfo(event.category);
+    const formattedDate = this.dateFormatter.formatEventDate(event);
 
-    // Highlight if location matches
-    if (selectedLocation === event.location) {
-      eventItem.classList.add('highlighted');
-    }
-
-    // Get category info
-    const categoryInfo = this.categoriesLoader.getCategoryInfo(event.category);
-
-    // Build tags HTML
-    const tagsHtml = event.tags ? event.tags.map(tag => {
-      const isSelected = selectedTag === tag;
-      return `<span class="tag ${isSelected ? 'selected' : ''}" onclick="filterByTag('${tag}')">${tag}</span>`;
-    }).join('') : '';
-
-    // Build poster button
-    const posterHtml = event.poster
-      ? `<span class="poster-btn" onclick="showPoster('${event.poster}')">🖼️ Vedi locandina</span>`
-      : '';
-
-    // Build description toggle
-    const descriptionHtml = event.description
-      ? `<span class="poster-btn" onclick="toggleDescription(${event.id})">📄 Maggiori dettagli</span>
-         <div id="desc-${event.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">${event.description}</div>`
-      : '';
-
-    // Build directions link
-    const _ec = event.coordinates;
-    const directionsHtml = _ec
-      ? `<a href="#" class="directions-btn" onclick="openDirections(${_ec.lat}, ${_ec.lng}, '${event.location.replace(/'/g, "\\'")}', '${event.location.replace(/'/g, "\\'")}'); return false;">🧭 Indicazioni</a>`
-      : '';
-
-    // Build inner HTML
-    eventItem.innerHTML = `
-      <div class="event-info">
-        <div class="event-title">${categoryInfo.icon} ${event.title}</div>
-        <div class="event-detail">📅 ${this.dateFormatter.formatEventDate(event)}</div>
-        <div class="event-detail">📍 ${event.location}</div>
-        <div class="event-tags">${tagsHtml}</div>
-        <div style="margin-top: 8px;">
-          ${posterHtml}
-          ${descriptionHtml}
-          ${directionsHtml}
-        </div>
-      </div>
-      <div class="event-actions">
-        <button class="btn btn-small" onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})'>➕ Aggiungi</button>
-        <button class="btn btn-small btn-outline" onclick="window.open('${categoryInfo.whatsappLink}', '_blank')">${categoryInfo.icon} Chat</button>
-      </div>
-    `;
-
-    return eventItem;
+    const wrapper = document.createElement('div');
+    createRoot(wrapper).render(
+      createElement(EventCard, {
+        event: { ...event, formattedDate },
+        categoryInfo,
+        selectedLocation,
+        selectedTag,
+        onFilterByTag: (tag) => this.filterByTag(tag),
+        onShowPoster:  (url) => this.eventBus.emit('modal:showPoster', { url }),
+      })
+    );
+    return wrapper;
   }
 
   /**

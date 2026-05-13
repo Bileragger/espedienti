@@ -4,15 +4,18 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  // Treat CDN imports (Firebase, Leaflet) as external — don't bundle them
+  // GitHub Pages serves the site from /espedienti/ — set base so asset paths are correct
+  base: process.env.VITE_BASE_PATH ?? '/',
+  server: {
+    // Keep for local dev in case historyApiFallback is ever needed
+    historyApiFallback: false,
+  },
   build: {
     rollupOptions: {
       input: {
-        main:      resolve(__dirname, 'index.html'),
-        admin:     resolve(__dirname, 'admin.html'),
-        about:     resolve(__dirname, 'about.html'),
-        contatti:  resolve(__dirname, 'contatti.html'),
-        register:  resolve(__dirname, 'register.html'),
+        main:     resolve(__dirname, 'index.html'),
+        admin:    resolve(__dirname, 'admin.html'),
+        register: resolve(__dirname, 'register.html'),
       },
     },
   },
