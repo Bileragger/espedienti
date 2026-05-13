@@ -1,15 +1,24 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import {
+  getFirestore, doc, getDoc, collection, getDocs, addDoc,
+  updateDoc, deleteDoc, onSnapshot, query, where, orderBy,
+} from 'firebase/firestore';
 import { FIREBASE_CONFIG } from '../../js/config/firebase-config.js';
 
 const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// Expose for legacy vanilla JS that still uses window.firebaseApp
+// Expose for legacy vanilla JS (firebase-service.js waits for these)
 if (!window.firebaseApp) window.firebaseApp = app;
+if (!window.db) {
+  window.db = db;
+  window.firestoreModules = {
+    collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy,
+  };
+}
 if (!window.firebaseReady) {
   window.firebaseReady = true;
   window.dispatchEvent(new Event('firebaseReady'));
