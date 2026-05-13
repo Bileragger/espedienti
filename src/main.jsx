@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { SPAContext } from './contexts/SPAContext.jsx';
 import { Navbar } from './components/Navbar.jsx';
@@ -43,8 +43,8 @@ function App() {
 
 createRoot(document.getElementById('root')).render(
   <SPAContext.Provider value={true}>
-    <BrowserRouter>
+    <HashRouter>
       <App />
-    </BrowserRouter>
+    </HashRouter>
   </SPAContext.Provider>
 );

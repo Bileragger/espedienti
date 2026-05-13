@@ -5,9 +5,10 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { useInSPA } from '../contexts/SPAContext.jsx';
 
 function activePage() {
-  const path = window.location.pathname;
-  if (path.endsWith('about.html') || path === '/about') return 'project';
-  if (path.endsWith('contatti.html') || path === '/contatti') return 'contacts';
+  const path  = window.location.pathname;
+  const hash  = window.location.hash; // e.g. "#/about" with HashRouter
+  if (path.endsWith('about.html') || path === '/about' || hash === '#/about') return 'project';
+  if (path.endsWith('contatti.html') || path === '/contatti' || hash === '#/contatti') return 'contacts';
   if (path.endsWith('admin.html')) return 'admin';
   return null;
 }

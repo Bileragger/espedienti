@@ -4,9 +4,11 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages serves the site from /espedienti/ — set base so asset paths are correct
+  base: process.env.VITE_BASE_PATH ?? '/',
   server: {
-    // Serve index.html for all unknown routes so React Router handles /about, /contatti
-    historyApiFallback: true,
+    // Keep for local dev in case historyApiFallback is ever needed
+    historyApiFallback: false,
   },
   build: {
     rollupOptions: {
