@@ -21,12 +21,11 @@ export function Navbar() {
 
   // NavA: SPA-aware link — uses React Router <Link> inside the SPA, plain <a> elsewhere
   const NavA = ({ to, href, children, id, className, style, 'data-nav': dataNav }) => {
-    const dest = to ?? href;
-    const cls  = className ?? '';
+    const cls    = className ?? '';
     const shared = { id, style, 'data-nav': dataNav };
     return (inSPA && to)
-      ? <Link to={dest} className={cls} {...shared}>{children}</Link>
-      : <a href={dest ?? href} className={cls} {...shared}>{children}</a>;
+      ? <Link to={to} className={cls} {...shared}>{children}</Link>
+      : <a href={href ?? to} className={cls} {...shared}>{children}</a>;
   };
 
   const AdminLink = ({ id }) => (
