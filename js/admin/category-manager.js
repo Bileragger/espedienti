@@ -48,7 +48,7 @@ export class CategoryManager {
 
   async loadAll() {
     try {
-      this.eventCategories = await this.firebase.getAll(COLLECTION_EVENT_CATS);
+      this.eventCategories = this._dedupeByKey(await this.firebase.getAll(COLLECTION_EVENT_CATS));
     } catch (_) {
       this.eventCategories = [];
     }
@@ -58,7 +58,7 @@ export class CategoryManager {
     }
 
     try {
-      this.placeCategories = await this.firebase.getAll(COLLECTION_PLACE_CATS);
+      this.placeCategories = this._dedupeByKey(await this.firebase.getAll(COLLECTION_PLACE_CATS));
     } catch (_) {
       this.placeCategories = [];
     }
@@ -68,22 +68,37 @@ export class CategoryManager {
     }
   }
 
+  _dedupeByKey(categories) {
+    const seen = new Set();
+    return categories.filter(c => {
+      if (seen.has(c.key)) return false;
+      seen.add(c.key);
+      return true;
+    });
+  }
+
   async seedEventCategories() {
+    const existingKeys = new Set(this.eventCategories.map(c => c.key));
     for (const [key, cat] of Object.entries(EVENT_CATEGORIES)) {
+      if (existingKeys.has(key)) continue;
       const data = { key, name: cat.name, color: EVENT_CATEGORY_COLORS[key] || '#94a3b8', icon: cat.icon };
       try {
         const added = await this.firebase.add(COLLECTION_EVENT_CATS, data);
         this.eventCategories.push(added);
+        existingKeys.add(key);
       } catch (_) {}
     }
   }
 
   async seedPlaceCategories() {
+    const existingKeys = new Set(this.placeCategories.map(c => c.key));
     for (const [key, cat] of Object.entries(PLACE_CATEGORIES)) {
+      if (existingKeys.has(key)) continue;
       const data = { key, name: cat.name, color: PLACE_CATEGORY_COLORS[key] || '#64748b', icon: cat.icon };
       try {
         const added = await this.firebase.add(COLLECTION_PLACE_CATS, data);
         this.placeCategories.push(added);
+        existingKeys.add(key);
       } catch (_) {}
     }
   }
@@ -96,38 +111,51 @@ export class CategoryManager {
   }
 
   renderSection(type, categories, query) {
-    const listId = type === 'event' ? 'eventCatList' : 'placeCatList';
-    const list = document.getElementById(listId);
+    const listId   = type === 'event' ? 'eventCatList'  : 'placeCatList';
+    const countId  = type === 'event' ? 'eventCatCount' : 'placeCatCount';
+    const list     = document.getElementById(listId);
+    const countEl  = document.getElementById(countId);
     if (!list) return;
 
     const filtered = query
       ? categories.filter(c => c.name?.toLowerCase().includes(query) || c.key?.toLowerCase().includes(query))
       : categories;
 
+    if (countEl) countEl.textContent = `${categories.length} categorie`;
+
     if (filtered.length === 0) {
-      list.innerHTML = '<li class="list-empty">Nessuna categoria</li>';
+      list.innerHTML = `<li class="list-empty">${query ? 'Nessun risultato' : 'Nessuna categoria'}</li>`;
       return;
     }
 
-    // "altro" always last
     const sorted = [
-      ...filtered.filter(c => c.key !== 'altro'),
+      ...filtered.filter(c => c.key !== 'altro').sort((a, b) => a.name.localeCompare(b.name, 'it')),
       ...filtered.filter(c => c.key === 'altro'),
     ];
 
-    list.innerHTML = sorted.map(cat => `
-      <li class="cat-item" data-id="${cat.firebaseId}">
-        <input type="color" class="cat-color-picker" value="${cat.color || '#94a3b8'}"
-          id="color-${cat.firebaseId}"
-          title="Colore legenda">
-        <span class="cat-key">${cat.key}</span>
-        <input type="text" class="cat-name-input" value="${cat.name}"
-          id="name-${cat.firebaseId}"
-          placeholder="Nome categoria">
-        <button type="button" class="btn btn-small" onclick="saveCategoryEdit('${type}', '${cat.firebaseId}')">Salva</button>
-        ${cat.key !== 'altro' ? `<button type="button" class="btn btn-danger btn-small" onclick="deleteCategory('${type}', '${cat.firebaseId}')">Elimina</button>` : ''}
-      </li>
-    `).join('');
+    list.innerHTML = sorted.map(cat => {
+      const color   = cat.color || '#94a3b8';
+      const locked  = cat.key === 'altro';
+      return `
+        <li class="cat-item${locked ? ' is-locked' : ''}" data-id="${cat.firebaseId}" style="--cat-accent:${color}">
+          <div class="cat-item-left">
+            <input type="color" class="cat-color-picker" value="${color}"
+              id="color-${cat.firebaseId}" title="Colore"
+              ${locked ? 'disabled' : `onchange="document.querySelector('[data-id=\\'${cat.firebaseId}\\']').style.setProperty('--cat-accent',this.value)"`}>
+            <span class="cat-key" title="chiave interna">${cat.key}</span>
+          </div>
+          <input type="text" class="cat-name-input" value="${cat.name}"
+            id="name-${cat.firebaseId}" placeholder="Nome categoria"
+            ${locked ? 'disabled' : `onkeydown="if(event.key==='Enter'){event.preventDefault();saveCategoryEdit('${type}','${cat.firebaseId}');}"`}>
+          <div class="cat-item-actions">
+            ${locked
+              ? `<span style="font-size:0.7rem;color:var(--text-tertiary);padding:0 4px;">bloccato</span>`
+              : `<button type="button" class="btn btn-small" onclick="saveCategoryEdit('${type}','${cat.firebaseId}')">Salva</button>
+                 <button type="button" class="btn btn-danger btn-small" onclick="deleteCategory('${type}','${cat.firebaseId}')">✕</button>`
+            }
+          </div>
+        </li>`;
+    }).join('');
   }
 
   async addCategory(type) {
@@ -146,8 +174,9 @@ export class CategoryManager {
     const collection = type === 'event' ? COLLECTION_EVENT_CATS : COLLECTION_PLACE_CATS;
     const arr = type === 'event' ? this.eventCategories : this.placeCategories;
 
-    if (arr.some(c => c.key === key)) {
-      alert(`⚠️ La chiave "${key}" esiste già.`);
+    const normalizedName = name.toLowerCase();
+    if (arr.some(c => c.key === key || c.name.toLowerCase() === normalizedName)) {
+      alert(`⚠️ La categoria "${name}" esiste già.`);
       return;
     }
 
@@ -156,6 +185,7 @@ export class CategoryManager {
       const added = await this.firebase.add(collection, data);
       arr.push(added);
       if (nameInput) nameInput.value = '';
+      if (nameInput) nameInput.focus();
       this.render();
       this.populateFormSelects();
       this.publishColors();
@@ -191,12 +221,24 @@ export class CategoryManager {
     const cat = arr.find(c => c.firebaseId === firebaseId);
     if (!cat) return;
 
+    const normalizedName = name.toLowerCase();
+    if (arr.some(c => c.firebaseId !== firebaseId && c.name.toLowerCase() === normalizedName)) {
+      alert(`⚠️ Esiste già una categoria con il nome "${name}".`);
+      return;
+    }
+
     try {
       await this.firebase.update(collection, firebaseId, { name, color });
       cat.name = name;
       cat.color = color;
       this.populateFormSelects();
       this.publishColors();
+      // Visual feedback — flash green border on the saved row
+      const row = document.querySelector(`.cat-item[data-id="${firebaseId}"]`);
+      if (row) {
+        row.classList.add('save-flash');
+        setTimeout(() => row.classList.remove('save-flash'), 1200);
+      }
     } catch (error) {
       alert('❌ Errore nel salvataggio.');
       console.error(error);
@@ -262,6 +304,14 @@ export class CategoryManager {
   populateFormSelects() {
     this._populateSelect('eventPrimaryCategory', 'eventCatExtra', this.eventCategories);
     this._populateSelect('placePrimaryCategory', 'placeCatExtra', this.placeCategories);
+
+    // Also refresh the validation form category select if currently open
+    const valCat = document.getElementById('valCategory');
+    if (valCat) {
+      const current = valCat.value;
+      valCat.innerHTML = '<option value="">Seleziona categoria...</option>' +
+        this.eventCategories.map(c => `<option value="${c.key}"${c.key === current ? ' selected' : ''}>${c.name}</option>`).join('');
+    }
   }
 
   _populateSelect(selectId, checkboxName, categories) {

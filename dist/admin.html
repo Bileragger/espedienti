@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin — Espedienti a Napoli</title>
-    <link rel="icon" href="/espedienti/assets/icon-192-BJeAX0d6.svg" type="image/svg+xml">
+    <link rel="icon" href="/assets/icon-192-BJeAX0d6.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -222,6 +222,23 @@
 
         .form-group {
             margin-bottom: 12px;
+        }
+
+        .field-error-msg {
+            display: none;
+            color: #dc2626;
+            font-size: 0.78rem;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+        .form-group.field-error input,
+        .form-group.field-error select,
+        .form-group.field-error textarea {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px rgba(220,38,38,0.15);
+        }
+        .form-group.field-error .field-error-msg {
+            display: block;
         }
 
         label {
@@ -669,13 +686,36 @@
         }
 
         .place-item-name {
-            flex: 1;
             font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-right: 12px;
             min-width: 0;
+        }
+
+        .event-list-main {
+            flex: 1;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            min-width: 0;
+            margin-right: 12px;
+            overflow: hidden;
+        }
+
+        .event-list-date {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .event-list-date--past {
+            color: #dc2626;
+        }
+
+        .event-past {
+            opacity: 0.6;
         }
 
         .item-cats {
@@ -1045,111 +1085,170 @@
             }
         }
 
-        /* Category manager styles */
-        .cat-add-form {
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 16px;
+        /* ── Category manager ─────────────────────────────────────── */
+        .cat-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
         }
 
-        .cat-add-form h3 {
-            margin: 0 0 10px 0;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+        @media (max-width: 860px) {
+            .cat-columns { grid-template-columns: 1fr; }
+        }
+
+        .cat-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .cat-column-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .cat-column-header h2 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .cat-count-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            padding: 1px 8px;
+            border-radius: 20px;
+            margin-top: 4px;
+            letter-spacing: 0.02em;
+        }
+
+        .cat-add-form {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
         }
 
         .cat-add-row {
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .cat-key-input {
-            width: 160px;
-            flex-shrink: 0;
         }
 
         .cat-name-input-new {
-            width: 200px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
         }
 
-        .cat-icon-input {
-            width: 80px;
-            flex-shrink: 0;
-            text-align: center;
-        }
-
-        .cat-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .cat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+        .cat-color-picker-lg {
+            width: 40px;
+            height: 36px;
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
-            flex-wrap: wrap;
-        }
-
-        .cat-color-picker {
-            width: 36px;
-            height: 32px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
             padding: 2px;
             cursor: pointer;
             flex-shrink: 0;
             background: transparent;
         }
 
+        .cat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cat-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            border-left: 4px solid var(--cat-accent, #94a3b8);
+            transition: border-color 0.2s, box-shadow 0.15s;
+        }
+
+        .cat-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .cat-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-color-picker {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 1px;
+            cursor: pointer;
+            flex-shrink: 0;
+            background: transparent;
+        }
+
         .cat-key {
-            font-size: 0.78rem;
+            font-size: 0.7rem;
             color: var(--text-tertiary);
             font-family: monospace;
             background: var(--bg-secondary);
             padding: 2px 6px;
             border-radius: 4px;
             flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .cat-name-input {
-            flex: 1;
-            min-width: 140px;
-            padding: 5px 10px;
-            border: 1px solid var(--border-color);
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid transparent;
             border-radius: 6px;
-            font-size: 0.9rem;
-            background: var(--bg-primary);
+            font-size: 0.88rem;
+            font-weight: 500;
+            background: transparent;
             color: var(--text-primary);
+            transition: border-color 0.15s, background 0.15s;
         }
 
-        .cat-item .cat-icon-input {
-            width: 52px;
-            text-align: center;
-            font-size: 1.1rem;
-            padding: 3px 6px;
+        .cat-name-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .cat-item-actions {
+            display: flex;
+            gap: 6px;
             flex-shrink: 0;
         }
 
-        @media (max-width: 700px) {
-            .cat-add-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .cat-key-input, .cat-name-input-new, .cat-icon-input {
-                width: 100%;
-            }
+        .cat-item.is-locked {
+            opacity: 0.6;
+        }
+
+        .cat-item.save-flash {
+            border-color: #16a34a !important;
+            box-shadow: 0 0 0 2px rgba(22,163,74,0.18);
+            transition: border-color 0s, box-shadow 0s;
+        }
+
+        @media (max-width: 500px) {
+            .cat-add-row { flex-wrap: wrap; }
+            .cat-name-input-new { width: 100%; }
         }
 
         /* ── Invite tab ───────────────────────────────────────────── */
@@ -1286,7 +1385,8 @@
             font-family: inherit;
             font-size: 0.82rem;
         }
-        .modal {
+        /* Poster preview modal — scoped to avoid overriding the React auth modal */
+        #posterModal {
             display: none;
             position: fixed;
             inset: 0;
@@ -1295,8 +1395,8 @@
             align-items: center;
             justify-content: center;
         }
-        .modal.show { display: flex; }
-        .modal-content {
+        #posterModal.show { display: flex; }
+        #posterModal .modal-content {
             position: relative;
             background: var(--bg-secondary, #1e1e2e);
             border-radius: 10px;
@@ -1305,7 +1405,7 @@
             max-height: 90vh;
             overflow: auto;
         }
-        .modal-close {
+        #posterModal .modal-close {
             position: absolute;
             top: 8px;
             right: 12px;
@@ -1314,7 +1414,7 @@
             color: var(--text-secondary, #aaa);
             line-height: 1;
         }
-        .modal-close:hover { color: var(--text-primary, #fff); }
+        #posterModal .modal-close:hover { color: var(--text-primary, #fff); }
         .modal-content--poster {
             background: #111;
             padding: 12px;
@@ -1329,10 +1429,11 @@
             margin: auto;
         }
     </style>
-  <script type="module" crossorigin src="/espedienti/assets/admin-5ZqSB6zw.js"></script>
-  <link rel="modulepreload" crossorigin href="/espedienti/assets/firebase-config-wsne_POC.js">
-  <link rel="modulepreload" crossorigin href="/espedienti/assets/AuthModal-a26GnaUG.js">
-  <link rel="modulepreload" crossorigin href="/espedienti/assets/opening-hours-parser-5bIaZp2V.js">
+  <script type="module" crossorigin src="/assets/admin-CoIPpXoa.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/firebase-config-wsne_POC.js">
+  <link rel="modulepreload" crossorigin href="/assets/state-manager-u1hDROr3.js">
+  <link rel="modulepreload" crossorigin href="/assets/firebase-service-ozKbJOgQ.js">
+  <link rel="stylesheet" crossorigin href="/assets/state-manager-CvPTO8Mj.css">
 </head>
 <body>
 
@@ -1366,9 +1467,9 @@
             <div id="eventsTab" class="tab-content active">
 
             <div class="subtabs">
-                <button type="button" class="subtab-btn active" onclick="switchSubTab('events', 'form')">➕ Nuovo Evento</button>
-                <button type="button" class="subtab-btn" onclick="switchSubTab('events', 'list')">📋 Lista (<span id="eventCount">0</span>)</button>
-                <button type="button" class="subtab-btn" onclick="switchSubTab('events', 'validazione')">📥 Validazione (<span id="pendingCount">0</span>)</button>
+                <button type="button" class="subtab-btn active" onclick="switchSubTab('events', 'form')"><i data-lucide="plus" style="width:13px;height:13px;vertical-align:-2px;"></i> Nuovo Evento</button>
+                <button type="button" class="subtab-btn" onclick="switchSubTab('events', 'list')"><i data-lucide="list" style="width:13px;height:13px;vertical-align:-2px;"></i> Lista (<span id="eventCount">0</span>)</button>
+                <button type="button" class="subtab-btn" onclick="switchSubTab('events', 'validazione')"><i data-lucide="inbox" style="width:13px;height:13px;vertical-align:-2px;"></i> Validazione (<span id="pendingCount">0</span>)</button>
             </div>
 
 
@@ -1377,7 +1478,7 @@
 
             <!-- Form per nuovo evento -->
             <div class="section">
-                <h2>➕ Aggiungi Nuovo Evento</h2>
+                <h2>Aggiungi Nuovo Evento</h2>
                 <form id="eventForm">
                     <div class="form-group">
                         <label for="title">Titolo Evento *</label>
@@ -1389,14 +1490,14 @@
                             <label for="eventPrimaryCategory">Categoria Principale *</label>
                             <select id="eventPrimaryCategory" required>
                                 <option value="">Seleziona categoria principale</option>
-                                <option value="live-music">🎵 Live Music</option>
-                                <option value="open-mic">🎤 Open Mic</option>
-                                <option value="concerto">🎸 Concerto</option>
-                                <option value="spettacolo-teatrale">🎭 Spettacolo Teatrale</option>
-                                <option value="mostra">🖼️ Mostra</option>
-                                <option value="workshop">🛠️ Workshop</option>
-                                <option value="fiera">🎪 Fiera</option>
-                                <option value="altro">📍 Altro</option>
+                                <option value="live-music">Live Music</option>
+                                <option value="open-mic">Open Mic</option>
+                                <option value="concerto">Concerto</option>
+                                <option value="spettacolo-teatrale">Spettacolo Teatrale</option>
+                                <option value="mostra">Mostra</option>
+                                <option value="workshop">Workshop</option>
+                                <option value="fiera">Fiera</option>
+                                <option value="altro">Altro</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1431,12 +1532,12 @@
                     <div class="address-layout">
                         <div class="address-fields">
                             <div class="form-group location-group">
-                                <label for="placeSearch">📍 Seleziona da luoghi registrati <span style="font-weight:400;opacity:0.7;">(opzionale)</span></label>
+                                <label for="placeSearch">Seleziona da luoghi registrati <span style="font-weight:400;opacity:0.7;">(opzionale)</span></label>
                                 <input type="text" id="placeSearch" class="form-input" placeholder="Cerca tra i luoghi registrati..." autocomplete="off">
                                 <div class="search-results" id="placeSearchResults"></div>
                             </div>
                             <div class="form-group location-group">
-                                <label for="locationSearch">🔍 Cerca indirizzo</label>
+                                <label for="locationSearch">Cerca indirizzo</label>
                                 <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli">
                                 <div class="search-results" id="searchResults"></div>
                             </div>
@@ -1473,7 +1574,7 @@
                         <div class="tag-input-container" id="tagsContainer"></div>
                     </div>
 
-                    <button type="submit" class="btn" id="submitBtn">✅ Aggiungi Evento</button>
+                    <button type="submit" class="btn" id="submitBtn">Aggiungi Evento</button>
                 </form>
             </div>
 
@@ -1482,8 +1583,12 @@
             <!-- Sub-tab lista eventi -->
             <div id="eventsListSubTab" class="subtab-content">
                 <div class="section">
-                    <div class="list-search">
-                        <input type="text" id="eventsSearch" placeholder="🔍 Cerca per titolo, luogo o categoria...">
+                    <div class="section-header">
+                        <span></span>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="eventsSearch" class="search-input" placeholder="Cerca per titolo, luogo o categoria...">
+                            <button type="button" class="btn btn-secondary" onclick="reloadEvents()" title="Ricarica"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px;"></i></button>
+                        </div>
                     </div>
                     <ul class="events-list" id="eventsList"></ul>
                 </div>
@@ -1496,7 +1601,7 @@
                         <h2>Validazione eventi</h2>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <input id="validazioneSearch" class="search-input" placeholder="Cerca per titolo, luogo, data..." />
-                            <button type="button" class="btn btn-secondary" onclick="validazioneReload()" title="Ricarica">🔄</button>
+                            <button type="button" class="btn btn-secondary" onclick="validazioneReload()" title="Ricarica"><i data-lucide="refresh-cw" style="width:13px;height:13px;vertical-align:-2px;"></i></button>
                         </div>
                     </div>
                     <div id="validazioneList" class="items-list"></div>
@@ -1510,15 +1615,15 @@
             <div id="placesTab" class="tab-content">
 
             <div class="subtabs">
-                <button type="button" class="subtab-btn active" onclick="switchSubTab('places', 'form')">➕ Nuovo Luogo</button>
-                <button type="button" class="subtab-btn" onclick="switchSubTab('places', 'list')">📋 Lista (<span id="placeCount">0</span>)</button>
+                <button type="button" class="subtab-btn active" onclick="switchSubTab('places', 'form')"><i data-lucide="plus" style="width:13px;height:13px;vertical-align:-2px;"></i> Nuovo Luogo</button>
+                <button type="button" class="subtab-btn" onclick="switchSubTab('places', 'list')"><i data-lucide="list" style="width:13px;height:13px;vertical-align:-2px;"></i> Lista (<span id="placeCount">0</span>)</button>
             </div>
 
             <div id="placesFormSubTab" class="subtab-content active">
 
             <!-- Form per nuovo luogo -->
             <div class="section">
-                <h2>➕ Aggiungi Nuovo Luogo</h2>
+                <h2>Aggiungi Nuovo Luogo</h2>
                 <form id="placeForm">
                     <div class="form-group">
                         <label for="placeName">Nome Luogo *</label>
@@ -1530,16 +1635,16 @@
                             <label for="placePrimaryCategory">Categoria Principale *</label>
                             <select id="placePrimaryCategory" required>
                                 <option value="">Seleziona categoria principale</option>
-                                <option value="museo">🏛️ Museo</option>
-                                <option value="galleria">🖼️ Galleria d'Arte</option>
-                                <option value="parco">🌳 Parco</option>
-                                <option value="biblioteca">📚 Biblioteca</option>
-                                <option value="teatro">🎭 Teatro</option>
-                                <option value="coworking">💼 Coworking Space</option>
-                                <option value="ristorante">🍽️ Ristorante</option>
-                                <option value="centro-sociale">🤝 Centro Sociale</option>
-                                <option value="fondazione">🏢 Fondazione</option>
-                                <option value="altro">📍 Altro</option>
+                                <option value="museo">Museo</option>
+                                <option value="galleria">Galleria d'Arte</option>
+                                <option value="parco">Parco</option>
+                                <option value="biblioteca">Biblioteca</option>
+                                <option value="teatro">Teatro</option>
+                                <option value="coworking">Coworking Space</option>
+                                <option value="ristorante">Ristorante</option>
+                                <option value="centro-sociale">Centro Sociale</option>
+                                <option value="fondazione">Fondazione</option>
+                                <option value="altro">Altro</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1570,7 +1675,7 @@
                     <div class="address-layout">
                         <div class="address-fields">
                             <div class="form-group location-group">
-                                <label for="placeLocationSearch">🔍 Cerca indirizzo</label>
+                                <label for="placeLocationSearch">Cerca indirizzo</label>
                                 <input type="text" id="placeLocationSearch" placeholder="es. Piazza Museo, Napoli">
                                 <div class="search-results" id="placeLocationResults"></div>
                             </div>
@@ -1590,7 +1695,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>🕐 Orari di Apertura</label>
+                        <label>Orari di Apertura</label>
                         <small class="hours-hint">Formati accettati: "10:30-13:30" (singola apertura), "10:30-13:30 - 16:00-18:00" (doppia apertura), "su appuntamento", oppure vuoto (chiuso)</small>
                         <div class="opening-hours-grid">
                             <div class="hours-row">
@@ -1625,35 +1730,35 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="placeWebsite">🌐 Sito Web (opzionale)</label>
+                        <label for="placeWebsite">Sito Web (opzionale)</label>
                         <input type="url" id="placeWebsite" placeholder="https://esempio.com">
                         <small>Inserisci il sito web ufficiale del luogo</small>
                     </div>
 
                     <div class="form-group">
-                        <label>📱 Social (opzionale)</label>
+                        <label>Social (opzionale)</label>
                         <div class="social-inputs">
                             <div class="social-input-row">
-                                <span class="social-label">📘 Facebook</span>
+                                <span class="social-label">Facebook</span>
                                 <input type="url" id="placeFacebook" placeholder="https://facebook.com/pagina">
                             </div>
                             <div class="social-input-row">
-                                <span class="social-label">📸 Instagram</span>
+                                <span class="social-label">Instagram</span>
                                 <input type="url" id="placeInstagram" placeholder="https://instagram.com/account">
                             </div>
                             <div class="social-input-row">
-                                <span class="social-label">🎵 TikTok</span>
+                                <span class="social-label">TikTok</span>
                                 <input type="url" id="placeTiktok" placeholder="https://tiktok.com/@account">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="placeImage">🖼️ Immagine (opzionale)</label>
+                        <label for="placeImage">Immagine (opzionale)</label>
                         <input type="url" id="placeImage" placeholder="Incolla un link all'immagine">
                     </div>
 
-                    <button type="submit" class="btn">✅ Aggiungi Luogo</button>
+                    <button type="submit" class="btn">Aggiungi Luogo</button>
                 </form>
             </div>
 
@@ -1663,7 +1768,7 @@
             <div id="placesListSubTab" class="subtab-content">
                 <div class="section">
                     <div class="list-search">
-                        <input type="text" id="placesSearch" placeholder="🔍 Cerca per nome, indirizzo o categoria...">
+                        <input type="text" id="placesSearch" placeholder="Cerca per nome, indirizzo o categoria...">
                     </div>
                     <ul class="events-list" id="placesList"></ul>
                 </div>
@@ -1683,63 +1788,67 @@
 
             <!-- TAB CATEGORIE -->
             <div id="categoriesTab" class="tab-content">
+                <div class="cat-columns">
 
-                <!-- Categorie Eventi -->
-                <div class="section">
-                    <h2>Categorie Eventi</h2>
-
-                    <!-- Aggiungi categoria evento -->
-                    <div class="cat-add-form">
-                        <h3>Aggiungi categoria</h3>
-                        <div class="cat-add-row">
-                            <input type="text" id="newEventCatName" placeholder="Nome (es. Live Music)" class="form-control cat-name-input-new">
-                            <input type="color" id="newEventCatColor" value="#94a3b8" class="cat-color-picker" title="Colore legenda">
-                            <button type="button" class="btn" onclick="addCategory('event')">Aggiungi</button>
+                    <!-- Categorie Eventi -->
+                    <div class="cat-column">
+                        <div class="cat-column-header">
+                            <div>
+                                <h2>Categorie eventi</h2>
+                                <span class="cat-count-badge" id="eventCatCount"></span>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Ricerca -->
-                    <div class="list-search">
-                        <input type="text" id="eventCatSearch" placeholder="Cerca categoria…" class="form-control">
-                    </div>
-
-                    <!-- Lista categorie eventi -->
-                    <ul class="events-list cat-list" id="eventCatList">
-                        <li class="list-empty">Caricamento...</li>
-                    </ul>
-                </div>
-
-                <!-- Categorie Luoghi -->
-                <div class="section">
-                    <h2>Categorie Luoghi</h2>
-
-                    <!-- Aggiungi categoria luogo -->
-                    <div class="cat-add-form">
-                        <h3>Aggiungi categoria</h3>
-                        <div class="cat-add-row">
-                            <input type="text" id="newPlaceCatName" placeholder="Nome (es. Museo)" class="form-control cat-name-input-new">
-                            <input type="color" id="newPlaceCatColor" value="#64748b" class="cat-color-picker" title="Colore legenda">
-                            <button type="button" class="btn" onclick="addCategory('place')">Aggiungi</button>
+                        <div class="cat-add-form">
+                            <div class="cat-add-row">
+                                <input type="color" id="newEventCatColor" value="#94a3b8" class="cat-color-picker-lg" title="Colore">
+                                <input type="text" id="newEventCatName" placeholder="Nuova categoria…" class="form-control cat-name-input-new" onkeydown="if(event.key==='Enter'){event.preventDefault();addCategory('event');}">
+                                <button type="button" class="btn btn-small" onclick="addCategory('event')">+ Aggiungi</button>
+                            </div>
                         </div>
+
+                        <div class="list-search" style="margin-bottom:10px;">
+                            <input type="text" id="eventCatSearch" placeholder="Cerca…" class="form-control">
+                        </div>
+
+                        <ul class="cat-list" id="eventCatList">
+                            <li class="list-empty">Caricamento...</li>
+                        </ul>
                     </div>
 
-                    <!-- Ricerca -->
-                    <div class="list-search">
-                        <input type="text" id="placeCatSearch" placeholder="Cerca categoria…" class="form-control">
+                    <!-- Categorie Luoghi -->
+                    <div class="cat-column">
+                        <div class="cat-column-header">
+                            <div>
+                                <h2>Categorie luoghi</h2>
+                                <span class="cat-count-badge" id="placeCatCount"></span>
+                            </div>
+                        </div>
+
+                        <div class="cat-add-form">
+                            <div class="cat-add-row">
+                                <input type="color" id="newPlaceCatColor" value="#64748b" class="cat-color-picker-lg" title="Colore">
+                                <input type="text" id="newPlaceCatName" placeholder="Nuova categoria…" class="form-control cat-name-input-new" onkeydown="if(event.key==='Enter'){event.preventDefault();addCategory('place');}">
+                                <button type="button" class="btn btn-small" onclick="addCategory('place')">+ Aggiungi</button>
+                            </div>
+                        </div>
+
+                        <div class="list-search" style="margin-bottom:10px;">
+                            <input type="text" id="placeCatSearch" placeholder="Cerca…" class="form-control">
+                        </div>
+
+                        <ul class="cat-list" id="placeCatList">
+                            <li class="list-empty">Caricamento...</li>
+                        </ul>
                     </div>
 
-                    <!-- Lista categorie luoghi -->
-                    <ul class="events-list cat-list" id="placeCatList">
-                        <li class="list-empty">Caricamento...</li>
-                    </ul>
                 </div>
-
             </div><!-- Fine TAB CATEGORIE -->
 
             <!-- TAB INVITI -->
             <div id="invitesTab" class="tab-content">
                 <div class="section">
-                    <h2>✉️ Gestione Inviti</h2>
+                    <h2>Gestione Inviti</h2>
                     <p class="invite-hint">
                         Crea un invito per consentire la registrazione come Manager, Artista o Admin.
                         Verrà generato un link univoco da inviare via email all'utente.

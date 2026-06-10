@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export function Home({ hidden }) {
-  const initialized = useRef(false);
+  const initialized   = useRef(false);
+  const [tickerEvents, setTickerEvents] = useState([]);
 
-  // Apply i18n + lucide after every render (keeps translations in sync with language switches)
   useLayoutEffect(() => {
     if (!hidden) {
       window.i18n?.applyToDOM();
@@ -11,7 +11,6 @@ export function Home({ hidden }) {
     }
   });
 
-  // One-time initialisation: i18n → app.js
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -19,7 +18,6 @@ export function Home({ hidden }) {
     import('../../js/i18n/i18n-service.js').then(({ i18n }) => {
       window.i18n = i18n;
       i18n.initialize();
-      // Pick a random rotating subtitle
       const el = document.getElementById('heroSubtitle');
       if (el) {
         const subs = window.t ? window.t('hero.subtitles') : [
@@ -43,16 +41,24 @@ export function Home({ hidden }) {
     });
 
     import('../../js/app.js');
-
-    // Activate first mobile tab
     switchMobileTab('calendar');
   }, []);
 
-  // When home becomes visible again, tell Leaflet to resize
   useEffect(() => {
-    if (!hidden) {
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
-    }
+    const handler = (e) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const upcoming = (e.detail?.events ?? [])
+        .filter(ev => ev.date && ev.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 30);
+      setTickerEvents(upcoming);
+    };
+    window.addEventListener('espedienti:eventsLoaded', handler);
+    return () => window.removeEventListener('espedienti:eventsLoaded', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!hidden) setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
   }, [hidden]);
 
   function switchMobileTab(tab) {
@@ -72,33 +78,33 @@ export function Home({ hidden }) {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
     }
   }
-  // Expose for onclick attributes in the rendered HTML
   window.switchMobileTab = switchMobileTab;
+
+  const tickerContent = tickerEvents.length > 0
+    ? tickerEvents.map(ev => {
+        const d = new Date(ev.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+        return `${ev.title}  ·  ${d}`;
+      }).join('   •   ')
+    : null;
 
   return (
     <div style={hidden ? { display: 'none' } : undefined}>
 
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="hero">
-        <div className="hero-content">
-          <h1 data-i18n="hero.title">Cosa facciamo oggi a Napoli?</h1>
-          <p id="heroSubtitle" data-i18n="hero.subtitle.default">Events, luoghi e persone</p>
-          <div className="hero-buttons">
-            <button className="btn btn-white"
-              onClick={() => document.getElementById('map')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-              <i data-lucide="map"></i><span data-i18n="hero.btn.map">Esplora la mappa</span>
-            </button>
-            <button className="btn btn-white"
-              onClick={() => document.getElementById('calendar')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-              <i data-lucide="calendar"></i><span data-i18n="hero.btn.calendar">Vedi calendario</span>
-            </button>
-            <button className="btn btn-outline"
-              onClick={() => document.getElementById('community')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-              <i data-lucide="message-circle"></i><span data-i18n="hero.btn.community">Community</span>
-            </button>
-          </div>
+      {/* ── Home header ───────────────────────────────────────── */}
+      <header className="home-header">
+        <div className="ticker-wrap" aria-live="off">
+          {tickerContent ? (
+            <div className="ticker-track">
+              <span className="ticker-segment">{tickerContent}</span>
+              <span className="ticker-segment" aria-hidden="true">{tickerContent}</span>
+            </div>
+          ) : (
+            <div className="ticker-track ticker-loading">
+              <span className="ticker-segment">Caricamento eventi in corso…</span>
+            </div>
+          )}
         </div>
-      </section>
+      </header>
 
       {/* ── Main content ──────────────────────────────────────── */}
       <div className="container" id="events">
@@ -214,7 +220,6 @@ export function Home({ hidden }) {
         </div>
       </div>
 
-{/* ── Footer ────────────────────────────────────────────── */}
       <footer>
         <div className="footer-content">
           <p><strong>Espedienti a Napoli</strong></p>

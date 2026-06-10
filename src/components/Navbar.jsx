@@ -65,7 +65,10 @@ export function Navbar() {
     <header>
       <div className="header-content">
         <div className="logo">
-          <NavA to="/" href="./">Espedienti a Napoli</NavA>
+          <div className="logo-inner">
+            <NavA to="/" href="./">Espedienti a Napoli</NavA>
+            <span id="heroSubtitle" className="logo-subtitle"></span>
+          </div>
         </div>
 
         <button type="button" className="hamburger" id="hamburgerBtn"

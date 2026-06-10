@@ -57,11 +57,11 @@ export function Contatti() {
             <div className="contact-buttons">
               <a href="mailto:s.esposito.1101@gmail.com?subject=Segnalazione%20Bug%20-%20Espedienti%20a%20Napoli"
                 className="btn" data-i18n="about.contacts.bug">
-                🐛 Segnala Bug
+                <i data-lucide="bug" style={{width:'15px',height:'15px',verticalAlign:'-2px',marginRight:'6px'}}></i>Segnala Bug
               </a>
               <a href="mailto:s.esposito.1101@gmail.com?subject=Collaborazione%20-%20Espedienti%20a%20Napoli"
                 className="btn btn-outline btn-inline" data-i18n="about.contacts.collab">
-                ✉️ Collabora
+                <i data-lucide="mail" style={{width:'15px',height:'15px',verticalAlign:'-2px',marginRight:'6px'}}></i>Collabora
               </a>
             </div>
           </div>
@@ -70,7 +70,7 @@ export function Contatti() {
 
       <section className="newsletter" id="newsletter">
         <div className="newsletter-content">
-          <h2 data-i18n="about.newsletter.title">📬 Resta aggiornato</h2>
+          <h2 data-i18n="about.newsletter.title">Resta aggiornato</h2>
           <p data-i18n="about.newsletter.desc">Iscriviti alla newsletter per ricevere notifiche sui nuovi eventi e aggiornamenti sulla piattaforma</p>
           <form className="newsletter-form" onSubmit={handleSubmit}>
             <input
@@ -81,17 +81,17 @@ export function Contatti() {
               required
             />
             <button type="submit" disabled={status === 'loading'} data-i18n="about.newsletter.btn">
-              {status === 'loading' ? '⏳ Iscrizione...' : 'Iscriviti'}
+              {status === 'loading' ? 'Iscrizione...' : 'Iscriviti'}
             </button>
           </form>
           {status === 'error' && (
             <div className="newsletter-error" style={{ display: 'block' }} data-i18n="about.newsletter.error">
-              ⚠️ Inserisci un indirizzo email valido.
+              Inserisci un indirizzo email valido.
             </div>
           )}
           {status === 'success' && (
             <div className="newsletter-success" style={{ display: 'block' }} data-i18n="about.newsletter.success">
-              ✅ Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
+              Grazie per esserti iscritto! Riceverai presto aggiornamenti sui nuovi eventi.
             </div>
           )}
         </div>

@@ -111,6 +111,9 @@ async function initializeAdminApp() {
     // Set up window handlers
     setupWindowHandlers();
 
+    // Render Lucide icons injected by JS modules
+    if (window.lucide) window.lucide.createIcons();
+
     console.log('✅ Espedienti Admin initialized successfully!');
   } catch (error) {
     console.error('❌ Admin initialization error:', error);

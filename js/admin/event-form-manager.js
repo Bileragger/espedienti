@@ -65,6 +65,12 @@ export class EventFormManager {
     // Expose functions to window
     window.editEvent = (id) => this.editEvent(id);
     window.deleteEvent = (id) => this.deleteEvent(id);
+    window.reloadEvents = async () => {
+      const btn = document.querySelector('[onclick="reloadEvents()"]');
+      if (btn) btn.disabled = true;
+      await this.loadEvents();
+      if (btn) { btn.disabled = false; if (window.lucide) window.lucide.createIcons({ nodes: [btn] }); }
+    };
     window.removeTag = (tag) => this.removeTag(tag);
     window.selectLocation = (index) => this.selectLocation(index);
     window.useManualAddress = () => this.useManualAddress();
@@ -285,14 +291,14 @@ export class EventFormManager {
 
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
-    submitBtn.textContent = '⏳ Salvataggio...';
+    submitBtn.textContent = 'Salvataggio...';
 
     try {
       const coordsValue = document.getElementById('coordinates').value.trim();
       const coords = this.geocoding.parseCoordinateString(coordsValue);
 
       if (!coords) {
-        alert('⚠️ Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
+        alert('Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
         return;
       }
 
@@ -323,13 +329,13 @@ export class EventFormManager {
       }
 
       this.resetForm();
-      alert('✅ Evento salvato!');
+      alert('Evento salvato!');
     } catch (error) {
       console.error('Errore salvataggio evento:', error);
-      alert('❌ Errore nel salvataggio.');
+      alert('Errore nel salvataggio.');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = this.editingEventId ? '✅ Salva Modifiche' : '✅ Aggiungi Evento';
+      submitBtn.textContent = this.editingEventId ? 'Salva Modifiche' : 'Aggiungi Evento';
     }
   }
 
@@ -388,7 +394,7 @@ export class EventFormManager {
 
     if (c) this.miniMap.updateMarker('miniMap', c.lat, c.lng);
 
-    document.getElementById('submitBtn').textContent = '💾 Aggiorna Evento';
+    document.getElementById('submitBtn').textContent = 'Aggiorna Evento';
 
     window.switchSubTab?.('events', 'form');
     document.getElementById('eventForm')?.scrollIntoView({ behavior: 'smooth' });
@@ -432,14 +438,16 @@ export class EventFormManager {
 
     count.textContent = this.events.length;
 
+    const sorted = [...this.events].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
     const filtered = query
-      ? this.events.filter(e =>
+      ? sorted.filter(e =>
           e.title?.toLowerCase().includes(query.toLowerCase()) ||
           e.location?.toLowerCase().includes(query.toLowerCase()) ||
           e.primaryCategory?.toLowerCase().includes(query.toLowerCase()) ||
           e.categories?.some(c => c.toLowerCase().includes(query.toLowerCase()))
         )
-      : this.events;
+      : sorted;
 
     if (filtered.length === 0) {
       list.innerHTML = `<li class="list-empty">${query ? 'Nessun risultato' : 'Nessun evento presente'}</li>`;
@@ -455,9 +463,19 @@ export class EventFormManager {
         return `<span class="item-cat-chip${c === primary ? ' primary' : ''}" style="${style}">${c}</span>`;
       }).join('');
 
+      const dateLabel = event.date
+        ? new Date(event.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+        : null;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const isPast = event.date && event.date < today;
+
       return `
-        <li class="event-item place-item place-item--compact">
-          <span class="place-item-name">${event.title}</span>
+        <li class="event-item place-item place-item--compact${isPast ? ' event-past' : ''}">
+          <div class="event-list-main">
+            <span class="place-item-name">${event.title}</span>
+            ${dateLabel ? `<span class="event-list-date${isPast ? ' event-list-date--past' : ''}">${dateLabel}</span>` : ''}
+          </div>
           <div class="item-cats">${chips}</div>
           <div class="place-item-actions">
             <button type="button" class="btn btn-small" onclick="editEvent('${event.firebaseId}')">Modifica</button>

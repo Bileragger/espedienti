@@ -36,32 +36,32 @@ export function About() {
           <h2 className="section-title" data-i18n="about.howItWorks">Come Funziona</h2>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">📅</div>
+              <div className="feature-icon"><i data-lucide="calendar"></i></div>
               <h3 data-i18n="about.feature1.title">Calendario Condiviso</h3>
               <p data-i18n="about.feature1.desc">Visualizza tutti gli eventi della tua città in un unico calendario. Mai più occasioni perse!</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🗺️</div>
+              <div className="feature-icon"><i data-lucide="map"></i></div>
               <h3 data-i18n="about.feature2.title">Mappa Interattiva</h3>
               <p data-i18n="about.feature2.desc">Scopri eventi vicino a te con la nostra mappa. Clicca sui marker per vedere i dettagli.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">👥</div>
+              <div className="feature-icon"><i data-lucide="users"></i></div>
               <h3 data-i18n="about.feature3.title">Trova Compagni</h3>
               <p data-i18n="about.feature3.desc">Usa le chat per organizzarti con altre persone e partecipare insieme agli eventi.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔔</div>
+              <div className="feature-icon"><i data-lucide="calendar-plus"></i></div>
               <h3 data-i18n="about.feature4.title">Aggiungi al Tuo Calendario</h3>
               <p data-i18n="about.feature4.desc">Con un click aggiungi gli eventi che ti interessano al tuo Google Calendar personale.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">💬</div>
+              <div className="feature-icon"><i data-lucide="message-circle"></i></div>
               <h3 data-i18n="about.feature5.title">Chat per Interessi</h3>
               <p data-i18n="about.feature5.desc">Community organizzate per tema: musica, teatro, mostre e altro ancora.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">✨</div>
+              <div className="feature-icon"><i data-lucide="bell"></i></div>
               <h3 data-i18n="about.feature6.title">Sempre Aggiornato</h3>
               <p data-i18n="about.feature6.desc">Iscriviti alla newsletter per ricevere aggiornamenti su nuovi eventi e funzionalità.</p>
             </div>

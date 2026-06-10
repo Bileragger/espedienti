@@ -8,7 +8,7 @@
 import { firebaseService } from '../data/firebase-service.js';
 import { placeFormManager } from './place-form-manager.js';
 import { geocodingService } from './geocoding-service.js';
-import { EVENT_CATEGORIES } from '../config/constants.js';
+import { categoryManager } from './category-manager.js';
 import { esc } from '../utils/string-utils.js';
 
 const MESI_IT = {
@@ -71,6 +71,7 @@ export class ValidationManager {
     window.validazioneGeoSearch   = ()   => this._geoSearch();
     window.validazioneSelectGeo   = (i)  => this._selectGeo(i);
     window.validazioneAddTag      = ()   => this._addTagFromInput();
+    window.validazioneSalvaBozza  = ()   => this._saveDraft();
 
     console.log('✅ ValidationManager initialized');
   }
@@ -119,6 +120,7 @@ export class ValidationManager {
     }
 
     container.innerHTML = `<ul class="events-list">${filtered.map(e => this._cardHTML(e)).join('')}</ul>`;
+    if (window.lucide) window.lucide.createIcons({ nodes: Array.from(container.querySelectorAll('[data-lucide]')) });
   }
 
   _cardHTML(e) {
@@ -133,32 +135,36 @@ export class ValidationManager {
       : e.data || null;
 
     const dateMeta = [
-      submittedLabel ? `📨 Ricevuto: ${esc(submittedLabel)}` : null,
-      eventDateLabel ? `📅 Evento: ${esc(eventDateLabel)}` : null,
-      e.ora   ? `⏰ ${esc(e.ora)}`   : null,
-      e.luogo ? `📍 ${esc(e.luogo)}` : null,
+      submittedLabel ? `Ricevuto: ${esc(submittedLabel)}` : null,
+      eventDateLabel ? `${esc(eventDateLabel)}` : null,
+      e.ora   ? `${esc(e.ora)}`   : null,
+      e.luogo ? `${esc(e.luogo)}` : null,
     ].filter(Boolean).join(' &nbsp;&nbsp;');
 
     const prezzoChip = e.prezzo
-      ? `<span class="item-cat-chip">${e.prezzo.toLowerCase().includes('gratuit') || e.prezzo === '0' ? '🎟 Gratuito' : `💰 ${esc(e.prezzo)}`}</span>`
+      ? `<span class="item-cat-chip">${e.prezzo.toLowerCase().includes('gratuit') || e.prezzo === '0' ? 'Gratuito' : esc(e.prezzo)}</span>`
       : '';
 
     const thumb = e.imageUrl
       ? `<img src="${esc(e.imageUrl)}" alt="poster" class="val-thumb" onclick="showPoster('${esc(e.imageUrl)}')">`
-      : `<div class="val-thumb val-thumb--empty">📄</div>`;
+      : `<div class="val-thumb val-thumb--empty"><i data-lucide="file-text" style="width:20px;height:20px;opacity:0.4;"></i></div>`;
+
+    const draftBadge = e._draft
+      ? `<span style="font-size:0.7rem;background:#f59e0b;color:#fff;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px;">Bozza</span>`
+      : '';
 
     return `
       <li class="event-item place-item--compact val-card" id="valCard_${esc(e.firebaseId)}">
         ${thumb}
         <div class="val-card-body">
-          <span class="place-item-name">${esc(e.titolo || '—')}</span>
+          <span class="place-item-name">${esc(e.titolo || '—')}${draftBadge}</span>
           ${dateMeta ? `<div class="val-card-meta">${dateMeta}</div>` : ''}
           ${prezzoChip ? `<div class="item-cats">${prezzoChip}</div>` : ''}
           ${e.descrizione_breve ? `<div class="val-card-desc">${esc(e.descrizione_breve)}</div>` : ''}
         </div>
         <div class="place-item-actions">
-          <button type="button" class="btn btn-small" onclick="validazioneRevisiona('${esc(e.firebaseId)}')">✏️ Revisiona</button>
-          <button type="button" class="btn btn-danger btn-small" onclick="validazioneRifiuta('${esc(e.firebaseId)}')">🗑 Rifiuta</button>
+          <button type="button" class="btn btn-small" onclick="validazioneRevisiona('${esc(e.firebaseId)}')">Revisiona</button>
+          <button type="button" class="btn btn-danger btn-small" onclick="validazioneRifiuta('${esc(e.firebaseId)}')">Rifiuta</button>
         </div>
       </li>`;
   }
@@ -175,12 +181,15 @@ export class ValidationManager {
 
     if (window.switchSubTab) window.switchSubTab('events', 'validazione');
 
-    const dateVal = parseDataItaliana(raw.data);
-    const timeVal = parseOra(raw.ora);
+    // Use saved draft values if present, otherwise fall back to raw OCR fields
+    const draft   = raw._draft || {};
+    const dateVal = draft.date     ?? parseDataItaliana(raw.data);
+    const timeVal = draft.time     ?? parseOra(raw.ora);
 
-    const catOptions = Object.values(EVENT_CATEGORIES).map(c =>
-      `<option value="${c.id}">${c.icon} ${c.name}</option>`
-    ).join('');
+    const liveCats = categoryManager.eventCategories.length > 0
+      ? categoryManager.eventCategories
+      : [];
+    const catOptions = liveCats.map(c => `<option value="${c.key}">${esc(c.name)}</option>`).join('');
 
     const initialTags = [];
     if (raw.prezzo) {
@@ -195,7 +204,7 @@ export class ValidationManager {
     // Submission date info line
     const submittedRaw = raw.submittedAt || raw.createdAt || null;
     const submittedInfo = submittedRaw
-      ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:18px;">📨 Ricevuto: ${esc(formatDate(submittedRaw))}</p>`
+      ? `<p style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:18px;">Ricevuto: ${esc(formatDate(submittedRaw))}</p>`
       : '';
 
     const formPanel = document.getElementById('validazioneFormPanel');
@@ -207,29 +216,32 @@ export class ValidationManager {
 
     formPanel.innerHTML = `
       <div class="section" style="max-width:680px;">
-        <h2 style="margin-bottom:6px;">✏️ Revisiona evento</h2>
+        <h2 style="margin-bottom:6px;">Revisiona evento</h2>
         ${submittedInfo}
 
         ${raw.imageUrl ? `<div style="margin-bottom:16px;"><img src="${esc(raw.imageUrl)}" alt="Locandina" style="max-height:180px;border-radius:8px;cursor:pointer;" onclick="showPoster('${esc(raw.imageUrl)}')"></div>` : ''}
 
-        <div class="form-group">
+        <div class="form-group" id="valTitleGroup">
           <label class="form-label">Titolo *</label>
-          <input id="valTitle" class="form-input" type="text" value="${esc(raw.titolo || '')}" required>
+          <input id="valTitle" class="form-input" type="text" value="${esc(draft.title ?? raw.titolo ?? '')}" oninput="this.closest('.form-group').classList.remove('field-error')">
+          <span class="field-error-msg">Il titolo è obbligatorio.</span>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="valCategoryGroup">
           <label class="form-label">Categoria *</label>
-          <select id="valCategory" class="form-select">
+          <select id="valCategory" class="form-select" onchange="this.closest('.form-group').classList.remove('field-error')">
             <option value="">Seleziona categoria...</option>
             ${catOptions}
           </select>
+          <span class="field-error-msg">Seleziona una categoria.</span>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group">
+          <div class="form-group" id="valDateGroup">
             <label class="form-label">Data *</label>
-            <input id="valDate" class="form-input" type="date" value="${esc(dateVal)}">
+            <input id="valDate" class="form-input" type="date" value="${esc(dateVal)}" oninput="this.closest('.form-group').classList.remove('field-error')">
             ${raw.data ? `<small style="color:var(--text-secondary);">Grezzo: "${esc(raw.data)}"</small>` : ''}
+            <span class="field-error-msg">La data è obbligatoria.</span>
           </div>
           <div class="form-group">
             <label class="form-label">Ora inizio</label>
@@ -247,32 +259,33 @@ export class ValidationManager {
         <div class="form-group">
           <label class="form-label">Luogo / Indirizzo</label>
           <div style="display:flex;gap:8px;">
-            <input id="valLocation" class="form-input" type="text" value="${esc(raw.luogo || '')}" style="flex:1;" placeholder="Via/Piazza, Napoli">
-            <button type="button" class="btn btn-secondary" onclick="validazioneGeoSearch()">🔍 Cerca</button>
+            <input id="valLocation" class="form-input" type="text" value="${esc(draft.location ?? raw.luogo ?? '')}" style="flex:1;" placeholder="Via/Piazza, Napoli">
+            <button type="button" class="btn btn-secondary" onclick="validazioneGeoSearch()">Cerca</button>
           </div>
           <div id="valGeoResults" style="margin-top:6px;"></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group">
+          <div class="form-group" id="valLatGroup">
             <label class="form-label">Latitudine *</label>
-            <input id="valLat" class="form-input" type="number" step="any" placeholder="40.8518">
+            <input id="valLat" class="form-input" type="number" step="any" placeholder="40.8518" value="${esc(String(draft.lat ?? ''))}" oninput="this.closest('.form-group').classList.remove('field-error');document.getElementById('valLngGroup')?.classList.remove('field-error');">
+            <span class="field-error-msg">Coordinate obbligatorie.</span>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="valLngGroup">
             <label class="form-label">Longitudine *</label>
-            <input id="valLng" class="form-input" type="number" step="any" placeholder="14.2681">
+            <input id="valLng" class="form-input" type="number" step="any" placeholder="14.2681" value="${esc(String(draft.lng ?? ''))}" oninput="this.closest('.form-group').classList.remove('field-error');document.getElementById('valLatGroup')?.classList.remove('field-error');">
+            <span class="field-error-msg">&nbsp;</span>
           </div>
         </div>
-        <p id="valCoordsError" style="color:#dc2626;font-size:0.82rem;display:none;margin-top:-8px;margin-bottom:8px;">⚠️ Le coordinate sono obbligatorie per pubblicare l'evento. Usa la ricerca o seleziona un luogo registrato.</p>
 
         <div class="form-group">
           <label class="form-label">Descrizione</label>
-          <textarea id="valDescription" class="form-textarea" rows="3">${esc(raw.descrizione_breve || '')}</textarea>
+          <textarea id="valDescription" class="form-textarea" rows="3">${esc(draft.description ?? raw.descrizione_breve ?? '')}</textarea>
         </div>
 
         <div class="form-group">
           <label class="form-label">URL Immagine (poster)</label>
-          <input id="valImageUrl" class="form-input" type="url" value="${esc(raw.imageUrl || '')}" placeholder="https://...">
+          <input id="valImageUrl" class="form-input" type="url" value="${esc(draft.imageUrl ?? raw.imageUrl ?? '')}" placeholder="https://...">
         </div>
 
         <div class="form-group">
@@ -288,14 +301,25 @@ export class ValidationManager {
 
         <div class="form-group">
           <label class="form-label">Link WhatsApp</label>
-          <input id="valWhatsapp" class="form-input" type="url" placeholder="https://wa.me/...">
+          <input id="valWhatsapp" class="form-input" type="url" placeholder="https://wa.me/..." value="${esc(draft.whatsapp ?? '')}">
         </div>
 
-        <div style="display:flex;gap:10px;margin-top:24px;">
-          <button type="button" class="btn btn-primary" onclick="validazioneApprova()">✅ Approva e pubblica</button>
+        <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary" onclick="validazioneApprova()">Approva e pubblica</button>
+          <button type="button" class="btn btn-secondary" onclick="validazioneSalvaBozza()">Salva bozza</button>
           <button type="button" class="btn btn-secondary" onclick="validazioneBackToList()">← Torna alla lista</button>
         </div>
       </div>`;
+
+    // Pre-select category (can't be done via value attr on <select> with dynamic options)
+    const catSel = document.getElementById('valCategory');
+    if (catSel) catSel.value = draft.category ?? raw.category ?? '';
+
+    // Pre-populate lat/lng from raw coordinates if draft has no value
+    const latEl = document.getElementById('valLat');
+    const lngEl = document.getElementById('valLng');
+    if (latEl && !latEl.value && raw.coordinates?.lat != null) latEl.value = raw.coordinates.lat;
+    if (lngEl && !lngEl.value && raw.coordinates?.lng != null) lngEl.value = raw.coordinates.lng;
 
     this._showSubTab('form');
     this._setupPlaceSearch('valPlaceSearch', 'valPlaceResults');
@@ -337,7 +361,8 @@ export class ValidationManager {
           if (place.coordinates?.lat != null && place.coordinates?.lng != null) {
             document.getElementById('valLat').value = place.coordinates.lat;
             document.getElementById('valLng').value = place.coordinates.lng;
-            document.getElementById('valCoordsError')?.style && (document.getElementById('valCoordsError').style.display = 'none');
+            document.getElementById('valLatGroup')?.classList.remove('field-error');
+            document.getElementById('valLngGroup')?.classList.remove('field-error');
           }
         });
       });
@@ -373,7 +398,7 @@ export class ValidationManager {
       if (resultsEl) {
         resultsEl.innerHTML = this._geoResults.map((r, i) =>
           `<div class="geo-result-item" onclick="validazioneSelectGeo(${i})" style="padding:6px 10px;cursor:pointer;border-radius:6px;font-size:13px;margin-bottom:3px;background:var(--bg-secondary);">
-            📍 ${esc(r.display_name)}
+            ${esc(r.display_name)}
           </div>`
         ).join('');
       }
@@ -389,8 +414,8 @@ export class ValidationManager {
     document.getElementById('valLat').value = parseFloat(r.lat).toFixed(6);
     document.getElementById('valLng').value = parseFloat(r.lon).toFixed(6);
     document.getElementById('valGeoResults').innerHTML = '';
-    const err = document.getElementById('valCoordsError');
-    if (err) err.style.display = 'none';
+    document.getElementById('valLatGroup')?.classList.remove('field-error');
+    document.getElementById('valLngGroup')?.classList.remove('field-error');
     this._geoResults = [];
   }
 
@@ -430,15 +455,7 @@ export class ValidationManager {
     const whatsapp = document.getElementById('valWhatsapp')?.value?.trim();
     const tags     = this._collectTags();
 
-    if (!title) { alert('Il titolo è obbligatorio.'); return; }
-    if (!date)  { alert('La data è obbligatoria.'); return; }
-
-    if (isNaN(lat) || isNaN(lng) || !lat || !lng) {
-      const err = document.getElementById('valCoordsError');
-      if (err) { err.style.display = ''; err.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      alert('Le coordinate sono obbligatorie. Usa la ricerca geocoding o seleziona un luogo registrato.');
-      return;
-    }
+    if (!this._validateFields()) return;
 
     const eventData = {
       title,
@@ -480,6 +497,55 @@ export class ValidationManager {
     } catch (err) {
       console.error('❌ Errore rifiuto:', err);
       alert('Errore durante il rifiuto. Riprova.');
+    }
+  }
+
+  // ── Validation / Draft ────────────────────────────────────────────────────
+
+  _validateFields() {
+    let valid = true;
+    const checks = [
+      { id: 'valTitle',    group: 'valTitleGroup' },
+      { id: 'valCategory', group: 'valCategoryGroup' },
+      { id: 'valDate',     group: 'valDateGroup' },
+      { id: 'valLat',      group: 'valLatGroup' },
+      { id: 'valLng',      group: 'valLngGroup' },
+    ];
+    checks.forEach(({ id, group }) => {
+      const el  = document.getElementById(id);
+      const grp = document.getElementById(group);
+      if (!el?.value?.trim()) { grp?.classList.add('field-error'); valid = false; }
+    });
+    if (!valid) document.querySelector('.form-group.field-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return valid;
+  }
+
+  async _saveDraft() {
+    if (!this._editing) return;
+    const draft = {
+      title:       document.getElementById('valTitle')?.value?.trim()       ?? '',
+      category:    document.getElementById('valCategory')?.value            ?? '',
+      date:        document.getElementById('valDate')?.value                ?? '',
+      time:        document.getElementById('valTime')?.value                ?? '',
+      location:    document.getElementById('valLocation')?.value?.trim()    ?? '',
+      lat:         document.getElementById('valLat')?.value !== '' ? parseFloat(document.getElementById('valLat').value) : null,
+      lng:         document.getElementById('valLng')?.value !== '' ? parseFloat(document.getElementById('valLng').value) : null,
+      description: document.getElementById('valDescription')?.value?.trim() ?? '',
+      imageUrl:    document.getElementById('valImageUrl')?.value?.trim()    ?? '',
+      whatsapp:    document.getElementById('valWhatsapp')?.value?.trim()    ?? '',
+      tags:        this._collectTags(),
+      savedAt:     new Date().toISOString(),
+    };
+    try {
+      await firebaseService.update('eventi_raw', this._editing, { _draft: draft });
+      const item = this._items.find(e => e.firebaseId === this._editing);
+      if (item) item._draft = draft;
+      this._renderList(document.getElementById('validazioneSearch')?.value || '');
+      const btn = document.querySelector('[onclick="validazioneSalvaBozza()"]');
+      if (btn) { btn.textContent = 'Salvata'; setTimeout(() => { btn.textContent = 'Salva bozza'; }, 2000); }
+    } catch (err) {
+      console.error('❌ Errore salvataggio bozza:', err);
+      alert('Errore durante il salvataggio della bozza.');
     }
   }
 
