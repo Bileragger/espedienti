@@ -6,6 +6,7 @@
     <title>Admin — Espedienti a Napoli</title>
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/main.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,71 +22,38 @@
     </script>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         import { FIREBASE_CONFIG } from './js/config/firebase-config.js';
 
-        const app = initializeApp(FIREBASE_CONFIG);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        const app     = initializeApp(FIREBASE_CONFIG);
+        const db      = getFirestore(app);
         const storage = getStorage(app);
 
-        // Rendi disponibili globalmente
+        // Rendi disponibili globalmente (auth e firebaseReady vengono impostati da AuthContext.jsx)
         window.firebaseApp = app;
         window.db = db;
-        window.auth = auth;
         window.firestoreModules = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
         window.storageModules = { storage, ref, uploadBytes, getDownloadURL };
 
-        // Assicura che esista un profilo Firestore per l'utente loggato
-        async function ensureUserProfile(user) {
-            const ref  = doc(db, 'users', user.uid);
-            const snap = await getDoc(ref);
-            if (!snap.exists()) {
-                await setDoc(ref, {
-                    uid:         user.uid,
-                    email:       user.email || '',
-                    displayName: user.displayName || user.email?.split('@')[0] || '',
-                    role:        'user',
-                    createdAt:   new Date().toISOString(),
-                });
-            }
-            return snap.exists() ? snap.data().role : 'user';
-        }
-
-        // Osserva stato autenticazione
-        onAuthStateChanged(auth, async (user) => {
+        // Auth è gestita da React AuthContext (navbar-mount.jsx → AuthContext.jsx).
+        // Ascoltiamo l'evento che dispatcha quando lo stato cambia.
+        window.addEventListener('authStateChanged', (e) => {
+            const { user, role } = e.detail ?? {};
             const accessDenied = document.getElementById('accessDenied');
             const adminContent = document.getElementById('adminContent');
 
             if (!user) {
-                // Non loggato → torna alla home (si aprirà il modale di login)
-                window.location.href = 'index.html';
+                window.location.href = './';
                 return;
             }
-
-            ensureUserProfile(user).then(role => {
-                if (role !== 'admin') {
-                    // Loggato ma non admin
-                    accessDenied.style.display = 'block';
-                    adminContent.style.display  = 'none';
-                    return;
-                }
-                accessDenied.style.display = 'none';
-                adminContent.style.display  = 'block';
-
-                if (!window.firebaseReady) {
-                    window.firebaseReady = true;
-                    window.dispatchEvent(new Event('firebaseReady'));
-                }
-            }).catch(() => {
-                // Errore lettura profilo → tratta come non admin
-                if (!window.firebaseReady) {
-                    window.firebaseReady = true;
-                    window.dispatchEvent(new Event('firebaseReady'));
-                }
-            });
+            if (role !== 'admin') {
+                if (accessDenied) accessDenied.style.display = 'block';
+                if (adminContent) adminContent.style.display  = 'none';
+                return;
+            }
+            if (accessDenied) accessDenied.style.display = 'none';
+            if (adminContent) adminContent.style.display  = 'block';
         });
     </script>
 
@@ -1355,7 +1323,8 @@
             font-family: inherit;
             font-size: 0.82rem;
         }
-        .modal {
+        /* Poster preview modal — scoped to avoid overriding the React auth modal */
+        #posterModal {
             display: none;
             position: fixed;
             inset: 0;
@@ -1364,8 +1333,8 @@
             align-items: center;
             justify-content: center;
         }
-        .modal.show { display: flex; }
-        .modal-content {
+        #posterModal.show { display: flex; }
+        #posterModal .modal-content {
             position: relative;
             background: var(--bg-secondary, #1e1e2e);
             border-radius: 10px;
@@ -1374,7 +1343,7 @@
             max-height: 90vh;
             overflow: auto;
         }
-        .modal-close {
+        #posterModal .modal-close {
             position: absolute;
             top: 8px;
             right: 12px;
@@ -1383,7 +1352,7 @@
             color: var(--text-secondary, #aaa);
             line-height: 1;
         }
-        .modal-close:hover { color: var(--text-primary, #fff); }
+        #posterModal .modal-close:hover { color: var(--text-primary, #fff); }
         .modal-content--poster {
             background: #111;
             padding: 12px;

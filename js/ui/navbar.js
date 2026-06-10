@@ -6,7 +6,7 @@ import './navbar-auth.js';
 import { authService } from '../auth/auth-service.js';
 import { authRenderer } from './auth-renderer.js';
 
-// Initialize auth modal on every page (authService has its own _initialized guard)
+// Skip legacy renderer when the React AuthModal is mounted (it owns window.openAuthModal)
 authService.initialize().then(() => {
-  authRenderer.initialize();
+  if (!window.__reactAuthModal) authRenderer.initialize();
 });

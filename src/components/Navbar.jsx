@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -17,7 +17,14 @@ export function Navbar() {
   const { name, isAdmin } = useAuth();
   const inSPA = useInSPA();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lang, setLang] = useState(() => window.i18n?.lang ?? 'it');
   const active = activePage();
+
+  useEffect(() => {
+    const handler = (e) => setLang(e.detail?.lang ?? 'it');
+    window.addEventListener('languageChanged', handler);
+    return () => window.removeEventListener('languageChanged', handler);
+  }, []);
 
   // NavA: SPA-aware link — uses React Router <Link> inside the SPA, plain <a> elsewhere
   const NavA = ({ to, href, children, id, className, style, 'data-nav': dataNav }) => {
@@ -49,14 +56,16 @@ export function Navbar() {
 
   const LangBtn = () => (
     <button type="button" className="lang-toggle-btn"
-      onClick={() => window.i18n?.toggle()}>EN</button>
+      onClick={() => window.i18n?.toggle()}>
+      {lang === 'it' ? 'EN' : 'IT'}
+    </button>
   );
 
   return (
     <header>
       <div className="header-content">
         <div className="logo">
-          <NavA to="/" href="index.html">Espedienti a Napoli</NavA>
+          <NavA to="/" href="./">Espedienti a Napoli</NavA>
         </div>
 
         <button type="button" className="hamburger" id="hamburgerBtn"
@@ -65,11 +74,11 @@ export function Navbar() {
         </button>
 
         <nav className="nav-links">
-          <NavA to="/about" href="about.html" data-nav="project"
+          <NavA to="/about" href="./#/about" data-nav="project"
             className={active === 'project' ? 'active' : ''}>
             Il Progetto
           </NavA>
-          <NavA to="/contatti" href="contatti.html" data-nav="contacts"
+          <NavA to="/contatti" href="./#/contatti" data-nav="contacts"
             className={active === 'contacts' ? 'active' : ''}>
             Contatti
           </NavA>
@@ -80,8 +89,8 @@ export function Navbar() {
 
         <nav className={`mobile-menu${menuOpen ? ' open' : ''}`} id="mobileMenu"
           onClick={() => setMenuOpen(false)}>
-          <NavA to="/about" href="about.html">Il Progetto</NavA>
-          <NavA to="/contatti" href="contatti.html">Contatti</NavA>
+          <NavA to="/about" href="./#/about">Il Progetto</NavA>
+          <NavA to="/contatti" href="./#/contatti">Contatti</NavA>
           {(isAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
           <AuthBtn />
           <LangBtn />

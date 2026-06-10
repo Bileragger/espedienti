@@ -7,9 +7,12 @@ import {
 } from 'firebase/firestore';
 import { FIREBASE_CONFIG } from '../../js/config/firebase-config.js';
 
-const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+const app  = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+
+// Expose for legacy callers (admin.html Firestore/Storage still uses window.auth for signOut etc.)
+if (!window.auth) window.auth = auth;
 
 // Expose for legacy vanilla JS (firebase-service.js waits for these)
 if (!window.firebaseApp) window.firebaseApp = app;
@@ -52,6 +55,7 @@ export function AuthProvider({ children }) {
         setName(null);
         setLoading(false);
         clearCache();
+        window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { user: null, role: 'user', name: null } }));
         return;
       }
 
@@ -67,6 +71,7 @@ export function AuthProvider({ children }) {
       setName(displayName);
       setLoading(false);
       writeCache(displayName, r === 'admin');
+      window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { user: firebaseUser, role: r, name: displayName } }));
     });
   }, []);
 

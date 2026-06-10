@@ -214,15 +214,7 @@ export function Home({ hidden }) {
         </div>
       </div>
 
-      {/* ── Poster modal ──────────────────────────────────────── */}
-      <div id="posterModal" className="modal" onClick={() => window.closeModal?.()}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
-          <span className="modal-close" onClick={() => window.closeModal?.()}>&times;</span>
-          <img id="posterImage" src="" alt="Locandina evento" />
-        </div>
-      </div>
-
-      {/* ── Footer ────────────────────────────────────────────── */}
+{/* ── Footer ────────────────────────────────────────────── */}
       <footer>
         <div className="footer-content">
           <p><strong>Espedienti a Napoli</strong></p>

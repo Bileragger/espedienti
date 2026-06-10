@@ -27,6 +27,14 @@ import { FIREBASE_CONFIG } from '../config/firebase-config.js';
 
 // ── Firebase init ─────────────────────────────────────────────────────────────
 
+// When the React AuthModal is mounted (navbar-mount.jsx → AuthContext.jsx), it owns
+// Firebase Auth. Calling getAuth() again from this CDN bundle triggers a second
+// gapi.load and causes a race condition. Skip auth init entirely in that case.
+if (window.__reactAuthModal) {
+  // AuthContext.jsx (npm bundle) already handles auth state, firebaseApp, and firebaseReady.
+  // Nothing to do here.
+} else {
+
 const _existingApps = getApps();
 const _app  = _existingApps.length > 0 ? _existingApps[0] : initializeApp(FIREBASE_CONFIG);
 const _auth = getAuth(_app);
@@ -105,3 +113,5 @@ onAuthStateChanged(_auth, async (user) => {
 
   _setNavUser(user, role);
 });
+
+} // end else (!window.__reactAuthModal)

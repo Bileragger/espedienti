@@ -26,7 +26,6 @@ import { calendarRenderer } from './ui/calendar-renderer.js';
 import { unifiedListRenderer } from './ui/unified-list-renderer.js';
 import { mapRenderer } from './ui/map-renderer.js';
 import { communityRenderer } from './ui/community-renderer.js';
-import { modalManager } from './ui/modal-manager.js';
 
 // Auth modules
 import { authService } from './auth/auth-service.js';
@@ -61,11 +60,12 @@ async function initializeModules() {
   unifiedListRenderer.initialize();
   mapRenderer.initialize();
   communityRenderer.initialize();
-  modalManager.initialize();
 
-  // Initialize auth
-  await authService.initialize();
-  authRenderer.initialize();
+  // Auth is owned by the React AuthModal in the SPA; skip legacy renderer there
+  if (!window.__reactAuthModal) {
+    await authService.initialize();
+    authRenderer.initialize();
+  }
 
   console.log('✅ All modules initialized');
 }
