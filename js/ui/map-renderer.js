@@ -62,6 +62,15 @@ export class MapRenderer {
     // Expose locateUser to window for onclick handlers
     window.locateUser = () => this.locateUser();
 
+    // Card hover → highlight corresponding map marker
+    window.highlightMarker = (id, type, on) => {
+      const marker = type === 'event'
+        ? this._eventMarkerById?.get(id)
+        : this._placeMarkerById?.get(id);
+      const el = marker?.getElement();
+      if (el) el.classList.toggle('marker-highlight', on);
+    };
+
     console.log('✅ MapRenderer initialized');
   }
 
@@ -210,6 +219,7 @@ export class MapRenderer {
   _renderEventMarkers(events) {
     const markers = [];
     const selectedLocation = this.state.get('selectedLocation');
+    this._eventMarkerById = new Map();
 
     events.forEach(event => {
       if (!event.coordinates) return;
@@ -221,16 +231,15 @@ export class MapRenderer {
         { icon }
       ).addTo(this.map);
 
-      // Create popup content
       const popupContent = this._createEventPopup(event);
       marker.bindPopup(popupContent);
 
-      // Click handler
       marker.on('click', () => {
         this._handleEventMarkerClick(event);
       });
 
       markers.push(marker);
+      this._eventMarkerById.set(event.id, marker);
     });
 
     this.state.set('markers', markers);
@@ -242,6 +251,7 @@ export class MapRenderer {
    */
   _renderPlaceMarkers(places) {
     const placeMarkers = [];
+    this._placeMarkerById = new Map();
 
     places.forEach(place => {
       if (!place.coordinates) return;
@@ -252,18 +262,15 @@ export class MapRenderer {
         { icon }
       ).addTo(this.map);
 
-      // Create popup content with offset
       const popupContent = this._createPlacePopup(place);
-      marker.bindPopup(popupContent, {
-        offset: [0, -20] // Offset in alto di 20px
-      });
+      marker.bindPopup(popupContent, { offset: [0, -20] });
 
-      // Click handler
       marker.on('click', () => {
         this._handlePlaceMarkerClick(place);
       });
 
       placeMarkers.push(marker);
+      this._placeMarkerById.set(place.id, marker);
     });
 
     this.state.set('placeMarkers', placeMarkers);
@@ -341,7 +348,7 @@ export class MapRenderer {
       : '';
 
     const posterBtn = event.poster
-      ? `<button onclick="showPoster('${event.poster}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1a1410; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">🖼️ Locandina</button>`
+      ? `<button onclick='window.openDetailModal(${JSON.stringify(event).replace(/'/g, "&#39;")}, "event")' style="width: 100%; padding: 8px; margin-top: 5px; background: #c9a200; color: #1a1410; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">🖼️ Locandina</button>`
       : '';
 
     return `
@@ -394,7 +401,7 @@ export class MapRenderer {
     }
 
     const imageBtn = place.image
-      ? `<button onclick="showPoster('${place.image}')" style="width: 100%; padding: 8px; margin-top: 5px; background: #92400e; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>`
+      ? `<button onclick='window.openDetailModal(${JSON.stringify(place).replace(/'/g, "&#39;")}, "place")' style="width: 100%; padding: 8px; margin-top: 5px; background: #92400e; color: white; border: none; border-radius: 6px; cursor: pointer;">🖼️ Immagine</button>`
       : '';
 
     return `

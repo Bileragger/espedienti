@@ -1,29 +1,18 @@
 /**
  * UserManager - Gestione Utenti
  *
- * Lista tutti gli utenti da Firestore `users`.
- * Permette di:
- *   - cambiare il ruolo di un utente
- *   - eliminare il profilo (l'account Firebase Auth rimane ma è inutilizzabile
- *     senza profilo; cancellazione Auth completa richiede Admin SDK/Cloud Function)
- *
  * Struttura documento Firestore `users/{uid}`:
- *   { uid, email, displayName, role, createdAt, disabled? }
+ *   { uid, email, displayName, roles: string[], locationId?, createdAt, disabled? }
+ *
+ * Backward compat: old docs with `role: string` are read and displayed correctly;
+ * saving always writes the new `roles: string[]` field.
  */
 
 import { firebaseService } from '../data/firebase-service.js';
 import { esc } from '../utils/string-utils.js';
+import { ROLE_KEYS, ROLE_META, ROLE_LABELS, ROLE_COLORS, normalizeRoles } from '../config/permissions.js';
 
 const COLLECTION = 'users';
-
-const ROLES = ['user', 'artist', 'manager', 'admin'];
-
-const ROLE_LABELS = {
-  user:    'Utente',
-  artist:  'Artista',
-  manager: 'Manager',
-  admin:   'Admin',
-};
 
 export class UserManager {
   constructor(firebase) {
@@ -36,9 +25,14 @@ export class UserManager {
     await this.load();
     this.render();
 
-    window.deleteUser      = (uid) => this.deleteUser(uid);
-    window.saveUserRole    = (uid) => this.saveUserRole(uid);
-    window.filterUsers     = ()    => this.filterAndRender();
+    window.deleteUser             = (uid) => this.deleteUser(uid);
+    window.saveUserRoles          = (uid) => this.saveUserRoles(uid);
+    window.filterUsers            = ()    => this.filterAndRender();
+    window._toggleHostAdminField  = (uid) => {
+      const checked = [...document.querySelectorAll(`input[name="roles-${uid}"]:checked`)];
+      const lf = document.getElementById(`location-field-${uid}`);
+      if (lf) lf.style.display = checked.some(cb => cb.value === 'host_admin') ? '' : 'none';
+    };
 
     const search = document.getElementById('userSearch');
     if (search) search.addEventListener('input', () => this.filterAndRender());
@@ -67,11 +61,12 @@ export class UserManager {
     if (!list) return;
 
     const filtered = this._query
-      ? this.users.filter(u =>
-          (u.email || '').toLowerCase().includes(this._query) ||
-          (u.displayName || '').toLowerCase().includes(this._query) ||
-          (u.role || '').toLowerCase().includes(this._query)
-        )
+      ? this.users.filter(u => {
+          const rolesStr = normalizeRoles(u).join(' ');
+          return (u.email || '').toLowerCase().includes(this._query)
+              || (u.displayName || '').toLowerCase().includes(this._query)
+              || rolesStr.toLowerCase().includes(this._query);
+        })
       : this.users;
 
     if (countEl) countEl.textContent = filtered.length;
@@ -82,47 +77,75 @@ export class UserManager {
     }
 
     list.innerHTML = filtered.map(user => {
-      const date      = user.createdAt ? new Date(user.createdAt).toLocaleDateString('it-IT') : '—';
-      const roleLabel = ROLE_LABELS[user.role] || user.role || 'user';
-      const roleClass = `invite-role-${user.role || 'user'}`;
-      const disabled  = user.disabled ? '<span class="user-disabled-badge">Disabilitato</span>' : '';
+      const date     = user.createdAt ? new Date(user.createdAt).toLocaleDateString('it-IT') : '—';
+      const roles    = normalizeRoles(user);
+      const disabled = user.disabled ? '<span class="user-disabled-badge">Disabilitato</span>' : '';
 
-      const roleOptions = ROLES.map(r =>
-        `<option value="${r}" ${r === user.role ? 'selected' : ''}>${ROLE_LABELS[r]}</option>`
+      const roleBadges = roles.map(r =>
+        `<span class="invite-role-badge" style="background:${ROLE_COLORS[r] ?? '#666'}">${ROLE_LABELS[r] ?? r}</span>`
       ).join('');
+
+      const roleCheckboxes = ROLE_KEYS.map(r => `
+        <label class="role-checkbox-label" title="${ROLE_META[r].description}">
+          <input type="checkbox" name="roles-${user.uid}" value="${r}" ${roles.includes(r) ? 'checked' : ''}>
+          <span class="role-label-text" data-role="${r}">${ROLE_LABELS[r]}</span>
+        </label>`
+      ).join('');
+
+      const locationField = roles.includes('host_admin') ? `
+        <div class="role-location-field" id="location-field-${user.uid}">
+          <input type="text" class="form-input" id="locationId-${user.uid}"
+            placeholder="locationId del luogo gestito"
+            value="${esc(user.locationId || '')}">
+        </div>` : `<div class="role-location-field" id="location-field-${user.uid}" style="display:none;">
+          <input type="text" class="form-input" id="locationId-${user.uid}"
+            placeholder="locationId del luogo gestito"
+            value="${esc(user.locationId || '')}">
+        </div>`;
 
       return `
         <li class="user-item ${user.disabled ? 'user-item--disabled' : ''}">
           <div class="user-info">
             <div class="user-name">${esc(user.displayName || '—')}</div>
             <div class="user-email">${esc(user.email || '—')}</div>
-            <span class="invite-role-badge ${roleClass}">${roleLabel}</span>
+            <div class="user-role-badges">${roleBadges}</div>
             ${disabled}
             <span class="invite-date">${date}</span>
           </div>
           <div class="user-role-controls">
-            <select class="user-role-select" id="role-${user.uid}">
-              ${roleOptions}
-            </select>
-            <button class="btn btn-small" onclick="saveUserRole('${user.uid}')">Salva</button>
+            <div class="role-checkboxes" id="roles-${user.uid}"
+              onchange="window._toggleHostAdminField('${user.uid}')">
+              ${roleCheckboxes}
+            </div>
+            ${locationField}
+            <button class="btn btn-small" onclick="saveUserRoles('${user.uid}')">Salva</button>
             <button class="btn btn-danger btn-small" onclick="deleteUser('${user.uid}')">Elimina</button>
           </div>
         </li>`;
     }).join('');
   }
 
-  async saveUserRole(uid) {
-    const select = document.getElementById(`role-${uid}`);
-    if (!select) return;
-    const newRole = select.value;
+  async saveUserRoles(uid) {
+    const checked = [...document.querySelectorAll(`input[name="roles-${uid}"]:checked`)];
+    const roles = checked.map(cb => cb.value);
+
+    if (!roles.length) {
+      alert('Seleziona almeno un ruolo.');
+      return;
+    }
+
+    const locationId = document.getElementById(`locationId-${uid}`)?.value.trim() || null;
+    const update = { roles };
+    if (locationId) update.locationId = locationId;
+    else update.locationId = null;
 
     try {
-      await this.firebase.update(COLLECTION, uid, { role: newRole });
+      await this.firebase.update(COLLECTION, uid, update);
       const user = this.users.find(u => u.uid === uid);
-      if (user) user.role = newRole;
+      if (user) { user.roles = roles; user.locationId = locationId; }
       this.render();
     } catch (err) {
-      alert('Errore durante il salvataggio del ruolo.');
+      alert('Errore durante il salvataggio dei ruoli.');
       console.error(err);
     }
   }
@@ -142,7 +165,6 @@ export class UserManager {
       console.error(err);
     }
   }
-
 }
 
 export const userManager = new UserManager(firebaseService);

@@ -26,6 +26,8 @@ export class EventFormManager {
     this.nextId = 1;
     this.editingEventId = null;
     this.categoryIcons = EVENT_CATEGORY_ICONS;
+    this._selectedPlaceId   = null;
+    this._selectedPlaceName = '';
   }
 
   async initialize() {
@@ -35,12 +37,13 @@ export class EventFormManager {
       this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
         this.miniMap.updateMarker('miniMap', lat, lng);
         document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        try {
-          const result = await this.geocoding.reverse(lat, lng);
-          if (result) {
-            document.getElementById('location').value = this.geocoding.formatAddress(result);
-          }
-        } catch (_) {}
+        const locationField = document.getElementById('location');
+        if (!locationField.value.trim()) {
+          try {
+            const result = await this.geocoding.reverse(lat, lng);
+            if (result) locationField.value = this.geocoding.formatAddress(result);
+          } catch (_) {}
+        }
       });
     }, 100);
 
@@ -65,6 +68,12 @@ export class EventFormManager {
     // Expose functions to window
     window.editEvent = (id) => this.editEvent(id);
     window.deleteEvent = (id) => this.deleteEvent(id);
+    window.reloadEvents = async () => {
+      const btn = document.querySelector('[onclick="reloadEvents()"]');
+      if (btn) btn.disabled = true;
+      await this.loadEvents();
+      if (btn) { btn.disabled = false; if (window.lucide) window.lucide.createIcons({ nodes: [btn] }); }
+    };
     window.removeTag = (tag) => this.removeTag(tag);
     window.selectLocation = (index) => this.selectLocation(index);
     window.useManualAddress = () => this.useManualAddress();
@@ -152,21 +161,19 @@ export class EventFormManager {
     const container = document.getElementById('searchResults');
     const result = container.searchResults[resultIndex];
 
-    const address = this.geocoding.formatAddress(result);
     const coords = this.geocoding.extractCoordinates(result);
+    const locationField = document.getElementById('location');
 
     document.getElementById('coordinates').value = `${coords.lat}, ${coords.lng}`;
-    document.getElementById('location').value = address;
+    if (!locationField.value.trim()) {
+      locationField.value = this.geocoding.formatAddress(result);
+    }
     document.getElementById('locationSearch').value = '';
 
     this.miniMap.updateMarker('miniMap', coords.lat, coords.lng);
     this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
       this.miniMap.updateMarker('miniMap', lat, lng);
       document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      try {
-        const rev = await this.geocoding.reverse(lat, lng);
-        if (rev) document.getElementById('location').value = this.geocoding.formatAddress(rev);
-      } catch (_) {}
     });
     container.classList.remove('show');
   }
@@ -256,7 +263,7 @@ export class EventFormManager {
     if (!places.length) { results.classList.remove('show'); return; }
     const sorted = [...places].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
     results.innerHTML = sorted.map((p, i) =>
-      `<div class="search-result-item" data-idx="${i}" data-name="${p.name || ''}">${p.name}${p.address ? `<br><small style="opacity:0.7">${p.address}</small>` : ''}</div>`
+      `<div class="search-result-item" data-idx="${i}">${p.name}${p.address ? `<br><small style="opacity:0.7">${p.address}</small>` : ''}</div>`
     ).join('');
     results.classList.add('show');
 
@@ -264,8 +271,11 @@ export class EventFormManager {
       item.addEventListener('click', () => {
         const place = sorted[parseInt(item.dataset.idx, 10)];
         if (!place) return;
-        input.value = place.name || '';
+        input.value = '';
         results.classList.remove('show');
+        this._selectedPlaceId   = place.firebaseId || place.id || null;
+        this._selectedPlaceName = place.name || '';
+        this._showSelectedPlaceChip(place.name);
         if (place.address) document.getElementById('location').value = place.address;
         if (place.coordinates?.lat != null) {
           const { lat, lng } = place.coordinates;
@@ -274,6 +284,25 @@ export class EventFormManager {
         }
       });
     });
+  }
+
+  _showSelectedPlaceChip(name) {
+    const chip = document.getElementById('selectedPlaceChip');
+    const input = document.getElementById('placeSearch');
+    if (!chip) return;
+    chip.innerHTML = `<span class="selected-place-chip__name">📍 ${name}</span><button type="button" class="selected-place-chip__remove" title="Scollega luogo">×</button>`;
+    chip.classList.add('visible');
+    if (input) input.value = '';
+    chip.querySelector('.selected-place-chip__remove').addEventListener('click', () => {
+      this._selectedPlaceId   = null;
+      this._selectedPlaceName = '';
+      chip.classList.remove('visible');
+    });
+  }
+
+  _hideSelectedPlaceChip() {
+    const chip = document.getElementById('selectedPlaceChip');
+    if (chip) chip.classList.remove('visible');
   }
 
   populatePlaceSelect() {
@@ -285,14 +314,14 @@ export class EventFormManager {
 
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
-    submitBtn.textContent = '⏳ Salvataggio...';
+    submitBtn.textContent = 'Salvataggio...';
 
     try {
       const coordsValue = document.getElementById('coordinates').value.trim();
       const coords = this.geocoding.parseCoordinateString(coordsValue);
 
       if (!coords) {
-        alert('⚠️ Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
+        alert('Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
         return;
       }
 
@@ -310,6 +339,14 @@ export class EventFormManager {
         tags: [...this.currentTags]
       };
 
+      if (this._selectedPlaceId) {
+        eventData.placeId   = this._selectedPlaceId;
+        eventData.placeName = this._selectedPlaceName;
+      } else {
+        eventData.placeId   = null;
+        eventData.placeName = null;
+      }
+
       const whatsappValue = document.getElementById('whatsapp').value.trim();
       if (whatsappValue) eventData.whatsappLink = whatsappValue;
 
@@ -323,13 +360,13 @@ export class EventFormManager {
       }
 
       this.resetForm();
-      alert('✅ Evento salvato!');
+      alert('Evento salvato!');
     } catch (error) {
       console.error('Errore salvataggio evento:', error);
-      alert('❌ Errore nel salvataggio.');
+      alert('Errore nel salvataggio.');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = this.editingEventId ? '✅ Salva Modifiche' : '✅ Aggiungi Evento';
+      submitBtn.textContent = this.editingEventId ? 'Salva Modifiche' : 'Aggiungi Evento';
     }
   }
 
@@ -388,7 +425,16 @@ export class EventFormManager {
 
     if (c) this.miniMap.updateMarker('miniMap', c.lat, c.lng);
 
-    document.getElementById('submitBtn').textContent = '💾 Aggiorna Evento';
+    document.getElementById('submitBtn').textContent = 'Aggiorna Evento';
+
+    this._selectedPlaceId   = event.placeId   || null;
+    this._selectedPlaceName = event.placeName || '';
+    if (event.placeName) {
+      this._showSelectedPlaceChip(event.placeName);
+    } else {
+      this._hideSelectedPlaceChip();
+    }
+    document.getElementById('placeSearchResults')?.classList.remove('show');
 
     window.switchSubTab?.('events', 'form');
     document.getElementById('eventForm')?.scrollIntoView({ behavior: 'smooth' });
@@ -396,8 +442,10 @@ export class EventFormManager {
 
   resetForm() {
     document.getElementById('eventForm').reset();
-    const placeSearch = document.getElementById('placeSearch');
-    if (placeSearch) placeSearch.value = '';
+    this._selectedPlaceId   = null;
+    this._selectedPlaceName = '';
+    this._hideSelectedPlaceChip();
+    document.getElementById('placeSearch').value = '';
     document.getElementById('placeSearchResults')?.classList.remove('show');
     this.currentTags = [];
     this.renderTags();
@@ -432,14 +480,16 @@ export class EventFormManager {
 
     count.textContent = this.events.length;
 
+    const sorted = [...this.events].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
     const filtered = query
-      ? this.events.filter(e =>
+      ? sorted.filter(e =>
           e.title?.toLowerCase().includes(query.toLowerCase()) ||
           e.location?.toLowerCase().includes(query.toLowerCase()) ||
           e.primaryCategory?.toLowerCase().includes(query.toLowerCase()) ||
           e.categories?.some(c => c.toLowerCase().includes(query.toLowerCase()))
         )
-      : this.events;
+      : sorted;
 
     if (filtered.length === 0) {
       list.innerHTML = `<li class="list-empty">${query ? 'Nessun risultato' : 'Nessun evento presente'}</li>`;
@@ -455,9 +505,19 @@ export class EventFormManager {
         return `<span class="item-cat-chip${c === primary ? ' primary' : ''}" style="${style}">${c}</span>`;
       }).join('');
 
+      const dateLabel = event.date
+        ? new Date(event.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+        : null;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const isPast = event.date && event.date < today;
+
       return `
-        <li class="event-item place-item place-item--compact">
-          <span class="place-item-name">${event.title}</span>
+        <li class="event-item place-item place-item--compact${isPast ? ' event-past' : ''}">
+          <div class="event-list-main">
+            <span class="place-item-name">${event.title}</span>
+            ${dateLabel ? `<span class="event-list-date${isPast ? ' event-list-date--past' : ''}">${dateLabel}</span>` : ''}
+          </div>
           <div class="item-cats">${chips}</div>
           <div class="place-item-actions">
             <button type="button" class="btn btn-small" onclick="editEvent('${event.firebaseId}')">Modifica</button>

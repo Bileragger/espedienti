@@ -212,7 +212,7 @@ export class PlaceFormManager {
       if (value) {
         const validation = this.hoursParser.validateFormat(value);
         if (!validation.valid) {
-          throw new Error(`⚠️ ${dayNames[day]}: ${validation.error}\nValore inserito: "${value}"`);
+          throw new Error(`${dayNames[day]}: ${validation.error}\nValore inserito: "${value}"`);
         }
         hours[day] = value;
         hasAnyHours = true;
@@ -234,7 +234,7 @@ export class PlaceFormManager {
       const coords = this.geocoding.parseCoordinateString(coordsValue);
 
       if (!coords) {
-        alert('⚠️ Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
+        alert('Seleziona un indirizzo dalla ricerca o clicca sulla mappa per impostare la posizione.');
         return;
       }
 
@@ -268,12 +268,12 @@ export class PlaceFormManager {
       }
 
       this.resetForm();
-      alert('✅ Luogo salvato!');
+      alert('Luogo salvato!');
     } catch (error) {
       alert(error.message || '❌ Errore nel salvataggio.');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = this.editingPlaceId ? '✅ Salva Modifiche' : '✅ Aggiungi Luogo';
+      submitBtn.textContent = this.editingPlaceId ? 'Salva Modifiche' : 'Aggiungi Luogo';
     }
   }
 
@@ -342,7 +342,7 @@ export class PlaceFormManager {
     if (pc) this.miniMap.updateMarker('placeMiniMap', pc.lat, pc.lng);
 
     const submitBtn = document.querySelector('#placeForm button[type="submit"]');
-    submitBtn.textContent = '💾 Aggiorna Luogo';
+    submitBtn.textContent = 'Aggiorna Luogo';
 
     window.switchSubTab('places', 'form');
     document.getElementById('placeForm').scrollIntoView({ behavior: 'smooth' });

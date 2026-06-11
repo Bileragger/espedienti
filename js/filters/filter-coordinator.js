@@ -77,6 +77,11 @@ export class FilterCoordinator {
       eventCount: this.state.get('filteredEvents').length,
       placeCount: this.state.get('filteredPlaces').length
     });
+
+    // Notify React components (ticker, etc.)
+    window.dispatchEvent(new CustomEvent('espedienti:eventsLoaded', {
+      detail: { events: this.state.get('events') ?? [] }
+    }));
   }
 
   /**
@@ -84,6 +89,14 @@ export class FilterCoordinator {
    */
   filterEvents() {
     let events = this.state.get('events');
+
+    // Hide past events by default unless the user has explicitly selected a past date
+    const selectedDate = this.state.get('selectedDate');
+    const today = new Date().toISOString().slice(0, 10);
+    const showingPastDate = selectedDate && selectedDate < today;
+    if (!showingPastDate) {
+      events = events.filter(e => !e.date || e.date >= today);
+    }
 
     // Apply filters in order
     events = this.searchFilter.filterEvents(events);

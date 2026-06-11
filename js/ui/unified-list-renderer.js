@@ -12,6 +12,7 @@ import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';
 import { dateFormatter } from '../utils/date-formatter.js';
 import { categoriesLoader } from '../data/categories-loader.js';
+import { mapCategoriesLoader } from '../data/map-categories.js';
 import { dateFilter } from '../filters/date-filter.js';
 import { openingHoursParser } from '../utils/opening-hours-parser.js';
 import { PLACE_CATEGORY_ICONS, PLACE_CATEGORY_NAMES } from '../config/constants.js';
@@ -36,20 +37,45 @@ export class UnifiedListRenderer {
       this.render();
     });
 
+    // Map marker clicks → scroll + highlight list card
+    this.eventBus.on('event:scrollTo', ({ eventId }) => this.scrollToEvent(eventId));
+    this.eventBus.on('place:scrollTo', ({ placeId }) => this.scrollToPlace(placeId));
+
     // Re-render when language changes so dynamic strings update
     window.addEventListener('languageChanged', () => this.render());
 
     // Window handlers (used by inline onclick in rendered HTML)
     window.filterByTag = (tag) => this.dateFilter.selectTag(tag);
-    window.toggleDescription = (id) => this._toggle(`desc-${id}`);
-    window.togglePlaceDescription = (id) => this._toggle(`place-desc-${id}`);
-    window.togglePlaceHours = (id) => this._toggle(`place-hours-${id}`);
     window.addToCalendar = (event) => this._addToCalendar(event);
-    window.showPoster = (url) => this.eventBus.emit('modal:showPoster', { url });
+    window.showPoster = () => {}; // no-op — replaced by DetailModal
     window.openDirections = (lat, lng, name, addr) => this._openDirections(lat, lng, name, addr);
     window.centerMapOnPlace = (lat, lng) => this.eventBus.emit('map:centerOn', { lat, lng });
+    window.openPlaceFromEvent = (placeId) => {
+      const place = this.state.get('places')?.find(p => (p.firebaseId || p.id) === placeId);
+      if (place) window.openDetailModal?.(place, 'place');
+    };
+
+    // Show skeletons while data loads
+    this._showSkeletons();
 
     console.log('✅ UnifiedListRenderer initialized');
+  }
+
+  _showSkeletons() {
+    const container = document.getElementById('unifiedList');
+    if (!container) return;
+    container.innerHTML = Array.from({ length: 4 }, () => `
+      <div class="event-item skeleton-card">
+        <div class="event-info">
+          <div class="skeleton-line" style="width:60%;height:1rem;margin-bottom:10px;"></div>
+          <div class="skeleton-line" style="width:40%;height:0.8rem;margin-bottom:6px;"></div>
+          <div class="skeleton-line" style="width:50%;height:0.8rem;"></div>
+        </div>
+        <div class="event-actions">
+          <div class="skeleton-line" style="width:120px;height:2rem;border-radius:6px;"></div>
+        </div>
+      </div>
+    `).join('');
   }
 
   _createIcons() {
@@ -126,42 +152,52 @@ export class UnifiedListRenderer {
     const el = document.createElement('div');
     el.className = 'event-item';
     el.id = `event-${event.id}`;
+    el.style.cursor = 'pointer';
     if (selectedLocation === event.location) el.classList.add('highlighted');
 
-    const categoryInfo = this.categoriesLoader.getCategoryInfo(event.category);
-
     const tagsHtml = event.tags ? event.tags.map(tag =>
-      `<span class="tag ${selectedTag === tag ? 'selected' : ''}" onclick="filterByTag('${tag}')">${tag}</span>`
+      `<span class="tag ${selectedTag === tag ? 'selected' : ''}">${tag}</span>`
     ).join('') : '';
 
     const t = window.t || (k => k);
-    const posterHtml = event.poster
-      ? `<span class="poster-btn" onclick="showPoster('${event.poster}')">${t('item.poster')}</span>` : '';
+    const primaryEventCat = event.primaryCategory || event.category;
+    const allEventCats = event.categories?.length ? event.categories : (primaryEventCat ? [primaryEventCat] : []);
+    const catColor = (window.categoryColors?.eventColors?.[primaryEventCat]) || '#c9a200';
+    const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
+    const eventJson = JSON.stringify(event).replace(/'/g, '&#39;');
+    const eventCoords = event.coordinates;
+    const eventCatBadges = allEventCats
+      .map(key => mapCategoriesLoader.eventCategories.find(c => c.key === key)?.name ?? key)
+      .filter(Boolean)
+      .map(name => `<span class="place-category">${name}</span>`)
+      .join('');
 
-    const descHtml = event.description
-      ? `<span class="poster-btn" onclick="toggleDescription(${event.id})">${t('item.details')}</span>
-         <div id="desc-${event.id}" style="display:none;margin-top:10px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:0.9rem;line-height:1.6;">${event.description}</div>` : '';
-
-    const coords = event.coordinates;
-    const dirHtml = coords
-      ? `<a href="#" class="directions-btn" onclick="openDirections(${coords.lat},${coords.lng},'${event.location.replace(/'/g, "\\'")}','${event.location.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`
+    const placeLink = event.placeName
+      ? `<div class="event-detail"><i data-lucide="building-2" class="lucide-detail"></i><button class="place-link-btn" onclick="event.stopPropagation();window.openPlaceFromEvent('${event.placeId}')">${event.placeName}</button></div>`
       : '';
 
-    const catColor = (window.categoryColors?.eventColors?.[event.category]) || '#c9a200';
-    const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
+    const today = new Date().toISOString().slice(0, 10);
+    const happeningBadge = event.date === today
+      ? `<span class="happening-badge">${t('event.happeningToday')}</span>`
+      : '';
+
     el.innerHTML = `
       <div class="event-info">
-        <div class="event-title">${catDot}${event.title}</div>
+        <div class="event-title">${catDot}${event.title}${happeningBadge}</div>
+        ${eventCatBadges ? `<div class="event-detail cat-badges">${eventCatBadges}</div>` : ''}
         <div class="event-detail"><i data-lucide="calendar" class="lucide-detail"></i>${this.dateFormatter.formatEventDate(event)}</div>
         <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${event.location}</div>
+        ${placeLink}
         <div class="event-tags">${tagsHtml}</div>
-        <div style="margin-top:8px;">${posterHtml}${descHtml}${dirHtml}</div>
       </div>
       <div class="event-actions">
-        <button class="btn btn-small" onclick='addToCalendar(${JSON.stringify(event).replace(/'/g, "&#39;")})'>${t('item.addCalendar')}</button>
-        <button class="btn btn-small btn-outline" onclick="window.open('${categoryInfo.whatsappLink}','_blank')">${categoryInfo.icon} ${t('item.chat')}</button>
+        <button class="btn btn-small" onclick="event.stopPropagation();addToCalendar(${eventJson})">+ Calendario</button>
+        ${eventCoords ? `<button class="btn btn-small btn-outline" onclick="event.stopPropagation();centerMapOnPlace(${eventCoords.lat},${eventCoords.lng})">${t('item.showOnMap')}</button>` : ''}
       </div>
     `;
+    el.addEventListener('click', () => window.openDetailModal?.(event, 'event'));
+    el.addEventListener('mouseenter', () => window.highlightMarker?.(event.id, 'event', true));
+    el.addEventListener('mouseleave', () => window.highlightMarker?.(event.id, 'event', false));
     return el;
   }
 
@@ -169,10 +205,17 @@ export class UnifiedListRenderer {
     const el = document.createElement('div');
     el.className = 'event-item place-item';
     el.id = `place-${place.id}`;
+    el.style.cursor = 'pointer';
 
-    const catName = this.categoryNames[place.primaryCategory || place.category] || 'Altro';
-    const catColor = (window.categoryColors?.placeColors?.[place.primaryCategory || place.category]) || '#92400e';
+    const primaryPlaceCat = place.primaryCategory || place.category;
+    const allPlaceCats = place.categories?.length ? place.categories : (primaryPlaceCat ? [primaryPlaceCat] : []);
+    const catColor = (window.categoryColors?.placeColors?.[primaryPlaceCat]) || '#92400e';
     const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
+    const placeCatBadges = allPlaceCats
+      .map(key => mapCategoriesLoader.placeCategories.find(c => c.key === key)?.name ?? this.categoryNames[key] ?? key)
+      .filter(Boolean)
+      .map(name => `<span class="place-category">${name}</span>`)
+      .join('');
 
     const t = window.t || (k => k);
 
@@ -184,39 +227,21 @@ export class UnifiedListRenderer {
       statusBadge = `<span style="display:inline-block;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;background:${color};color:#fff;vertical-align:middle;margin-left:6px;text-transform:uppercase;letter-spacing:0.04em;">${label}</span>`;
     }
 
-    const descHtml = place.description
-      ? `<span class="poster-btn" onclick="togglePlaceDescription(${place.id})">${t('item.placeDetails')}</span>
-         <div id="place-desc-${place.id}" style="display:none;margin-top:10px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:0.9rem;line-height:1.6;">${place.description}</div>` : '';
-
-    const hoursHtml = place.openingHours
-      ? `<span class="poster-btn" onclick="togglePlaceHours(${place.id})">${t('item.hours')}</span>
-         <div id="place-hours-${place.id}" style="display:none;" class="opening-hours">
-           <div class="opening-hours-title">${t('item.openingHours')}</div>
-           <div class="hours-grid">${this.openingHoursParser.formatForDisplay(place.openingHours)}</div>
-         </div>` : '';
-
-    const websiteHtml = place.website
-      ? `<a href="${place.website}" target="_blank" rel="noopener noreferrer" class="directions-btn" style="background:var(--accent-primary);text-decoration:none;">${t('item.website')}</a>` : '';
-
-    const imageHtml = place.image
-      ? `<span class="poster-btn" onclick="showPoster('${place.image}')">${t('item.image')}</span>` : '';
-
     const placeCoords = place.coordinates;
-    const dirHtml = placeCoords
-      ? `<a href="#" class="directions-btn" onclick="openDirections(${placeCoords.lat},${placeCoords.lng},'${place.name.replace(/'/g, "\\'")}','${place.address.replace(/'/g, "\\'")}');return false;">${t('item.directions')}</a>`
-      : '';
 
     el.innerHTML = `
       <div class="event-info">
         <div class="event-title">${catDot}${place.name}${statusBadge}</div>
-        <div class="event-detail"><span class="place-category">${catName}</span></div>
+        ${placeCatBadges ? `<div class="event-detail cat-badges">${placeCatBadges}</div>` : ''}
         <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${place.address}</div>
-        <div style="margin-top:8px;">${descHtml}${hoursHtml}${websiteHtml}${imageHtml}${dirHtml}</div>
       </div>
       <div class="event-actions">
-        ${placeCoords ? `<button class="btn btn-small btn-outline" onclick="centerMapOnPlace(${placeCoords.lat},${placeCoords.lng})">${t('item.showOnMap')}</button>` : ''}
+        ${placeCoords ? `<button class="btn btn-small btn-outline" onclick="event.stopPropagation();centerMapOnPlace(${placeCoords.lat},${placeCoords.lng})">${t('item.showOnMap')}</button>` : ''}
       </div>
     `;
+    el.addEventListener('click', () => window.openDetailModal?.(place, 'place'));
+    el.addEventListener('mouseenter', () => window.highlightMarker?.(place.id, 'place', true));
+    el.addEventListener('mouseleave', () => window.highlightMarker?.(place.id, 'place', false));
     return el;
   }
 

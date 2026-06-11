@@ -2,26 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the caller is an authenticated admin
-    function isAdmin() {
-      return request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    // Helper: check if the caller is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Public collections — anyone can read, only admins can write
-    match /events/{doc} {
-      allow read: if true;
-      allow write: if isAdmin();
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    match /places/{doc} {
+    // Supports both new `roles: string[]` and legacy `role: string` field.
+    function hasRole(role) {
+      let data = userDoc();
+      return request.auth != null && (
+        (data.keys().hasAll(['roles']) && role in data.roles) ||
+        (data.keys().hasAll(['role'])  && data.role == role)
+      );
+    }
+
+    function isAdmin()          { return hasRole('admin'); }
+    function isHostAdmin()      { return hasRole('host_admin'); }
+    function isEventValidator() { return hasRole('event_validator'); }
+    function isEventHunter()    { return hasRole('event_hunter'); }
+
+    // host_admin can only write events/places for their assigned location
+    function ownsLocation(locationId) {
+      return isHostAdmin() && userDoc().locationId == locationId;
+    }
+
+    // ── Public collections ────────────────────────────────────────────────────
+
+    match /events/{eventId} {
       allow read: if true;
-      allow write: if isAdmin();
+      // admin: full write; host_admin: only their location; event_hunter: create only (status=pending)
+      allow create: if isAdmin()
+        || ownsLocation(request.resource.data.locationId)
+        || (isEventHunter() && request.resource.data.status == 'pending');
+      allow update: if isAdmin()
+        || ownsLocation(resource.data.locationId)
+        || (isEventValidator() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'validatedAt', 'validatedBy']));
+      allow delete: if isAdmin() || ownsLocation(resource.data.locationId);
+    }
+
+    match /places/{placeId} {
+      allow read: if true;
+      allow create: if isAdmin() || ownsLocation(request.resource.data.locationId);
+      allow update: if isAdmin() || ownsLocation(resource.data.locationId);
+      allow delete: if isAdmin();
     }
 
     match /event_categories/{doc} {
@@ -34,29 +62,41 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // User profiles — users can read their own, admins can read/write all
+    // ── User profiles ─────────────────────────────────────────────────────────
+
     match /users/{userId} {
+      // Users can read their own profile; admin can read all
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      // Users can update their own non-privileged fields; admin can write anything
+      allow update: if isAuthenticated() && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'locationId']);
+      allow write: if isAdmin();
+      // Registration via invite (new doc creation by the registering user)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Invite codes — admins only
+    // ── Invites ───────────────────────────────────────────────────────────────
+
     match /invites/{doc} {
-      allow read, write: if isAdmin();
+      // register.html needs to query invites by token (unauthenticated lookup)
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // Newsletter subscribers — admins only
+    // ── Newsletter ────────────────────────────────────────────────────────────
+
     match /newsletter_subscribers/{doc} {
       allow read, write: if isAdmin();
     }
 
-    // Raw events from Cloud Function — admins only
-    // (Cloud Function uses Admin SDK and bypasses these rules)
+    // ── Raw events (Cloud Function input) ────────────────────────────────────
+
     match /eventi_raw/{doc} {
       allow read, write: if isAdmin();
     }
 
-    // Error logs from Cloud Function — admins can read, no client writes
+    // ── Error logs (Cloud Function output) ───────────────────────────────────
+
     match /eventi_errors/{doc} {
       allow read: if isAdmin();
       allow write: if false;

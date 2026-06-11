@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Settings, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings, User, Menu, X, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useInSPA } from '../contexts/SPAContext.jsx';
+import { useTranslation } from '../utils/useTranslation.js';
 
 function activePage() {
   const path  = window.location.pathname;
@@ -14,10 +15,30 @@ function activePage() {
 }
 
 export function Navbar() {
-  const { name, isAdmin } = useAuth();
+  const { name, isAdmin, showAdminLink: showAdmin } = useAuth();
   const inSPA = useInSPA();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t, lang } = useTranslation();
   const active = activePage();
+  const menuRef = useRef(null);
+  const hamburgerRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e) {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        hamburgerRef.current && !hamburgerRef.current.contains(e.target)
+      ) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [menuOpen]);
 
   // NavA: SPA-aware link — uses React Router <Link> inside the SPA, plain <a> elsewhere
   const NavA = ({ to, href, children, id, className, style, 'data-nav': dataNav }) => {
@@ -37,54 +58,84 @@ export function Navbar() {
     </a>
   );
 
-  const AuthBtn = () => (
+  const AuthBtn = ({ mobile }) => (
     <button type="button"
-      className={`auth-nav-btn${name ? ' logged-in' : ''}`}
+      className={`auth-nav-btn${name ? ' logged-in' : ''}${mobile ? ' mobile' : ''}`}
       title={name ?? ''}
-      onClick={() => window.openAuthModal?.()}>
-      <User size={16} />
-      <span>{name ?? 'Accedi'}</span>
+      onClick={() => { window.openAuthModal?.(); setMenuOpen(false); }}>
+      <User size={mobile ? 18 : 16} />
+      <span>{name ?? t('auth.login.btn')}</span>
     </button>
   );
 
-  const LangBtn = () => (
-    <button type="button" className="lang-toggle-btn"
-      onClick={() => window.i18n?.toggle()}>EN</button>
+  const LangBtn = ({ mobile }) => (
+    <button type="button"
+      className={`lang-toggle-btn${mobile ? ' mobile' : ''}`}
+      onClick={() => window.i18n?.toggle()}>
+      <Globe size={mobile ? 16 : 14} />
+      <span>{lang === 'it' ? 'EN' : 'IT'}</span>
+    </button>
   );
 
   return (
     <header>
       <div className="header-content">
         <div className="logo">
-          <NavA to="/" href="index.html">Espedienti a Napoli</NavA>
+          <div className="logo-inner">
+            <NavA to="/" href="./">Espedienti a Napoli</NavA>
+            <span id="heroSubtitle" className="logo-subtitle"></span>
+          </div>
         </div>
 
-        <button type="button" className="hamburger" id="hamburgerBtn"
-          aria-label="Menu" onClick={() => setMenuOpen(o => !o)}>
-          ☰
+        <button type="button" className={`hamburger${menuOpen ? ' is-open' : ''}`}
+          id="hamburgerBtn" ref={hamburgerRef}
+          aria-label={menuOpen ? 'Chiudi menu' : 'Apri menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(o => !o)}>
+          <span className="hamburger-icon">
+            <Menu size={20} className="ham-open" />
+            <X    size={20} className="ham-close" />
+          </span>
         </button>
 
         <nav className="nav-links">
-          <NavA to="/about" href="about.html" data-nav="project"
+          <NavA to="/about" href="./#/about" data-nav="project"
             className={active === 'project' ? 'active' : ''}>
-            Il Progetto
+            {t('nav.project')}
           </NavA>
-          <NavA to="/contatti" href="contatti.html" data-nav="contacts"
+          <NavA to="/contatti" href="./#/contatti" data-nav="contacts"
             className={active === 'contacts' ? 'active' : ''}>
-            Contatti
+            {t('nav.collaborate')}
           </NavA>
-          {(isAdmin || active === 'admin') && <AdminLink id="adminNavLink" />}
+          {(showAdmin || active === 'admin') && <AdminLink id="adminNavLink" />}
           <AuthBtn />
           <LangBtn />
         </nav>
 
+        {/* backdrop */}
+        {menuOpen && (
+          <div className="mobile-menu-backdrop" onClick={() => setMenuOpen(false)} />
+        )}
+
         <nav className={`mobile-menu${menuOpen ? ' open' : ''}`} id="mobileMenu"
-          onClick={() => setMenuOpen(false)}>
-          <NavA to="/about" href="about.html">Il Progetto</NavA>
-          <NavA to="/contatti" href="contatti.html">Contatti</NavA>
-          {(isAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
-          <AuthBtn />
-          <LangBtn />
+          ref={menuRef}>
+          <div className="mobile-menu-nav">
+            <NavA to="/about" href="./#/about"
+              className={active === 'project' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}>
+              {t('nav.project')}
+            </NavA>
+            <NavA to="/contatti" href="./#/contatti"
+              className={active === 'contacts' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}>
+              {t('nav.collaborate')}
+            </NavA>
+            {(showAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
+          </div>
+          <div className="mobile-menu-footer">
+            <AuthBtn mobile />
+            <LangBtn mobile />
+          </div>
         </nav>
       </div>
     </header>

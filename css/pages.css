@@ -26,8 +26,17 @@
 .feature-card:hover { border-color: var(--accent-primary); }
 
 .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.feature-icon svg {
+    width: 32px;
+    height: 32px;
+    stroke: var(--accent-primary);
+    stroke-width: 1.5;
 }
 
 .feature-card h3 {
