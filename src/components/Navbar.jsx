@@ -3,6 +3,7 @@ import { Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useInSPA } from '../contexts/SPAContext.jsx';
+import { useTranslation } from '../utils/useTranslation.js';
 
 function activePage() {
   const path  = window.location.pathname;
@@ -17,14 +18,8 @@ export function Navbar() {
   const { name, isAdmin, showAdminLink: showAdmin } = useAuth();
   const inSPA = useInSPA();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [lang, setLang] = useState(() => window.i18n?.lang ?? 'it');
+  const { t, lang } = useTranslation();
   const active = activePage();
-
-  useEffect(() => {
-    const handler = (e) => setLang(e.detail?.lang ?? 'it');
-    window.addEventListener('languageChanged', handler);
-    return () => window.removeEventListener('languageChanged', handler);
-  }, []);
 
   // NavA: SPA-aware link — uses React Router <Link> inside the SPA, plain <a> elsewhere
   const NavA = ({ to, href, children, id, className, style, 'data-nav': dataNav }) => {
@@ -50,7 +45,7 @@ export function Navbar() {
       title={name ?? ''}
       onClick={() => window.openAuthModal?.()}>
       <User size={16} />
-      <span>{name ?? 'Accedi'}</span>
+      <span>{name ?? t('auth.login.btn')}</span>
     </button>
   );
 
@@ -79,11 +74,11 @@ export function Navbar() {
         <nav className="nav-links">
           <NavA to="/about" href="./#/about" data-nav="project"
             className={active === 'project' ? 'active' : ''}>
-            Il Progetto
+            {t('nav.project')}
           </NavA>
           <NavA to="/contatti" href="./#/contatti" data-nav="contacts"
             className={active === 'contacts' ? 'active' : ''}>
-            Contatti
+            {t('nav.collaborate')}
           </NavA>
           {(showAdmin || active === 'admin') && <AdminLink id="adminNavLink" />}
           <AuthBtn />
@@ -92,8 +87,8 @@ export function Navbar() {
 
         <nav className={`mobile-menu${menuOpen ? ' open' : ''}`} id="mobileMenu"
           onClick={() => setMenuOpen(false)}>
-          <NavA to="/about" href="./#/about">Il Progetto</NavA>
-          <NavA to="/contatti" href="./#/contatti">Contatti</NavA>
+          <NavA to="/about" href="./#/about">{t('nav.project')}</NavA>
+          <NavA to="/contatti" href="./#/contatti">{t('nav.collaborate')}</NavA>
           {(showAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
           <AuthBtn />
           <LangBtn />
