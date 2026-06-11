@@ -176,9 +176,14 @@ export class UnifiedListRenderer {
       ? `<div class="event-detail"><i data-lucide="building-2" class="lucide-detail"></i><button class="place-link-btn" onclick="event.stopPropagation();window.openPlaceFromEvent('${event.placeId}')">${event.placeName}</button></div>`
       : '';
 
+    const today = new Date().toISOString().slice(0, 10);
+    const happeningBadge = event.date === today
+      ? `<span class="happening-badge">${t('event.happeningToday')}</span>`
+      : '';
+
     el.innerHTML = `
       <div class="event-info">
-        <div class="event-title">${catDot}${event.title}</div>
+        <div class="event-title">${catDot}${event.title}${happeningBadge}</div>
         ${eventCatBadges ? `<div class="event-detail cat-badges">${eventCatBadges}</div>` : ''}
         <div class="event-detail"><i data-lucide="calendar" class="lucide-detail"></i>${this.dateFormatter.formatEventDate(event)}</div>
         <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${event.location}</div>

@@ -47,11 +47,20 @@ export function Home({ hidden }) {
   useEffect(() => {
     const handler = (e) => {
       const today = new Date().toISOString().slice(0, 10);
-      const upcoming = (e.detail?.events ?? [])
+      const allEvents = e.detail?.events ?? [];
+
+      const upcoming = allEvents
         .filter(ev => ev.date && ev.date >= today)
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 30);
       setTickerEvents(upcoming);
+
+      // Deep-link: ?event=FIREBASE_ID → auto-open modal
+      const eventId = new URLSearchParams(window.location.search).get('event');
+      if (eventId) {
+        const ev = allEvents.find(ev => (ev.firebaseId || String(ev.id)) === eventId);
+        if (ev) window.openDetailModal?.(ev, 'event');
+      }
     };
     window.addEventListener('espedienti:eventsLoaded', handler);
     return () => window.removeEventListener('espedienti:eventsLoaded', handler);
@@ -80,12 +89,31 @@ export function Home({ hidden }) {
   }
   window.switchMobileTab = switchMobileTab;
 
-  const tickerContent = tickerEvents.length > 0
-    ? tickerEvents.map(ev => {
-        const d = new Date(ev.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
-        return `${ev.title}  ·  ${d}`;
-      }).join('   •   ')
-    : null;
+  const makeTickerItems = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    return tickerEvents.map((ev, i) => {
+      const d = new Date(ev.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+      const time = ev.time?.start ? ` ${ev.time.start}` : '';
+      const venue = ev.placeName || ev.location || '';
+      const isToday = ev.date === today;
+      const happeningLabel = window.t?.('event.happeningToday') ?? 'happening today';
+      return (
+        <span key={i} className="ticker-item">
+          {isToday && <span className="ticker-today-tag">{happeningLabel}</span>}
+          <span className="ticker-meta">{d}{time}: </span>
+          <button
+            type="button"
+            className="ticker-btn"
+            onClick={() => window.openDetailModal?.(ev, 'event')}
+          >
+            {ev.title}
+          </button>
+          {venue && <span className="ticker-meta"> @ {venue}</span>}
+          {i < tickerEvents.length - 1 && <span className="ticker-sep">   •   </span>}
+        </span>
+      );
+    });
+  };
 
   return (
     <div style={hidden ? { display: 'none' } : undefined}>
@@ -93,10 +121,10 @@ export function Home({ hidden }) {
       {/* ── Home header ───────────────────────────────────────── */}
       <header className="home-header">
         <div className="ticker-wrap" aria-live="off">
-          {tickerContent ? (
+          {tickerEvents.length > 0 ? (
             <div className="ticker-track">
-              <span className="ticker-segment">{tickerContent}</span>
-              <span className="ticker-segment" aria-hidden="true">{tickerContent}</span>
+              <span className="ticker-segment">{makeTickerItems()}</span>
+              <span className="ticker-segment" aria-hidden="true">{makeTickerItems()}</span>
             </div>
           ) : (
             <div className="ticker-track ticker-loading">

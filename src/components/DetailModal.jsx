@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Clock, ExternalLink, Navigation, Calendar, MessageCircle, Building2 } from 'lucide-react';
+import { MapPin, Clock, ExternalLink, Navigation, Calendar, Share2, Check, Building2 } from 'lucide-react';
 import { dateFormatter } from '../../js/utils/date-formatter.js';
 import { openingHoursParser } from '../../js/utils/opening-hours-parser.js';
 import { categoriesLoader } from '../../js/data/categories-loader.js';
@@ -43,8 +43,23 @@ export function DetailModal() {
 
 function EventDetail({ item }) {
   const catColor = window.categoryColors?.eventColors?.[item.category] ?? '#c9a200';
-  const categoryInfo = categoriesLoader.getCategoryInfo(item.category);
   const coords = item.coordinates;
+  const [copied, setCopied] = useState(false);
+
+  function handleShare() {
+    const id = item.firebaseId || item.id;
+    const base = window.location.origin + window.location.pathname;
+    const url = `${base}?event=${id}`;
+    const shareLabel = window.t?.('event.share') ?? 'Condividi';
+    if (navigator.share) {
+      navigator.share({ title: item.title, url });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
 
   return (
     <>
@@ -92,20 +107,21 @@ function EventDetail({ item }) {
         <div className="detail-modal-actions">
           <button type="button" className="btn btn-small"
             onClick={() => window.addToCalendar?.(item)}>
-            <Calendar size={14} /> Aggiungi al Calendario
+            <Calendar size={14} /> {window.t?.('event.addCalendar') ?? 'Aggiungi al Calendario'}
           </button>
           {coords && (
             <button type="button" className="btn btn-small btn-outline"
               onClick={() => window.openDirections?.(coords.lat, coords.lng, item.location, item.location)}>
-              <Navigation size={14} /> Indicazioni
+              <Navigation size={14} /> {window.t?.('event.directions') ?? 'Indicazioni'}
             </button>
           )}
-          {categoryInfo?.whatsappLink && (
-            <a className="btn btn-small btn-outline"
-              href={categoryInfo.whatsappLink} target="_blank" rel="noopener noreferrer">
-              <MessageCircle size={14} /> {categoryInfo.icon} Chat
-            </a>
-          )}
+          <button type="button" className="btn btn-small btn-outline"
+            onClick={handleShare}>
+            {copied
+              ? <><Check size={14} /> {window.t?.('event.shareCopied') ?? 'Copiato!'}</>
+              : <><Share2 size={14} /> {window.t?.('event.share') ?? 'Condividi'}</>
+            }
+          </button>
         </div>
       </div>
     </>

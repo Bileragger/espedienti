@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Settings, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings, User, Menu, X, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useInSPA } from '../contexts/SPAContext.jsx';
@@ -20,6 +20,25 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t, lang } = useTranslation();
   const active = activePage();
+  const menuRef = useRef(null);
+  const hamburgerRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e) {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        hamburgerRef.current && !hamburgerRef.current.contains(e.target)
+      ) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [menuOpen]);
 
   // NavA: SPA-aware link — uses React Router <Link> inside the SPA, plain <a> elsewhere
   const NavA = ({ to, href, children, id, className, style, 'data-nav': dataNav }) => {
@@ -39,20 +58,22 @@ export function Navbar() {
     </a>
   );
 
-  const AuthBtn = () => (
+  const AuthBtn = ({ mobile }) => (
     <button type="button"
-      className={`auth-nav-btn${name ? ' logged-in' : ''}`}
+      className={`auth-nav-btn${name ? ' logged-in' : ''}${mobile ? ' mobile' : ''}`}
       title={name ?? ''}
-      onClick={() => window.openAuthModal?.()}>
-      <User size={16} />
+      onClick={() => { window.openAuthModal?.(); setMenuOpen(false); }}>
+      <User size={mobile ? 18 : 16} />
       <span>{name ?? t('auth.login.btn')}</span>
     </button>
   );
 
-  const LangBtn = () => (
-    <button type="button" className="lang-toggle-btn"
+  const LangBtn = ({ mobile }) => (
+    <button type="button"
+      className={`lang-toggle-btn${mobile ? ' mobile' : ''}`}
       onClick={() => window.i18n?.toggle()}>
-      {lang === 'it' ? 'EN' : 'IT'}
+      <Globe size={mobile ? 16 : 14} />
+      <span>{lang === 'it' ? 'EN' : 'IT'}</span>
     </button>
   );
 
@@ -66,9 +87,15 @@ export function Navbar() {
           </div>
         </div>
 
-        <button type="button" className="hamburger" id="hamburgerBtn"
-          aria-label="Menu" onClick={() => setMenuOpen(o => !o)}>
-          ☰
+        <button type="button" className={`hamburger${menuOpen ? ' is-open' : ''}`}
+          id="hamburgerBtn" ref={hamburgerRef}
+          aria-label={menuOpen ? 'Chiudi menu' : 'Apri menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(o => !o)}>
+          <span className="hamburger-icon">
+            <Menu size={20} className="ham-open" />
+            <X    size={20} className="ham-close" />
+          </span>
         </button>
 
         <nav className="nav-links">
@@ -85,13 +112,30 @@ export function Navbar() {
           <LangBtn />
         </nav>
 
+        {/* backdrop */}
+        {menuOpen && (
+          <div className="mobile-menu-backdrop" onClick={() => setMenuOpen(false)} />
+        )}
+
         <nav className={`mobile-menu${menuOpen ? ' open' : ''}`} id="mobileMenu"
-          onClick={() => setMenuOpen(false)}>
-          <NavA to="/about" href="./#/about">{t('nav.project')}</NavA>
-          <NavA to="/contatti" href="./#/contatti">{t('nav.collaborate')}</NavA>
-          {(showAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
-          <AuthBtn />
-          <LangBtn />
+          ref={menuRef}>
+          <div className="mobile-menu-nav">
+            <NavA to="/about" href="./#/about"
+              className={active === 'project' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}>
+              {t('nav.project')}
+            </NavA>
+            <NavA to="/contatti" href="./#/contatti"
+              className={active === 'contacts' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}>
+              {t('nav.collaborate')}
+            </NavA>
+            {(showAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
+          </div>
+          <div className="mobile-menu-footer">
+            <AuthBtn mobile />
+            <LangBtn mobile />
+          </div>
         </nav>
       </div>
     </header>

@@ -195,6 +195,13 @@ export const translations = {
     // Navigation (new)
     'nav.collaborate': 'Collabora',
 
+    // Event status / actions
+    'event.happeningToday': 'happening today',
+    'event.share': 'Condividi',
+    'event.shareCopied': 'Copiato!',
+    'event.addCalendar': 'Aggiungi al Calendario',
+    'event.directions': 'Indicazioni',
+
     // About page (rewritten)
     'about.pageTitle': 'Chi Siamo – Espedienti a Napoli',
     'about.hero.eyebrow': '100% Napoli. 100% Gratuito.',
@@ -490,6 +497,13 @@ export const translations = {
 
     // Navigation (new)
     'nav.collaborate': 'Collaborate',
+
+    // Event status / actions
+    'event.happeningToday': 'happening today',
+    'event.share': 'Share',
+    'event.shareCopied': 'Copied!',
+    'event.addCalendar': 'Add to Calendar',
+    'event.directions': 'Directions',
 
     // About page (rewritten)
     'about.pageTitle': 'About Us – Espedienti a Napoli',
