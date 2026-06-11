@@ -1,29 +1,31 @@
 /**
  * InviteManager - Gestione Inviti
  *
- * Crea inviti per ruoli privilegiati (admin, manager, artist).
- * Ogni invito genera un token univoco salvato in Firestore `invites`.
- * L'admin riceve un link da inviare all'utente via mail (mailto:).
- *
  * Struttura documento Firestore `invites`:
- *   { token, role, email, used, createdAt, usedAt? }
+ *   { token, roles: string[], email, used, createdAt, usedAt? }
+ *
+ * Backward compat: old docs with `role: string` are displayed correctly.
  */
 
 import { firebaseService } from '../data/firebase-service.js';
 import { esc } from '../utils/string-utils.js';
+import { ROLE_KEYS, ROLE_META, ROLE_LABELS, ROLE_COLORS } from '../config/permissions.js';
 
 const COLLECTION = 'invites';
 
-const ROLE_LABELS = {
-  admin:   'Admin',
-  manager: 'Manager',
-  artist:  'Artista',
-};
+// Roles that require an invite (user self-registers; admin is granted manually)
+const INVITE_ROLES = ROLE_KEYS.filter(r => r !== 'user');
 
 function generateToken() {
   const arr = new Uint8Array(18);
   crypto.getRandomValues(arr);
   return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getRolesFromDoc(inv) {
+  if (Array.isArray(inv.roles) && inv.roles.length) return inv.roles;
+  if (typeof inv.role === 'string' && inv.role) return [inv.role];
+  return ['user'];
 }
 
 export class InviteManager {
@@ -33,13 +35,14 @@ export class InviteManager {
   }
 
   async initialize() {
+    this._renderInviteForm();
     await this.load();
     this.render();
 
-    window.createInvite = () => this.createInvite();
-    window.deleteInvite = (id) => this.deleteInvite(id);
-    window.copyInviteLink = (token) => this.copyInviteLink(token);
-    window.sendInviteMail = (token, email, role) => this.sendInviteMail(token, email, role);
+    window.createInvite    = () => this.createInvite();
+    window.deleteInvite    = (id) => this.deleteInvite(id);
+    window.copyInviteLink  = (token) => this.copyInviteLink(token);
+    window.sendInviteMail  = (token, email, rolesJson) => this.sendInviteMail(token, email, JSON.parse(rolesJson));
 
     console.log('✅ InviteManager initialized');
   }
@@ -53,41 +56,58 @@ export class InviteManager {
     }
   }
 
+  _renderInviteForm() {
+    const container = document.getElementById('inviteFormFields');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="form-group">
+        <label for="inviteEmail">Email invitato *</label>
+        <input type="email" id="inviteEmail" class="form-input" placeholder="nome@esempio.it" required>
+      </div>
+      <div class="form-group">
+        <label>Ruoli da assegnare *</label>
+        <div class="role-checkboxes" id="inviteRolesCheckboxes">
+          ${INVITE_ROLES.map(r => `
+            <label class="role-checkbox-label" title="${ROLE_META[r].description}">
+              <input type="checkbox" name="inviteRole" value="${r}">
+              <span class="role-label-text" data-role="${r}">${ROLE_LABELS[r]}</span>
+            </label>
+            <small class="form-hint role-desc">${ROLE_META[r].description}</small>`).join('')}
+        </div>
+      </div>
+      <div id="inviteError" class="field-error-msg"></div>
+      <button type="button" class="btn" id="inviteCreateBtn" onclick="createInvite()">Crea &amp; Invia</button>`;
+  }
+
   async createInvite() {
     const emailInput = document.getElementById('inviteEmail');
-    const roleInput  = document.getElementById('inviteRole');
     const errEl      = document.getElementById('inviteError');
     const btn        = document.getElementById('inviteCreateBtn');
 
     const email = emailInput?.value.trim();
-    const role  = roleInput?.value;
+    const roles = [...document.querySelectorAll('input[name="inviteRole"]:checked')].map(cb => cb.value);
 
-    if (!email || !role) {
-      if (errEl) errEl.textContent = 'Inserisci email e ruolo.';
+    if (!email || !roles.length) {
+      if (errEl) errEl.textContent = 'Inserisci email e seleziona almeno un ruolo.';
       return;
     }
 
     if (errEl) errEl.textContent = '';
-    if (btn) { btn.disabled = true; btn.textContent = 'Creazione...'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Creazione…'; }
 
     try {
       const token = generateToken();
-      const data = {
-        token,
-        role,
-        email,
-        used: false,
-        createdAt: new Date().toISOString(),
-      };
+      const data = { token, roles, email, used: false, createdAt: new Date().toISOString() };
 
       const added = await this.firebase.add(COLLECTION, data);
       this.invites.unshift(added);
 
       if (emailInput) emailInput.value = '';
+      document.querySelectorAll('input[name="inviteRole"]').forEach(cb => { cb.checked = false; });
       this.render();
 
-      // Proponi subito l'invio email
-      this.sendInviteMail(token, email, role);
+      this.sendInviteMail(token, email, roles);
     } catch (err) {
       if (errEl) errEl.textContent = 'Errore nella creazione. Riprova.';
       console.error(err);
@@ -122,12 +142,12 @@ export class InviteManager {
     });
   }
 
-  sendInviteMail(token, email, role) {
-    const url     = this._registerUrl(token);
-    const roleLabel = ROLE_LABELS[role] || role;
-    const subject = encodeURIComponent(`Invito Espedienti – Profilo ${roleLabel}`);
-    const body    = encodeURIComponent(
-      `Ciao,\n\nsei stato invitato a unirti a Espedienti come ${roleLabel}.\n\nClicca il link qui sotto per completare la registrazione:\n\n${url}\n\nIl link è valido per una sola registrazione.\n\nA presto,\nTeam Espedienti`
+  sendInviteMail(token, email, roles) {
+    const url        = this._registerUrl(token);
+    const roleLabels = roles.map(r => ROLE_LABELS[r] ?? r).join(', ');
+    const subject    = encodeURIComponent(`Invito Espedienti – ${roleLabels}`);
+    const body       = encodeURIComponent(
+      `Ciao,\n\nsei stato invitato a unirti a Espedienti con i seguenti ruoli: ${roleLabels}.\n\nClicca il link qui sotto per completare la registrazione:\n\n${url}\n\nIl link è valido per una sola registrazione.\n\nA presto,\nTeam Espedienti`
     );
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   }
@@ -142,21 +162,26 @@ export class InviteManager {
     }
 
     list.innerHTML = this.invites.map(inv => {
-      const date     = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('it-IT') : '—';
-      const roleLabel = ROLE_LABELS[inv.role] || inv.role;
+      const date        = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('it-IT') : '—';
+      const roles       = getRolesFromDoc(inv);
       const statusClass = inv.used ? 'invite-used' : 'invite-active';
       const statusText  = inv.used ? 'Utilizzato' : 'Attivo';
 
+      const roleBadges = roles.map(r =>
+        `<span class="invite-role-badge" style="background:${ROLE_COLORS[r] ?? '#666'}">${ROLE_LABELS[r] ?? r}</span>`
+      ).join('');
+
+      const rolesJson = esc(JSON.stringify(roles));
       const actionsHtml = !inv.used
         ? `<button class="btn btn-small" onclick="copyInviteLink('${inv.token}')">Copia link</button>
-           <button class="btn btn-small" onclick="sendInviteMail('${inv.token}','${esc(inv.email)}','${inv.role}')">Invia mail</button>`
+           <button class="btn btn-small" onclick="sendInviteMail('${inv.token}','${esc(inv.email)}','${rolesJson}')">Invia mail</button>`
         : '';
 
       return `
         <li class="invite-item">
           <div class="invite-info">
             <span class="invite-email">${esc(inv.email)}</span>
-            <span class="invite-role-badge invite-role-${inv.role}">${roleLabel}</span>
+            <div class="user-role-badges">${roleBadges}</div>
             <span class="invite-status ${statusClass}">${statusText}</span>
             <span class="invite-date">${date}</span>
           </div>
@@ -167,7 +192,6 @@ export class InviteManager {
         </li>`;
     }).join('');
   }
-
 }
 
 export const inviteManager = new InviteManager(firebaseService);

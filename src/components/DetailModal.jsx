@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Clock, ExternalLink, Navigation, Calendar, MessageCircle } from 'lucide-react';
+import { MapPin, Clock, ExternalLink, Navigation, Calendar, MessageCircle, Building2 } from 'lucide-react';
 import { dateFormatter } from '../../js/utils/date-formatter.js';
 import { openingHoursParser } from '../../js/utils/opening-hours-parser.js';
 import { categoriesLoader } from '../../js/data/categories-loader.js';
@@ -66,6 +66,15 @@ function EventDetail({ item }) {
             <MapPin size={14} />
             <span>{item.location}</span>
           </div>
+          {item.placeName && (
+            <div className="detail-modal-meta-row">
+              <Building2 size={14} />
+              <button type="button" className="place-link-btn"
+                onClick={() => window.openPlaceFromEvent?.(item.placeId)}>
+                {item.placeName}
+              </button>
+            </div>
+          )}
         </div>
 
         {item.tags?.length > 0 && (

@@ -14,7 +14,7 @@ function activePage() {
 }
 
 export function Navbar() {
-  const { name, isAdmin } = useAuth();
+  const { name, isAdmin, showAdminLink: showAdmin } = useAuth();
   const inSPA = useInSPA();
   const [menuOpen, setMenuOpen] = useState(false);
   const [lang, setLang] = useState(() => window.i18n?.lang ?? 'it');
@@ -85,7 +85,7 @@ export function Navbar() {
             className={active === 'contacts' ? 'active' : ''}>
             Contatti
           </NavA>
-          {(isAdmin || active === 'admin') && <AdminLink id="adminNavLink" />}
+          {(showAdmin || active === 'admin') && <AdminLink id="adminNavLink" />}
           <AuthBtn />
           <LangBtn />
         </nav>
@@ -94,7 +94,7 @@ export function Navbar() {
           onClick={() => setMenuOpen(false)}>
           <NavA to="/about" href="./#/about">Il Progetto</NavA>
           <NavA to="/contatti" href="./#/contatti">Contatti</NavA>
-          {(isAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
+          {(showAdmin || active === 'admin') && <AdminLink id="adminNavLinkMobile" />}
           <AuthBtn />
           <LangBtn />
         </nav>

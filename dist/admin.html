@@ -260,6 +260,16 @@
             color: var(--text-primary);
         }
 
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: auto;
+            padding: 0;
+            border: revert;
+            background: revert;
+            box-shadow: none;
+            transition: none;
+        }
+
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--accent-primary);
@@ -624,6 +634,48 @@
 
         .location-group {
             position: relative;
+        }
+
+        .form-hint {
+            opacity: 0.65;
+            margin-top: 3px;
+            display: block;
+            font-size: 0.8rem;
+        }
+
+        .selected-place-chip {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 4px 10px;
+            background: rgba(201, 162, 0, 0.12);
+            border: 1px solid rgba(201, 162, 0, 0.35);
+            border-radius: 20px;
+            font-size: 0.82rem;
+            color: var(--text-primary);
+        }
+
+        .selected-place-chip.visible {
+            display: inline-flex;
+        }
+
+        .selected-place-chip__name {
+            font-weight: 600;
+        }
+
+        .selected-place-chip__remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 2px;
+        }
+
+        .selected-place-chip__remove:hover {
+            color: var(--text-primary);
         }
 
         /* Tab styles */
@@ -1286,9 +1338,10 @@
 
         .invite-info {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            flex: 1;
         }
 
         .invite-email { font-weight: 500; font-size: 0.9rem; }
@@ -1351,9 +1404,9 @@
 
         .user-info {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
             flex: 1;
         }
 
@@ -1373,17 +1426,57 @@
 
         .user-role-controls {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 6px;
             flex-wrap: wrap;
         }
 
-        .user-role-select {
-            padding: 5px 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-family: inherit;
+        .role-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .role-checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
             font-size: 0.82rem;
+            cursor: pointer;
+            padding: 2px 0;
+        }
+
+        .role-checkbox-label input[type="checkbox"] {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .role-location-field {
+            margin-top: 4px;
+            width: 100%;
+        }
+
+        [data-role="admin"]          { color: #dc2626; font-weight: 600; }
+        [data-role="host_admin"]     { color: #7c3aed; font-weight: 600; }
+        [data-role="artist"]         { color: #0284c7; font-weight: 600; }
+        [data-role="user"]           { color: #16a34a; font-weight: 600; }
+        [data-role="event_hunter"]   { color: #d97706; font-weight: 600; }
+        [data-role="event_validator"]{ color: #0891b2; font-weight: 600; }
+
+        .role-desc {
+            display: block;
+            margin: 0 0 6px 20px;
+            font-size: 0.72rem;
+            opacity: 0.6;
+        }
+
+        .user-role-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin: 3px 0;
         }
         /* Poster preview modal — scoped to avoid overriding the React auth modal */
         #posterModal {
@@ -1429,11 +1522,11 @@
             margin: auto;
         }
     </style>
-  <script type="module" crossorigin src="/espedienti/assets/admin-CoIPpXoa.js"></script>
+  <script type="module" crossorigin src="/espedienti/assets/admin-BnaSbuUv.js"></script>
   <link rel="modulepreload" crossorigin href="/espedienti/assets/firebase-config-wsne_POC.js">
-  <link rel="modulepreload" crossorigin href="/espedienti/assets/state-manager-u1hDROr3.js">
-  <link rel="modulepreload" crossorigin href="/espedienti/assets/firebase-service-ozKbJOgQ.js">
-  <link rel="stylesheet" crossorigin href="/espedienti/assets/state-manager-CvPTO8Mj.css">
+  <link rel="modulepreload" crossorigin href="/espedienti/assets/state-manager-Dhnmj6DV.js">
+  <link rel="modulepreload" crossorigin href="/espedienti/assets/firebase-service-CwHsIKQe.js">
+  <link rel="stylesheet" crossorigin href="/espedienti/assets/state-manager-DqaeCoq8.css">
 </head>
 <body>
 
@@ -1532,18 +1625,21 @@
                     <div class="address-layout">
                         <div class="address-fields">
                             <div class="form-group location-group">
-                                <label for="placeSearch">Seleziona da luoghi registrati <span style="font-weight:400;opacity:0.7;">(opzionale)</span></label>
+                                <label for="placeSearch">Luogo registrato <span style="font-weight:400;opacity:0.7;">(opzionale)</span></label>
                                 <input type="text" id="placeSearch" class="form-input" placeholder="Cerca tra i luoghi registrati..." autocomplete="off">
                                 <div class="search-results" id="placeSearchResults"></div>
-                            </div>
-                            <div class="form-group location-group">
-                                <label for="locationSearch">Cerca indirizzo</label>
-                                <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli">
-                                <div class="search-results" id="searchResults"></div>
+                                <div id="selectedPlaceChip" class="selected-place-chip"></div>
                             </div>
                             <div class="form-group">
                                 <label for="location">Indirizzo *</label>
-                                <input type="text" id="location" required placeholder="Compilato dalla ricerca, modificabile">
+                                <input type="text" id="location" required placeholder="es. Via Toledo 40, Napoli">
+                                <small class="form-hint">Scrivi l'indirizzo come lo conosci — viene salvato esattamente così</small>
+                            </div>
+                            <div class="form-group location-group">
+                                <label for="locationSearch">Cerca coordinate via Nominatim <span style="font-weight:400;opacity:0.7;">(approssimativo)</span></label>
+                                <input type="text" id="locationSearch" placeholder="es. Via Toledo, Napoli">
+                                <div class="search-results" id="searchResults"></div>
+                                <small class="form-hint">Aggiorna solo le coordinate — l'indirizzo sopra non viene sovrascritto</small>
                             </div>
                             <div class="form-group">
                                 <label>Coordinate</label>
@@ -1856,16 +1952,7 @@
 
                     <div class="cat-add-form">
                         <h3>Nuovo Invito</h3>
-                        <div class="cat-add-row">
-                            <input type="email" id="inviteEmail" class="invite-email-input" placeholder="Email destinatario">
-                            <select id="inviteRole" class="invite-role-select">
-                                <option value="manager">Manager</option>
-                                <option value="artist">Artista</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                            <button type="button" id="inviteCreateBtn" class="btn" onclick="createInvite()">Crea &amp; Invia</button>
-                        </div>
-                        <div class="invite-error" id="inviteError"></div>
+                        <div id="inviteFormFields"><!-- rendered by InviteManager --></div>
                     </div>
 
                     <ul class="events-list invite-list" id="inviteList">

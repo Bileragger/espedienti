@@ -59,26 +59,26 @@ function _clearAuthCache() {
 
 // ── Navbar DOM updates ────────────────────────────────────────────────────────
 
-function _setNavUser(user, role) {
+function _setNavUser(user, roles) {
   const btn   = document.getElementById('authNavBtn');
   const label = document.getElementById('authNavLabel');
   if (btn) {
     const name = user.displayName || user.email.split('@')[0];
     if (label) {
       label.textContent = name;
-      label.removeAttribute('data-i18n'); // prevent i18n from overwriting username
+      label.removeAttribute('data-i18n');
     }
     btn.classList.add('logged-in');
     btn.title = user.email;
     if (window.lucide) window.lucide.createIcons({ nodes: [btn] });
   }
 
-  const isAdmin = role === 'admin';
-  _cacheAuth(user.displayName || user.email.split('@')[0], isAdmin);
+  const canSeeAdmin = roles.includes('admin') || roles.includes('host_admin') || roles.includes('event_validator');
+  _cacheAuth(user.displayName || user.email.split('@')[0], roles.includes('admin'));
 
   ['adminNavLink', 'adminNavLinkMobile'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = isAdmin ? 'flex' : 'none';
+    if (el) el.style.display = canSeeAdmin ? 'flex' : 'none';
   });
 }
 
@@ -105,13 +105,18 @@ function _setNavLoggedOut() {
 onAuthStateChanged(_auth, async (user) => {
   if (!user) { _setNavLoggedOut(); return; }
 
-  let role = 'user';
+  let roles = ['user'];
   try {
     const snap = await getDoc(doc(_db, 'users', user.uid));
-    if (snap.exists()) role = snap.data().role || 'user';
+    if (snap.exists()) {
+      const data = snap.data();
+      roles = Array.isArray(data.roles) && data.roles.length
+        ? data.roles
+        : (data.role ? [data.role] : ['user']);
+    }
   } catch { /* use default */ }
 
-  _setNavUser(user, role);
+  _setNavUser(user, roles);
 });
 
 } // end else (!window.__reactAuthModal)

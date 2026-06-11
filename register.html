@@ -22,8 +22,14 @@
         const db   = getFirestore(app);
         const auth = getAuth(app);
 
-        const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', artist: 'Artista', user: 'Utente' };
-        const ROLE_COLORS = { admin: '#dc2626', manager: '#7c3aed', artist: '#0284c7', user: '#16a34a' };
+        const ROLE_LABELS = {
+          admin: 'Admin', host_admin: 'Host Admin', artist: 'Artista',
+          user: 'Utente', event_hunter: 'Event Hunter', event_validator: 'Event Validator',
+        };
+        const ROLE_COLORS = {
+          admin: '#dc2626', host_admin: '#7c3aed', artist: '#0284c7',
+          user: '#16a34a', event_hunter: '#d97706', event_validator: '#0891b2',
+        };
 
         let inviteDoc   = null;
         let inviteToken = null;
@@ -50,7 +56,10 @@
 
                 if (data.used) { showState('used'); return; }
 
-                buildForm(data.role, data.email);
+                const roles = Array.isArray(data.roles) && data.roles.length
+                    ? data.roles
+                    : (data.role ? [data.role] : ['user']);
+                buildForm(roles, data.email);
                 showState('form');
             } catch (err) {
                 console.error(err);
@@ -58,14 +67,14 @@
             }
         }
 
-        function buildForm(role, email) {
-            document.getElementById('roleLabel').textContent = ROLE_LABELS[role] || role;
-            document.getElementById('roleLabel').style.background = ROLE_COLORS[role] || '#16a34a';
+        function buildForm(roles, email) {
+            const badgesEl = document.getElementById('roleBadges');
+            if (badgesEl) {
+                badgesEl.innerHTML = roles.map(r =>
+                    `<span class="role-badge" style="background:${ROLE_COLORS[r] || '#16a34a'}">${ROLE_LABELS[r] || r}</span>`
+                ).join('');
+            }
             document.getElementById('regEmail').value = email || '';
-
-            // For user role (shouldn't arrive here, but just in case) show name field
-            // For all invite roles: email + password only for now
-            // Name field shown for all
         }
 
         async function handleSubmit(e) {
@@ -92,7 +101,10 @@
             btn.textContent = 'Registrazione in corso…';
 
             try {
-                const role = inviteDoc.data().role;
+                const data  = inviteDoc.data();
+                const roles = Array.isArray(data.roles) && data.roles.length
+                    ? data.roles
+                    : (data.role ? [data.role] : ['user']);
 
                 // Create Firebase Auth user
                 const credential = await createUserWithEmailAndPassword(auth, email, password);
@@ -102,7 +114,7 @@
                     uid: credential.user.uid,
                     email,
                     displayName: name,
-                    role,
+                    roles,
                     createdAt: new Date().toISOString(),
                 });
 
@@ -130,7 +142,7 @@
 
         function showState(state) {
             ['loading', 'invalid', 'used', 'error', 'form', 'success'].forEach(s => {
-                document.getElementById('state-' + s).style.display = s === state ? '' : 'none';
+                document.getElementById('state-' + s).classList.toggle('active', s === state);
             });
         }
 
@@ -204,11 +216,13 @@
         .register-body { padding: 24px 22px; }
 
         /* States */
-        .state-block { text-align: center; padding: 16px 0; }
+        .state-block { display: none; text-align: center; padding: 16px 0; }
+        .state-block.active { display: block; }
         .state-block .lucide { width: 40px; height: 40px; margin-bottom: 12px; }
         .state-block h2 { font-size: 1.1rem; margin-bottom: 8px; }
         .state-block p  { font-size: 0.88rem; color: var(--text-tertiary); line-height: 1.6; }
         .state-block a  { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+        .role-badges-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 4px 0; }
 
         /* Role badge */
         .role-invite-row {
@@ -301,45 +315,45 @@
         <div class="register-body">
 
             <!-- Loading -->
-            <div id="state-loading" class="state-block">
+            <div id="state-loading" class="state-block active">
                 <i data-lucide="loader" class="lucide"></i>
                 <h2>Verifica in corso…</h2>
             </div>
 
             <!-- Invalid token -->
-            <div id="state-invalid" class="state-block" style="display:none;">
+            <div id="state-invalid" class="state-block">
                 <i data-lucide="x-circle" class="lucide error-icon"></i>
                 <h2>Link non valido</h2>
                 <p>Il link di invito non è valido o è scaduto.<br>Contatta chi ti ha inviato l'invito.</p>
             </div>
 
             <!-- Already used -->
-            <div id="state-used" class="state-block" style="display:none;">
+            <div id="state-used" class="state-block">
                 <i data-lucide="alert-circle" class="lucide warning-icon"></i>
                 <h2>Invito già utilizzato</h2>
                 <p>Questo link di invito è già stato usato.<br>Hai già un account? <a href="index.html">Accedi dalla home.</a></p>
             </div>
 
             <!-- Generic error -->
-            <div id="state-error" class="state-block" style="display:none;">
+            <div id="state-error" class="state-block">
                 <i data-lucide="alert-triangle" class="lucide error-icon"></i>
                 <h2>Errore</h2>
                 <p>Si è verificato un errore. Riprova più tardi.</p>
             </div>
 
             <!-- Success -->
-            <div id="state-success" class="state-block" style="display:none;">
+            <div id="state-success" class="state-block">
                 <i data-lucide="check-circle" class="lucide success-icon"></i>
                 <h2>Registrazione completata!</h2>
                 <p>Benvenuto su Espedienti.<br><a href="index.html">Torna alla home e accedi.</a></p>
             </div>
 
             <!-- Form -->
-            <div id="state-form" style="display:none;">
+            <div id="state-form" class="state-block">
                 <div class="role-invite-row">
                     <i data-lucide="mail"></i>
                     Sei stato invitato come
-                    <span class="role-badge" id="roleLabel">–</span>
+                    <div class="role-badges-row" id="roleBadges"></div>
                 </div>
 
                 <form id="regForm" class="reg-form">

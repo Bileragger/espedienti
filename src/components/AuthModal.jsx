@@ -4,13 +4,11 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } f
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { LogIn, UserPlus, LogOut, UserCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { ROLE_LABELS, ROLE_COLORS } from '../../js/config/permissions.js';
 
 // Signal that the React modal owns window.openAuthModal — checked by app.js
 // to skip authRenderer.initialize() which would overwrite it.
 window.__reactAuthModal = true;
-
-const ROLE_LABELS = { user: 'Utente', artist: 'Artista', manager: 'Manager', admin: 'Admin' };
-const ROLE_COLORS = { admin: '#dc2626', manager: '#7c3aed', artist: '#0284c7', user: '#16a34a' };
 
 function mapError(err) {
   const code = err?.code ?? '';
@@ -52,8 +50,8 @@ export function AuthModal() {
 
         <div className="auth-modal-body">
           {user
-            ? <ProfilePanel user={user} role={role} name={name} auth={auth} />
-            : <AuthPanel    tab={tab}   setTab={setTab}          auth={auth} />
+            ? <ProfilePanel user={user} name={name} auth={auth} />
+            : <AuthPanel    tab={tab}   setTab={setTab} auth={auth} />
           }
         </div>
 
@@ -65,9 +63,8 @@ export function AuthModal() {
 
 // ── Logged-in ────────────────────────────────────────────────────────────────
 
-function ProfilePanel({ user, role, name, auth }) {
-  const color      = ROLE_COLORS[role] ?? ROLE_COLORS.user;
-  const roleLabel  = ROLE_LABELS[role] ?? role ?? 'user';
+function ProfilePanel({ user, name, auth }) {
+  const { roles } = useAuth();
 
   return (
     <>
@@ -76,7 +73,14 @@ function ProfilePanel({ user, role, name, auth }) {
         <div className="auth-profile-info">
           <div className="auth-profile-name">{name ?? user.email}</div>
           <div className="auth-profile-email">{user.email}</div>
-          <span className="auth-role-badge" style={{ background: color }}>{roleLabel}</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+            {roles.map(r => (
+              <span key={r} className="auth-role-badge"
+                style={{ background: ROLE_COLORS[r] ?? ROLE_COLORS.user }}>
+                {ROLE_LABELS[r] ?? r}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
       <button type="button" className="btn auth-submit-btn" style={{ marginTop: 18 }}

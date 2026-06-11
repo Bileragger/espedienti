@@ -26,6 +26,8 @@ export class EventFormManager {
     this.nextId = 1;
     this.editingEventId = null;
     this.categoryIcons = EVENT_CATEGORY_ICONS;
+    this._selectedPlaceId   = null;
+    this._selectedPlaceName = '';
   }
 
   async initialize() {
@@ -35,12 +37,13 @@ export class EventFormManager {
       this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
         this.miniMap.updateMarker('miniMap', lat, lng);
         document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        try {
-          const result = await this.geocoding.reverse(lat, lng);
-          if (result) {
-            document.getElementById('location').value = this.geocoding.formatAddress(result);
-          }
-        } catch (_) {}
+        const locationField = document.getElementById('location');
+        if (!locationField.value.trim()) {
+          try {
+            const result = await this.geocoding.reverse(lat, lng);
+            if (result) locationField.value = this.geocoding.formatAddress(result);
+          } catch (_) {}
+        }
       });
     }, 100);
 
@@ -158,21 +161,19 @@ export class EventFormManager {
     const container = document.getElementById('searchResults');
     const result = container.searchResults[resultIndex];
 
-    const address = this.geocoding.formatAddress(result);
     const coords = this.geocoding.extractCoordinates(result);
+    const locationField = document.getElementById('location');
 
     document.getElementById('coordinates').value = `${coords.lat}, ${coords.lng}`;
-    document.getElementById('location').value = address;
+    if (!locationField.value.trim()) {
+      locationField.value = this.geocoding.formatAddress(result);
+    }
     document.getElementById('locationSearch').value = '';
 
     this.miniMap.updateMarker('miniMap', coords.lat, coords.lng);
     this.miniMap.setupInteraction('miniMap', async (lat, lng) => {
       this.miniMap.updateMarker('miniMap', lat, lng);
       document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      try {
-        const rev = await this.geocoding.reverse(lat, lng);
-        if (rev) document.getElementById('location').value = this.geocoding.formatAddress(rev);
-      } catch (_) {}
     });
     container.classList.remove('show');
   }
@@ -262,7 +263,7 @@ export class EventFormManager {
     if (!places.length) { results.classList.remove('show'); return; }
     const sorted = [...places].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
     results.innerHTML = sorted.map((p, i) =>
-      `<div class="search-result-item" data-idx="${i}" data-name="${p.name || ''}">${p.name}${p.address ? `<br><small style="opacity:0.7">${p.address}</small>` : ''}</div>`
+      `<div class="search-result-item" data-idx="${i}">${p.name}${p.address ? `<br><small style="opacity:0.7">${p.address}</small>` : ''}</div>`
     ).join('');
     results.classList.add('show');
 
@@ -270,8 +271,11 @@ export class EventFormManager {
       item.addEventListener('click', () => {
         const place = sorted[parseInt(item.dataset.idx, 10)];
         if (!place) return;
-        input.value = place.name || '';
+        input.value = '';
         results.classList.remove('show');
+        this._selectedPlaceId   = place.firebaseId || place.id || null;
+        this._selectedPlaceName = place.name || '';
+        this._showSelectedPlaceChip(place.name);
         if (place.address) document.getElementById('location').value = place.address;
         if (place.coordinates?.lat != null) {
           const { lat, lng } = place.coordinates;
@@ -280,6 +284,25 @@ export class EventFormManager {
         }
       });
     });
+  }
+
+  _showSelectedPlaceChip(name) {
+    const chip = document.getElementById('selectedPlaceChip');
+    const input = document.getElementById('placeSearch');
+    if (!chip) return;
+    chip.innerHTML = `<span class="selected-place-chip__name">📍 ${name}</span><button type="button" class="selected-place-chip__remove" title="Scollega luogo">×</button>`;
+    chip.classList.add('visible');
+    if (input) input.value = '';
+    chip.querySelector('.selected-place-chip__remove').addEventListener('click', () => {
+      this._selectedPlaceId   = null;
+      this._selectedPlaceName = '';
+      chip.classList.remove('visible');
+    });
+  }
+
+  _hideSelectedPlaceChip() {
+    const chip = document.getElementById('selectedPlaceChip');
+    if (chip) chip.classList.remove('visible');
   }
 
   populatePlaceSelect() {
@@ -315,6 +338,14 @@ export class EventFormManager {
         coordinates: coords,
         tags: [...this.currentTags]
       };
+
+      if (this._selectedPlaceId) {
+        eventData.placeId   = this._selectedPlaceId;
+        eventData.placeName = this._selectedPlaceName;
+      } else {
+        eventData.placeId   = null;
+        eventData.placeName = null;
+      }
 
       const whatsappValue = document.getElementById('whatsapp').value.trim();
       if (whatsappValue) eventData.whatsappLink = whatsappValue;
@@ -396,14 +427,25 @@ export class EventFormManager {
 
     document.getElementById('submitBtn').textContent = 'Aggiorna Evento';
 
+    this._selectedPlaceId   = event.placeId   || null;
+    this._selectedPlaceName = event.placeName || '';
+    if (event.placeName) {
+      this._showSelectedPlaceChip(event.placeName);
+    } else {
+      this._hideSelectedPlaceChip();
+    }
+    document.getElementById('placeSearchResults')?.classList.remove('show');
+
     window.switchSubTab?.('events', 'form');
     document.getElementById('eventForm')?.scrollIntoView({ behavior: 'smooth' });
   }
 
   resetForm() {
     document.getElementById('eventForm').reset();
-    const placeSearch = document.getElementById('placeSearch');
-    if (placeSearch) placeSearch.value = '';
+    this._selectedPlaceId   = null;
+    this._selectedPlaceName = '';
+    this._hideSelectedPlaceChip();
+    document.getElementById('placeSearch').value = '';
     document.getElementById('placeSearchResults')?.classList.remove('show');
     this.currentTags = [];
     this.renderTags();

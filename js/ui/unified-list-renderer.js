@@ -12,6 +12,7 @@ import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state-manager.js';
 import { dateFormatter } from '../utils/date-formatter.js';
 import { categoriesLoader } from '../data/categories-loader.js';
+import { mapCategoriesLoader } from '../data/map-categories.js';
 import { dateFilter } from '../filters/date-filter.js';
 import { openingHoursParser } from '../utils/opening-hours-parser.js';
 import { PLACE_CATEGORY_ICONS, PLACE_CATEGORY_NAMES } from '../config/constants.js';
@@ -49,6 +50,10 @@ export class UnifiedListRenderer {
     window.showPoster = () => {}; // no-op — replaced by DetailModal
     window.openDirections = (lat, lng, name, addr) => this._openDirections(lat, lng, name, addr);
     window.centerMapOnPlace = (lat, lng) => this.eventBus.emit('map:centerOn', { lat, lng });
+    window.openPlaceFromEvent = (placeId) => {
+      const place = this.state.get('places')?.find(p => (p.firebaseId || p.id) === placeId);
+      if (place) window.openDetailModal?.(place, 'place');
+    };
 
     // Show skeletons while data loads
     this._showSkeletons();
@@ -150,26 +155,39 @@ export class UnifiedListRenderer {
     el.style.cursor = 'pointer';
     if (selectedLocation === event.location) el.classList.add('highlighted');
 
-    const categoryInfo = this.categoriesLoader.getCategoryInfo(event.category);
     const tagsHtml = event.tags ? event.tags.map(tag =>
       `<span class="tag ${selectedTag === tag ? 'selected' : ''}">${tag}</span>`
     ).join('') : '';
 
     const t = window.t || (k => k);
-    const catColor = (window.categoryColors?.eventColors?.[event.category]) || '#c9a200';
+    const primaryEventCat = event.primaryCategory || event.category;
+    const allEventCats = event.categories?.length ? event.categories : (primaryEventCat ? [primaryEventCat] : []);
+    const catColor = (window.categoryColors?.eventColors?.[primaryEventCat]) || '#c9a200';
     const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
     const eventJson = JSON.stringify(event).replace(/'/g, '&#39;');
+    const eventCoords = event.coordinates;
+    const eventCatBadges = allEventCats
+      .map(key => mapCategoriesLoader.eventCategories.find(c => c.key === key)?.name ?? key)
+      .filter(Boolean)
+      .map(name => `<span class="place-category">${name}</span>`)
+      .join('');
+
+    const placeLink = event.placeName
+      ? `<div class="event-detail"><i data-lucide="building-2" class="lucide-detail"></i><button class="place-link-btn" onclick="event.stopPropagation();window.openPlaceFromEvent('${event.placeId}')">${event.placeName}</button></div>`
+      : '';
 
     el.innerHTML = `
       <div class="event-info">
         <div class="event-title">${catDot}${event.title}</div>
+        ${eventCatBadges ? `<div class="event-detail cat-badges">${eventCatBadges}</div>` : ''}
         <div class="event-detail"><i data-lucide="calendar" class="lucide-detail"></i>${this.dateFormatter.formatEventDate(event)}</div>
         <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${event.location}</div>
+        ${placeLink}
         <div class="event-tags">${tagsHtml}</div>
       </div>
       <div class="event-actions">
-        <button class="btn btn-small" onclick="event.stopPropagation();addToCalendar(${eventJson})">${t('item.addCalendar')}</button>
-        <button class="btn btn-small btn-outline" onclick="event.stopPropagation();window.open('${categoryInfo.whatsappLink}','_blank')">${categoryInfo.icon} ${t('item.chat')}</button>
+        <button class="btn btn-small" onclick="event.stopPropagation();addToCalendar(${eventJson})">+ Calendario</button>
+        ${eventCoords ? `<button class="btn btn-small btn-outline" onclick="event.stopPropagation();centerMapOnPlace(${eventCoords.lat},${eventCoords.lng})">${t('item.showOnMap')}</button>` : ''}
       </div>
     `;
     el.addEventListener('click', () => window.openDetailModal?.(event, 'event'));
@@ -184,9 +202,15 @@ export class UnifiedListRenderer {
     el.id = `place-${place.id}`;
     el.style.cursor = 'pointer';
 
-    const catName = this.categoryNames[place.primaryCategory || place.category] || 'Altro';
-    const catColor = (window.categoryColors?.placeColors?.[place.primaryCategory || place.category]) || '#92400e';
+    const primaryPlaceCat = place.primaryCategory || place.category;
+    const allPlaceCats = place.categories?.length ? place.categories : (primaryPlaceCat ? [primaryPlaceCat] : []);
+    const catColor = (window.categoryColors?.placeColors?.[primaryPlaceCat]) || '#92400e';
     const catDot = `<span class="cat-dot" style="background:${catColor};"></span>`;
+    const placeCatBadges = allPlaceCats
+      .map(key => mapCategoriesLoader.placeCategories.find(c => c.key === key)?.name ?? this.categoryNames[key] ?? key)
+      .filter(Boolean)
+      .map(name => `<span class="place-category">${name}</span>`)
+      .join('');
 
     const t = window.t || (k => k);
 
@@ -203,7 +227,7 @@ export class UnifiedListRenderer {
     el.innerHTML = `
       <div class="event-info">
         <div class="event-title">${catDot}${place.name}${statusBadge}</div>
-        <div class="event-detail"><span class="place-category">${catName}</span></div>
+        ${placeCatBadges ? `<div class="event-detail cat-badges">${placeCatBadges}</div>` : ''}
         <div class="event-detail"><i data-lucide="map-pin" class="lucide-detail"></i>${place.address}</div>
       </div>
       <div class="event-actions">
